@@ -1,0 +1,191 @@
+if [ $# -eq 0 ]; then exec codegen -u -x -S $0; exit $? ; else exec codegen -u -x -S $0 "$@"; exit $? ; fi
+#!/bin/codegen
+
+Usage := << EOF
+{
+    UsageStr = << EOFSTR
+Usage:  $p: [-show] [-help] {file|dirs}...
+
+Fix files that are missing the final EOL.
+
+Options:
+ -v[erbose] only show files that are missing EOL, but do not fix.
+ -show      only show files that are missing EOL, but do not fix.
+ -help      show this help message
+
+Example:
+ $p -show file.java com/sun/mypackage
+EOFSTR
+
+    %echo $UsageStr
+}
+EOF
+
+parse_options := << EOF
+#parse options
+{
+    badOptions=0
+    parsedOption=0
+    CG_MATCH_SPEC = /^-/
+
+    %ifnot $theArg:match %return
+
+	#we have an option:
+    parsedOption=1
+
+    CG_MATCH_SPEC = /^-show/
+    %if $theArg:match DO_SHOW = 1
+    %if $theArg:match %return
+
+    CG_MATCH_SPEC = /^-h/
+    %if $theArg:match DO_HELP = 1
+    %if $theArg:match %return
+
+    CG_MATCH_SPEC = /^-v/
+    %if $theArg:match VERBOSE = 1
+    %if $theArg:match %return
+
+	badOptions=1
+	%eecho ${p}: bad option, $theArg
+}
+EOF
+
+process_one_arg := << EOF
+#if simple file, then add to stack
+#if directory, then get list of files in dir and add to stack
+#skip non-existent files.
+{
+    theArg = $arg
+    %shift arg CG_ARGV
+
+#%eecho process_one_arg T0 arg='$arg' theArg='$theArg'
+
+	%call parse_options
+	%if $parsedOption %return
+
+    #is it a directory?
+    %if $theArg:d %call push_dir_list
+    %if $theArg:d %return
+
+    #is it a plain file?
+    %if $theArg:f %call push_file_name
+    %if $theArg:f %return
+
+    #otherwise, the arg is unrecognized - display error:
+    %eecho ${p}: bad arg, $theArg - IGNORED
+}
+EOF
+
+push_file_name := << EOF
+{
+    %push FILESTACK $theArg
+    %void $FILE_CNT:incr:assign
+}
+EOF
+
+push_dir_list := << EOF
+{
+    #use walkdir to get file-list:
+    CG_SHELL_COMMAND_ARGS = -ftxt $theArg
+    %void $theDirList:walkdir:assign
+
+#%echo BEFORE SUBSTITUTION:  theDirList=$theDirList
+    #$; is used to delimit stack elements:
+    CG_SUBSTITUTE_SPEC := s/\n/$;/g
+    %void $theDirList:substitute:assign
+
+#%echo AFTER SUBSTITUTION:  theDirList=$theDirList
+
+    %push FILESTACK $theDirList
+
+    %void $DIR_CNT:incr:assign
+}
+EOF
+
+dump_stats := << EOF
+{
+    %echo Processed $FILE_CNT file arguments
+    %echo Processed $DIR_CNT directory arguments
+    %echo Processed Found $UNREADABLE_FILE_CNT unreadable files
+    %echo Processed a total of $TOTAL_FILE_CNT files
+}
+EOF
+
+reset_stats := << EOF
+{
+    FILE_CNT = 0
+    DIR_CNT = 0
+    UNREADABLE_FILE_CNT = 0
+    TOTAL_FILE_CNT = 0
+}
+EOF
+
+process_one_file := << EOF
+{
+    theTextFile = $aTextFile
+    %shift aTextFile FILESTACK
+
+    %void $TOTAL_FILE_CNT:incr:assign
+
+    %ifnot $theTextFile:r %void UNREADABLE_FILE_CNT:incr:assign
+    %ifnot $theTextFile:r EXIT_STATUS = 1
+    %ifnot $theTextFile:r %return ${p}:  ${theTextFile} is not readable - SKIPPED.
+
+    %readtemplate ECHO_TXT $theTextFile
+
+    CG_COMPARE_SPEC = $ECHO_TXT
+
+    #FIXEOL:
+    %void $ECHO_TXT:fixeol:assign
+
+    unchanged = $ECHO_TXT:eq
+
+    %if    $unchanged %return UNCHANGED:  $theTextFile
+    %ifnot $unchanged %echo FIXEOL:  $theTextFile
+
+    #if -show option, then we're done:
+    %if $DO_SHOW %return
+
+    #re-write the file but only if it has changed:
+    echo $theTextFile
+}
+EOF
+
+##################################### MAIN #####################################
+
+CG_ROOT = .
+DO_SHOW = 0
+DO_HELP = 0
+VERBOSE = 0
+EXIT_STATUS = 0
+
+p = $CG_INFILE:basename
+
+%ifndef CG_ARGV %call Usage
+%ifndef CG_ARGV %halt 1
+
+%call reset_stats
+
+#this stack holds final list of files to process
+FILESTACK =
+
+#%pragma debug 1
+
+#process arguments:
+%shift arg CG_ARGV
+%whiledef arg %call process_one_arg
+
+%if $badOptions %call Usage
+%if $badOptions %halt 1
+
+%if $DO_HELP %call Usage
+%if $DO_HELP %halt 0
+
+#process files from argument expansion:
+
+%shift aTextFile FILESTACK
+%whiledef aTextFile %call process_one_file
+
+%if $VERBOSE %call dump_stats
+
+%halt $EXIT_STATUS

@@ -1,0 +1,19 @@
+TARGET_OS = cmn
+junit.jar               java/ant/lib/junit.jar                0444
+checkstyle-all-1.2.jar  java/ant/lib/checkstyle-all-1.2.jar   0444
+checkstyle-all-2.1.jar  java/ant/lib/checkstyle-all-2.1.jar   0444
+mysqljdbc.jar           java/ant/lib/mysqljdbc.jar            0444
+
+#note - this is the oracle 9.2.0.3 jdbc driver
+ojdbc14.jar             java/ant/lib/ojdbc14.jar              0444
+
+#ant task for JMX:
+jmx4ant.jar             java/ant/lib/jmx4ant.jar              0444
+
+#JMX 1.2.1 reference implementation (used by jmx4ant):
+jmxri.jar               java/ant/lib/jmxri.jar                0444
+jmxtools.jar            java/ant/lib/jmxtools.jar             0444
+
+#JMX Remote 1.0 reference implementation (used by jmx4ant):
+jmxremote.jar           java/ant/lib/jmxremote.jar            0444
+jmxremote_optional.jar  java/ant/lib/jmxremote_optional.jar   0444

@@ -1,0 +1,9 @@
+TEMPLATE= file.mmf
+PKG		= bin
+PKG2	= lib
+
+FILES	= bldres.prl
+FILES2	= bldres.pl bldres.dat
+
+CMDS   = ${FILES}
+CMDS2  = ${FILES2}

@@ -1,0 +1,12 @@
+TEMPLATE	= file.mmf
+
+PKG	=  bin
+PKG2	=  lib
+
+MODE	=  0555
+MODE2	=  0444
+
+FILES	= fixcvsroot.prl changes.prl tagBuild.prl
+FILES2	= fixcvsroot.pl changes.pl tagBuild.pl
+		  
+CMDS    = ${FILES}

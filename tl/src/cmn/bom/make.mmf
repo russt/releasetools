@@ -1,0 +1,8 @@
+TEMPLATE        = file.mmf
+PKG     = bin
+PKG2    = lib
+
+FILES   = makebom.prl ppbom.prl release.prl
+FILES2  = makebom.pl bomparse.pl bomsuprt.pl ppbom.pl release.pl
+
+CMDS    = ${FILES}

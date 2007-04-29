@@ -1,0 +1,52 @@
+#notes:
+# 10/11/96 RT
+#   -renamed the installed version of crc to be pcrc,
+#    so as not to conflict with the system command.
+#   -took out the & sh munge for skel programs, as this
+#    addes a double startup line.
+#
+
+TARGET_OS=cmn & sh, mac & mpw
+../optpath.prl     bin/$TARGET_OS/optpath         0555
+
+TARGET_OS = ntcmn & ksh
+../optpath.prl     bin/$TARGET_OS/optpath.ksh      0555
+
+TARGET_OS = cmn & skel
+../shsyntax.prl    bin/$TARGET_OS/shsyntax         0555
+../shsyntax.prl    bin/$TARGET_OS/url              0555
+
+TARGET_OS = cmn
+../shsyntax.pl     lib/$TARGET_OS/shsyntax.pl      0444
+
+TARGET_OS = cmn & skel, mac & skel & mpw
+../localtxt.prl    bin/$TARGET_OS/localtxt         0555
+../crc.prl         bin/$TARGET_OS/pcrc             0555
+../bldmsg.prl      bin/$TARGET_OS/bldmsg           0555
+../walkdir.prl     bin/$TARGET_OS/walkdir          0555
+../ddiff.prl       bin/$TARGET_OS/ddiff            0555
+
+TARGET_OS = ntcmn & skel & ksh
+../localtxt.prl    bin/$TARGET_OS/localtxt.ksh     0555
+../bldmsg.prl      bin/$TARGET_OS/bldmsg.ksh       0555
+../walkdir.prl     bin/$TARGET_OS/walkdir.ksh      0555
+../ddiff.prl       bin/$TARGET_OS/ddiff.ksh        0555
+
+TARGET_OS=cmn, ntcmn, mac
+../crc.pl         lib/$TARGET_OS/pcrc.pl           0444
+../listutil.pl    lib/$TARGET_OS/listutil.pl       0444
+../localtxt.pl    lib/$TARGET_OS/localtxt.pl       0444
+../numutil.pl     lib/$TARGET_OS/numutil.pl        0444
+../url.pl         lib/$TARGET_OS/url.pl            0444
+../vars.pl        lib/$TARGET_OS/vars.pl           0444
+../suffix.pl      lib/$TARGET_OS/suffix.pl         0444
+../transact.pl    lib/$TARGET_OS/transact.pl       0444
+../bldmsg.pl      lib/$TARGET_OS/bldmsg.pl         0444
+../walkdir.pl     lib/$TARGET_OS/walkdir.pl        0444
+../ddiff.pl       lib/$TARGET_OS/ddiff.pl          0444
+
+TARGET_OS = cmn
+../comparejars.sh   bin/$TARGET_OS/comparejars       0555
+
+TARGET_OS = ntcmn
+../comparejars.sh   bin/$TARGET_OS/comparejars.ksh   0555

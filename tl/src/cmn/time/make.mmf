@@ -1,0 +1,7 @@
+TEMPLATE        = file.mmf
+PKG     = lib
+
+MAPFILE = install.map
+MODE    = 0444
+ 
+FILES   = txtm.pl

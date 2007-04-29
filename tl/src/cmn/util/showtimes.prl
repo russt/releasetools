@@ -1,0 +1,223 @@
+#!/usr/local/bin/perl -w
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)showtimes.prl - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+# showtimes - display bldtime.log in a nice format
+#
+
+
+#################################### MAIN #####################################
+
+&init;
+&parse_args;
+
+for $fn (@FILES) {
+	&showtimes($fn);
+}
+
+exit(0);
+&squawk_off;
+
+################################# SUBROUTINES #################################
+
+sub showtimes
+{
+	my ($fn) = @_;
+	my (%PERFDAT) = ();
+	my($txt, $kk, $ii, @rec);
+
+	if (!open(INFILE, $fn)) {
+		printf STDERR ("%s: WARNING:  can't open file '%s'\n", $p, $fn);
+		return(0);
+	}
+
+	#printf "%4s	%s\n", "time(m)", "Task";
+	#printf "----	------------------------------------\n";
+	while(<INFILE>) {
+		chop;
+		$txt = $_;
+		@rec = split("\t", $_);
+
+		# Instead of appending a sequence number to records having
+		# identical begin times, append the task name, which is
+		# supposed to be unique. Doing so has the benefit of
+		# preserving the original order of the task names when
+		# they have identical begin times.
+		#
+		#$ii = 0;
+		#$kk = $rec[$BT_BEGTIME] . "$ii";
+		#while(defined($PERFDAT{$kk})) {
+		#	++$ii;
+		#	$kk = $rec[$BT_BEGTIME] . "$ii";
+		#}
+		#
+		if (! defined($rec[$BT_TASKNAME])) {
+			printf STDERR "$p: skipping record with no task name\n";
+			next;
+		}
+		$kk = $rec[$BT_BEGTIME] . $rec[$BT_TASKNAME];
+
+		$PERFDAT{$kk} = $txt;
+	}
+
+	for $kk (sort keys %PERFDAT) {
+		@rec = split("\t", $PERFDAT{$kk});
+		printf "%s",
+                        &txtime_to_short_date(&gmt_to_txtm($rec[$BT_BEGTIME]));
+		printf "		%8s", &timestr($rec[$BT_RUNTIME]);
+		printf "	%s", $rec[$BT_PLATFORM];
+		printf "	%d", $rec[$BT_STATUS];
+                printf "	%s", $rec[$BT_TASKNAME];
+                printf "\n";
+	}
+
+	close(INFILE);
+	return(1);		#success
+}
+
+sub timestr
+{
+	my ($secs) = @_;
+
+	if ($secs >= 0) {
+		return sprintf("%02d:%02d:%02d", $secs/3600, ($secs/60) % 60, $secs % 60);
+	}
+
+	return "INCOMPLETE";
+}
+
+sub gmt_to_txtm
+#convert unix time to transaction date/time format
+{
+	my($gtime) = @_;
+
+	my(@trec) = localtime($gtime);
+
+	return sprintf("%02d%02d%02d%02d%02d%02d",
+		$trec[$TM_YEAR] + 1900,
+		$trec[$TM_MONTH] +1,
+		$trec[$TM_MDAY],
+		$trec[$TM_HOUR],
+		$trec[$TM_MINUTE],
+		$trec[$TM_SECOND]);
+}
+
+sub txtime_to_short_date
+#yyyymmddhhmmss -> mmdd.hh:mm:ss
+{
+	my($txtm) = @_;
+
+	#0 2 4 6 8 
+	#yyyymmddhhmmss -> mmdd.hh:mm:ss
+	return sprintf("%s.%s:%s:%s",
+			substr($txtm, 4, 4),
+			substr($txtm, 8, 2),
+			substr($txtm, 10, 2),
+			substr($txtm, 12, 2)
+		); 
+}
+
+################################ USAGE SUBROUTINES ###############################
+
+sub squawk_off
+#shut up extraneous warnings from perl -w option:
+{
+    if (1 > 2) {
+    }
+}
+
+sub usage
+{
+	local($status) = @_;
+
+    print STDERR <<"!";
+Usage:  $p [-help] [files...]
+
+Options:
+ -help  print this usage message 
+
+!
+    exit($status);
+}
+
+sub parse_args
+#process command-line arguments
+{
+    #eat up flag args:
+
+    while ($#ARGV+1 > 0 && $ARGV[0] =~ /^-/) {
+		$flag = shift(@ARGV);
+
+		if ($flag =~ /^-h/) {
+			&usage(0);
+		} else {
+			&usage(1);
+		}
+    }
+
+    #take remaining args as files:
+    if ($#ARGV < 0 || ($#ARGV == 0 && $ARGV[0] eq "")) {
+		@FILES = ("bldtime.log");	#default
+		printf "%s:  assuming '%s' for build-time data.\n", $p, $FILES[0];
+    } else {
+		@FILES = @ARGV;
+	}
+}
+
+sub init
+{
+    #set up program name argument:
+    local(@tmp) = split('/', $0);
+    $p = $tmp[$#_];
+
+	#note -unused fields commented out to avoid squawks from perl.
+#	$BT_BLDDATE 	= 0;
+#	$BT_PATHNAME 	= 1;
+	$BT_PLATFORM	= 2;
+#	$BT_HOSTNAME	= 3;
+	$BT_BEGTIME 	= 4;
+#	$BT_ENDTIME 	= 5;
+	$BT_RUNTIME 	= 6;
+	$BT_STATUS	 	= 7;
+	$BT_TASKNAME	= 8;
+
+#Example build-times record:
+# 0      1      2           3       4           5           6       7   8
+#980630  main	solsparc	miles   899304912	899306054	1142	0	apps regression test
+#980630  main	solsparc	miles   899300323	899304840	4517	0	base regression test
+
+	#localtime record fields:
+	$TM_SECOND	= 0;
+	$TM_MINUTE	= 1;
+	$TM_HOUR	= 2;
+	$TM_MDAY	= 3;
+	$TM_MONTH	= 4;
+	$TM_YEAR	= 5;
+}

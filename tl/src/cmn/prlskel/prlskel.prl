@@ -1,0 +1,522 @@
+#!/bin/perl -w
+
+#
+# BEGIN_HEADER - DO NOT EDIT
+#
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)prlskel.prl - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+#
+# END_HEADER - DO NOT EDIT
+#
+
+# prlskel.prl   -- "perl skeleton"
+# This script is the bootstrapping code to setup some variables and
+# run a tool which is stored in a perl library.
+
+################################# SETUP, MISC #################################
+
+$alreadyAborted = 0;
+&init_pathname;
+
+# these should be package relative
+if ($OS == $UNIX) {
+	$SIG{'INT'} = 'rec_signal';
+	$SIG{'KILL'} = 'rec_signal';
+	$SIG{'QUIT'} = 'rec_signal';
+	$SIG{'TERM'} = 'rec_signal';
+	$SIG{'HUP'} = 'rec_signal';
+	$SIG{'TRAP'} = 'rec_signal';
+} elsif ($OS == $NT) {
+	# KILL, QUIT, & HUP are not recognized by NT
+	$SIG{'INT'} = 'rec_signal';
+	$SIG{'TERM'} = 'rec_signal';
+} elsif ($OS == $DOS) {
+	$SIG{'INT'} = 'rec_signal';
+	$SIG{'KILL'} = 'rec_signal';
+	$SIG{'QUIT'} = 'rec_signal';
+	$SIG{'TERM'} = 'rec_signal';
+	$SIG{'HUP'} = 'rec_signal';
+	$SIG{'TRAP'} = 'rec_signal';
+}
+
+# If you set NoInterrupt to true, interrupts will be ignored.  Make sure
+# that you eventually change NoInterrupt back to false and then check
+# SignalToDieReceived; if true, it means that we received a signal while
+# interrupts were turned off.
+$NoInterrupt = 0;
+$SignalToDieReceived = 0;
+
+&init_libpath;		#initialize library search path
+
+################################### MAIN ######################################
+
+@TempFileList = ();
+@TempDirList = ();
+%CallCleanupPackages = ();
+
+$have_pkgmap = eval "require \"pkgmap.pl\"";
+
+$status = &run_pkg($p, *ARGV, *ENV);
+&cleanup_packages;
+&cleanup;
+exit $status;
+
+&squawk_off;
+
+######################### USER CALLABLE SUBROUTINES #########################
+# The following are functions that might be called from an external package.
+
+sub load_pkg
+	# Load in the package.  Prep some variables
+{
+	local($pkg_name) = @_;
+
+ 	# Stuff into the new variable space these commonly used vars
+ 	foreach $var ("p", "OS", "UNIX", "NT", "MACINTOSH", "DOS", "CPS",
+ 				  "LIBPS", "PATHVAR", "PS_IN", "PS_OUT") {
+ 		eval "\$$pkg_name'$var = \$$var";
+ 	}
+	
+	# Let programs know they are running under prlskel.
+	# The below is the same as: eval "\$${pkg_name}::FORTE_PRLSKEL = 1;";
+	${"${pkg_name}::FORTE_PRLSKEL"} = 1;
+
+	require "$pkg_name.pl";
+	$CallCleanupPackages{$pkg_name} = 1;
+	return $pkg_name;
+}
+
+sub run_pkg
+	# Load in the $pkg_name perl library, execute it's main, call it's
+	# cleanup, and return the status.  If you're going to be executing
+	# packages as programs, use run_pkg.
+{
+	local($orig_pkg_name, *ARGV, *ENV) = @_;
+#printf("p=%s, pkg_name=%s\n", $p, $pkg_name);
+#require "dumpvar.pl";
+#&dumpvar('main', 'pkg_name', 'ARGV');
+	local(*main);
+
+	if (defined($have_pkgmap)) {
+		$pkg_name = &pkgmap::map($orig_pkg_name);
+		# print "orig_pkg_name = '$orig_pkg_name' p = '$p' pkg_name = '$pkg_name'\n";
+		if ($orig_pkg_name eq $p) {
+			$p = $pkg_name;
+		}
+	} else {
+		$pkg_name = $orig_pkg_name;
+	}
+
+	$pkg_name = &load_pkg($pkg_name);
+ 	eval "\$${pkg_name}::p = \$pkg_name";
+	
+	*main = &pkg_handle($pkg_name, 'main');
+
+    #program must have a main:
+	if (defined(&main)) {
+		$status = &main(*ARGV, *ENV);
+	} else {
+		#no main!
+		&abort("$pkg_name:  'main' undefined in package $pkg_name.pl\n", 1);
+	}
+	
+    #it is an error not to return status:
+	&abort("$pkg_name:  main returned undefined status\n", 1)
+		unless (defined($status));
+
+	&call_cleanup($pkg_name);
+
+	return $status;
+}
+
+sub abort
+{
+	local($msg, $errorNum) = @_;
+	print STDERR $msg;
+	if (!defined($errorNum)) {
+		$errorNum = 1;
+	}
+
+	# abort could be called multiple times (eg, multiple ctrl-c's and the
+	# cleanup routine is in an infinite loop).
+	++$alreadyAborted;
+	&cleanup_packages if ($alreadyAborted <= 1);
+	&cleanup if ($alreadyAborted <= 2);
+	exit $errorNum;
+}
+
+sub dump_inc
+# Print out where we got included perl libraries from
+# It's typically called when debugging is on.
+{
+	local($f, $libdir, $ff, $found);
+	
+	foreach $f (keys %INC) {
+		$found = 0;
+		foreach $libdir (@INC) {
+			$ff = $libdir . $PS_OUT . $f;
+			if (-r $ff) {
+				print "Required: $ff\n";
+				$found = 1;
+				last;
+			}
+		}
+		if (!$found) {
+			print "Required: $ff (but not found in the filesystem)\n";
+		}
+	}
+}
+
+sub reload_inc
+	# Try to reload all of the included perl libraries
+{
+	local($dumpErr) = @_;
+	local($f);
+
+	if ($dumpErr) {
+		# redirect stderr to a temp file (which we ignore)
+		&require_os;
+		
+		local($tmpFile);
+		$tmpFile = &os'TempFile;
+		if (!open(RELOAD_TMP_FILE, ">$tmpFile")) {
+			print "Failed to open $tmpFile for write: $!\n";
+			$dumpErr = 0;
+		} else {
+			open(RELOAD_REAL_STDERR, ">&STDERR");
+			open(STDERR, ">&RELOAD_TMP_FILE");
+		}
+	}
+	foreach $f (keys %INC) {
+		# We ignore errors here, because we're always going to get
+		# some ("Subroutine blah redefined").
+		print "reloading $f\n";
+		eval "do \"$f\"";
+	}
+	if ($dumpErr) {
+		# reestablish stderr and close off the temp file
+		open(STDERR, ">&RELOAD_REAL_STDERR");
+		close(RELOAD_TMP_FILE);
+	}
+}
+
+sub print_prof
+{
+	foreach $func (keys %profCount) {
+		print "$func: $profCount{$func}\n";
+	}
+}
+
+sub require_os
+# bring in the correct implementation of the os package
+{
+	require "os.pl";
+}
+
+################################ SUBROUTINES ##################################
+
+sub cleanup_packages
+	# This probably shouldn't be called except when we're exiting.  Note
+	# that normal users should just call &abort (which will call this).
+{
+	local($pkg_name);
+	foreach $pkg_name (keys %CallCleanupPackages) {
+		&call_cleanup($pkg_name);
+	}
+}
+
+sub call_cleanup
+	# Call a particular package's cleanup if it has one.
+{
+	local($pkg_name) = @_;
+	local(*pkg_cleanup);
+
+	if (! $CallCleanupPackages{$pkg_name}) {
+		return;
+	}
+	#print "Calling cleanup of package $pkg_name\n";
+	$CallCleanupPackages{$pkg_name} = 0;
+	#call pkg cleanup routine if there is one:
+	*pkg_cleanup = &pkg_handle($pkg_name, 'cleanup');
+	&pkg_cleanup if (defined(&pkg_cleanup));
+}
+
+sub pkg_handle
+	# sets a global function handle to &<pkg>'<name> and returns it.
+	# the handle will be undefined if the subroutine is undefined.
+{
+	local ($pkg, $name) = @_;
+
+	#the eval has to be global:
+	eval("*tempGlobalFunctionHandle = *${pkg}'$name");
+	return(*tempGlobalFunctionHandle);
+}
+
+sub rec_signal
+	# Receives a signal and then aborts program.  We ignore SIGHUP.
+{
+	local($SIG) = @_;
+
+	# Reestablish the handler.
+	local($prevHandler) = $SIG{$SIG};
+	$SIG{$SIG} = $prevHandler;
+	printf STDERR ("\n%s:  Received SIG%s%s\n",
+		$p, $SIG, ($SIG eq "HUP")? " - IGNORED" : "");
+
+	return if ($SIG eq "HUP");
+	if ($SIG eq "TRAP") {
+		*trap_handler = &pkg_handle($pkg_name, 'trap_handler');
+
+		# If they've got a trap handler, then we call it.
+		if (defined(&trap_handler)) {
+			$status = &trap_handler($SIG);
+			return;
+		}
+	}
+	$SignalToDieReceived = 1;
+	if ($NoInterrupt) {
+		print "NoInterrupt is set, ignoring the signal for now (p=$p).\n";
+		return;
+	}
+
+	&abort("Shutting down.\n");
+	# abort should have killed the program, so, this shouldn't run.
+	$SIG{$SIG} = "";
+}
+
+sub cleanup
+	# This is the cleanup for prlskel.
+	# Remove any temp files.
+	# Routines to manage @TempFileList are in <OS>.h
+	# This should only be called once per process!
+{
+	local($tempFile, $tempDir);
+
+	# Remove any temporary files that are still hanging around.
+	foreach $tempFile (@TempFileList) {
+		if (-f $tempFile) {
+			# print "I would have removed $tempFile\n";
+			unlink $tempFile;
+		}
+	}
+	foreach $tempDir (@TempDirList) {
+		if (-d $tempDir) {
+			&os::rm_recursive($tempDir);
+		}
+	}
+}
+
+################################ PATH UTILITIES ###############################
+
+sub path_separator
+#what is the separator char used by this filesystem, and how is
+#the current directory indicated?
+#Returns 9-tuple:
+# (current_dir_symbol,
+#	volume_separator,
+#	input_path_separator,
+#	output_path_separator,
+#	up_directory,
+#	command_PATH_env_var_separator,
+#	command_LIBPATH_env_var_separator,
+#	PATH_ENV_VAR_NAME
+# )
+{
+	$UNIX = 1; $MACINTOSH=2; $NT=3; $VMS = 4; $DOS = 5; $VMS=$VMS;
+	my @unix_setup = ('.', '/', '/', '/', '..', ':', ';', 'PATH');
+
+	if (defined($^O) &&  $^O =~ /cygwin/i) {
+		$OS = $UNIX;
+		return @unix_setup;
+	}
+
+	$OSENV = $ENV{'OS'};
+	if ((defined($OSENV) &&  $OSENV eq 'Windows_NT') || $0 =~ /\.ksh$/) {
+		$OS = $NT;
+		if (defined($ENV{"PATH"})) {
+			$PATHVAR = "PATH";
+		} else {
+			$PATHVAR = "Path";
+		}
+		return('.', ':', '[\\\/]', '/', '..', ';', ';', $PATHVAR);
+	}
+
+	$OSENV = $ENV{'COMSPEC'};
+	if (defined($OSENV) || $0 =~ /\.bat$/) {
+		$OS = $DOS;
+		return('.', ':', '[\\\/]', '/', '..', ';', ';', 'PATH');
+	}
+
+    for (@INC) {
+		if (/:/) {	#mac
+			$OS = $MACINTOSH;
+			return (':', ':', ':', ':', '::', ',', ';', 'Commands');
+		}
+    }
+
+	#default is unix:
+	$OS = $UNIX;
+	return @unix_setup;
+}
+
+sub init_pathname
+#initialize standard pathname variables.
+{
+    ($DOT, $VOLSEP, $PS_IN, $PS_OUT, $UPDIR, $CPS, $LIBPS, $PATHVAR) = &path_separator;
+
+    #set up program name argument:
+    # figure out the program name and put it into p
+	my($head, $tail);
+	($head, $tail) = ($0 =~ /^(.*)$PS_IN(.*)$/);
+	if (!defined($head) || !defined($tail)) {
+		$head = $DOT;
+		$tail = $0;
+	}
+	$p = $tail;
+	if ($OS == $NT || $OS == $DOS) {
+		# We want to get the right case for the filename, so we search in
+		# the directory case insensitively.  This is so that users can
+		# command xyzzy, when the command is really xYzZy; perl does care
+		# when you load the package in and try to run main from the
+		# wrong case package name.
+		my(@dirFiles, @candidates);
+		if (opendir(DIR, $head)) {
+			@dirFiles = readdir(DIR);
+			closedir(DIR);
+			my($searchFor) = quotemeta($tail);
+			@candidates = grep(/^$searchFor$/i, @dirFiles);
+			if ($#candidates+1 > 0) {
+				$p = $candidates[0];
+				#print "Switched p to $p (from $tail): " . join(" ", @candidates) . "\n";
+			}
+		}
+		$p =~ s/\.ksh$//;
+		$p =~ s/\.bat$//;
+	}
+}
+
+sub init_libpath
+	#assert:  $PERL_LIBPATH is defined
+	#NOTE:  if you want $DOT in your path, go ahead and put it in.
+{
+	if (!$ENV{'PERL_LIBPATH'}) {
+
+		local($msg) = <<"!"
+$p:  ERROR: PERL_LIBPATH  undefined.
+
+You must set PERL_LIBPATH to the list of directories perl will search
+to find required libraries.
+
+Example (csh):
+	setenv PERL_LIBPATH "$DOT$LIBPS$DOT${PS_OUT}lib"
+!
+		;
+
+		&abort($msg, 1);
+	}
+	local(@libs) = split($LIBPS, $ENV{'PERL_LIBPATH'});
+	if (@libs) {
+		unshift(@INC, @libs);
+	}
+
+	# Allow for standard Perl way to locate custom libraries.
+	if (defined($ENV{'PERLLIB'})) {
+		$ENV{'PERLLIB'} = join($CPS,split($LIBPS,$ENV{'PERL_LIBPATH'}),
+							   $ENV{'PERLLIB'});
+	} else {
+		$ENV{'PERLLIB'} = join($CPS,split($LIBPS,$ENV{'PERL_LIBPATH'}));
+	}
+#printf STDERR ("LIBPS='%s' libs=(%s)\n", $LIBPS, join(',', @libs));
+}
+
+sub squawk_off
+#shut up extraneous warnings from perl -w option:
+{
+    if (1 > 2) {
+		*FsType = *FsType;
+		*LoginName = *LoginName;
+		*NodeName = *NodeName;
+		*RegUnloadKey = *RegUnloadKey;
+		*RegSetValueEx = *RegSetValueEx;
+		*RegSetValue = *RegSetValue;
+		*RegSetKeySecurity = *RegSetKeySecurity;
+		*RegSaveKey = *RegSaveKey;
+		*RegRestoreKey = *RegRestoreKey;
+		*RegReplaceKey = *RegReplaceKey;
+		*RegQueryValueEx = *RegQueryValueEx;
+		*RegQueryValue = *RegQueryValue;
+		*RegQueryInfoKey = *RegQueryInfoKey;
+		*RegOpenKeyEx = *RegOpenKeyEx;
+		*RegOpenKey = *RegOpenKey;
+		*RegNotifyChangeKeyValue = *RegNotifyChangeKeyValue;
+		*RegLoadKey = *RegLoadKey;
+		*RegGetKeySecurity = *RegGetKeySecurity;
+		*RegFlushKey = *RegFlushKey;
+		*RegEnumValue = *RegEnumValue;
+		*RegEnumKeyEx = *RegEnumKeyEx;
+		*RegEnumKey = *RegEnumKey;
+		*RegDeleteValue = *RegDeleteValue;
+		*RegDeleteKey = *RegDeleteKey;
+		*RegCreateKeyEx = *RegCreateKeyEx;
+		*RegCreateKey = *RegCreateKey;
+		*RegConnectRegistry = *RegConnectRegistry;
+		*RegCloseKey = *RegCloseKey;
+		*Spawn = *Spawn;
+		*CPS = *CPS;
+		*PS_OUT = *PS_OUT;
+		*DOT = *DOT;
+		*LIBPS = *LIBPS;
+		*FORTE_PRLSKEL = *FORTE_PRLSKEL;
+		*MAC = *MAC;
+		*VMS = *VMS;
+		*PATHVAR = *PATHVAR;
+		*UPDIR = *UPDIR;
+		*UPDIR = *UPDIR;
+		*VOLSEP = *VOLSEP;
+		*dump_inc = *dump_inc;
+		*reload_inc = *reload_inc;
+		*require_os = *require_os;
+		*pickfiles = *pickfiles;
+		*pwd = *pwd;
+		*rec_signal = *rec_signal;
+		*reload_inc = *reload_inc;
+		*print_prof = *print_prof;
+		*tempGlobalFunctionHandle = *tempGlobalFunctionHandle;
+		*RELOAD_REAL_STDERR = *RELOAD_REAL_STDERR;
+    }
+}
+
+sub run_pskel_cmd
+## Called &run_pskel_cmd("localtxt -os unix foofile");
+{
+    local($argvstr) = @_;
+
+    print "CMD_RUN_PSKEL $argvstr\n";
+
+    @argarr=split(' ',$argvstr);
+    push(@fullargs,@argarr);
+
+    &'main(*fullargs, \@ENV);
+    return 1;
+}

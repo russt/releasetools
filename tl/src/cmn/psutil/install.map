@@ -1,0 +1,18 @@
+TARGET_OS = cmn & skel, mac & skel & mpw
+checkpid.prl    bin/$TARGET_OS/checkpid         0555
+pstree.prl      bin/$TARGET_OS/pstree           0555
+
+TARGET_OS = ntcmn & skel & ksh
+checkpid.prl    bin/$TARGET_OS/checkpid.ksh     0555
+pstree.prl      bin/$TARGET_OS/pstree.ksh       0555
+
+TARGET_OS=cmn, ntcmn, mac
+checkpid.pl    lib/$TARGET_OS/checkpid.pl       0444
+psutil.pl      lib/$TARGET_OS/psutil.pl         0444
+pstree.pl      lib/$TARGET_OS/pstree.pl         0444
+
+TARGET_OS = cmn,ntcmn
+killchld.sh    bin/$TARGET_OS/killChildren      0555
+
+TARGET_OS = ntcmn
+killchld.sh    bin/$TARGET_OS/killChildren.ksh  0555

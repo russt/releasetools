@@ -1,0 +1,9 @@
+TEMPLATE= file.mmf
+PKG	= bin
+PKG2	= lib
+
+FILES	= prlskel.prl
+FILES2	= prlskel.pl pkgmap.pl
+FILES3	= prlskel.1
+
+CMDS    = ${FILES}

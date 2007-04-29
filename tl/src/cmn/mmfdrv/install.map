@@ -1,0 +1,11 @@
+TARGET_OS = cmn & skel, mac & skel & mpw
+mmfdrv.prl bin/$TARGET_OS/mmfdrv 555
+
+TARGET_OS = ntcmn & skel & ksh
+mmfdrv.prl bin/$TARGET_OS/mmfdrv.ksh 555
+
+TARGET_OS = cmn, ntcmn
+mmfdrv.pl lib/$TARGET_OS/mmfdrv.pl 444
+
+TARGET_OS = cmn
+mmfdrv.1 man/man1/mmfdrv.1 444

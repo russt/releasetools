@@ -1,0 +1,16 @@
+####
+#this files is required by makedrv -c mmf, but only to trigger the unpacking of the
+#tar files.
+#
+#WARNING:  ntcmn.btz is just a copy of cmn.btz.  perl modules (.pm file) are expected
+#          to be in UNIX EOL format.
+#These files may need be updated and/or diverged if perl is updated.
+####
+
+TEMPLATE = file.mmf
+
+PKG  = lib
+
+#this is a dummy target:
+LIBFILES = perlcmn
+

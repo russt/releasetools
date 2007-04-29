@@ -1,0 +1,334 @@
+#!/bin/perl
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)optpath.prl - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+#optpath - eliminate path components that do not exist on this host.
+
+#################################### MAIN ######################################
+
+&init_pathname();
+&parse_args;
+
+&init_env($VAR_ARG, $SEP_ARG);
+
+$newpath = "";
+%upath = ();
+
+#for each path component...
+foreach $pp (@PATH)
+{
+#printf STDERR "pp=%s\n", $pp;
+	next if (defined($upaths{$pp}));	#been there, done that
+	next if (!(-d $pp) && !(-f $pp) && $DELETE_OPTION);
+
+	if ($RM_OPT == 1) {
+		$yesmatch = 0;
+		foreach $pat (@RM_LIST) {
+			$yesmatch = ($pp =~ /$pat/);
+#printf STDERR "pat=%s pp=%s yesmatch=%d\n", $pat, $pp, $yesmatch;
+			last if ($yesmatch);
+		}
+
+		next if ($yesmatch);
+	}
+
+	$upaths{$pp} = 1;
+	$newpath = ($newpath eq "") ? $pp : "${newpath}$SEP_ARG${pp}";
+}
+
+print "$newpath\n";
+exit 0;
+
+################################# INIT,USAGE ###################################
+
+sub usage
+{
+	local($status) = @_;
+
+    print STDERR <<"!";
+Usage:  $p [-help] [-d] -var PATHVAR -sep PATHSEP
+           [-rm pattern[,pattern ...]]
+
+Synopsis:
+ Edit a PATH variable, eliminating redundant components,
+ while preserving precedence.
+
+Options:
+ -help display usage message.
+ -d    delete non-existent components from path.
+ -var PATHVAR
+       use <PATHVAR> instead of the standard command PATH variable.
+ -sep PATHSEP
+       use <PATHSEP> instead of the standard command PATH separator char.
+ -rm pattern[,pattern ...]
+       remove path components matching any pattern in the supplied
+       pattern list.  Individual patterns are interpreted as perl
+       regular-expressions.
+
+Examples:
+ Typical use at end of .cshrc or .tcshrc:
+
+    set opt=`$p` >& /dev/null
+    if (\$status == 0) then
+        setenv PATH \$opt
+    else
+        echo path not optimized
+    endif
+
+ At end of .profile (/bin/sh) or profile.ksh (mks shell):
+
+    opt=`optpath`
+    if [ $? -eq 0 ]; then
+        PATH=$opt
+    else
+        echo path not optimized
+    fi
+
+ Delete components that begin with "/forte1/d/tools",
+ or end with "/bin/cmn", "/bin/\$FORTE_PORT", or "/install/bin".
+ Note the careful quoting.  This allows the shell to interpolate
+ \$FORTE_PORT, while passing \$ as part of the perl pattern:
+
+    set opt=`$p -rm '^/forte1/d/tools,/install/bin\$,/bin/'\${FORTE_PORT}'\$'`
+
+ Edit the Java CLASSPATH variable, deleting non-existent
+ class directories and archives:
+
+    set opt=`$p -d -var CLASSPATH -sep ':'`
+
+NOTES:
+ Please check the status of the $p command
+ before resetting your path - otherwise your shell
+ may become unusable.
+
+ Care must be taken with the -d option.  Sometimes
+ path components are not present because they have
+ not been built yet, or because the network is
+ temporarily unavailable.
+
+!
+    exit($status);
+}
+
+sub parse_args
+#proccess command-line aguments
+{
+	local ($flag, $parm);
+	$DELETE_OPTION = 0;
+	$RM_OPT = 0;
+	$SEP_OPT = 0;
+	$VAR_OPT = 0;
+
+	#default to standard path var & separator:
+	$VAR_ARG = $PATHVAR;
+	$SEP_ARG = $CPS;
+
+    #eat up flag args:
+    while ($#ARGV+1 > 0 && $ARGV[0] =~ /^-/) {
+		$flag = shift(@ARGV);
+
+		if ($flag eq '-d') {
+			$DELETE_OPTION = 1;
+		} elsif ($flag =~ '^-h') {
+			&usage(0);
+		} elsif ($flag eq '-var') {
+			if ($#ARGV < 0 || $ARGV[0] eq "") {
+				printf STDERR "%s:  -var requires an argument\n", $p;
+				&usage(1);
+			}
+			$VAR_OPT = 1;
+			$VAR_ARG = shift(@ARGV);
+		} elsif ($flag eq '-sep') {
+			if ($#ARGV < 0 || $ARGV[0] eq "") {
+				printf STDERR "%s:  -sep requires an argument\n", $p;
+				&usage(1);
+			}
+			$SEP_OPT = 1;
+			$SEP_ARG = shift(@ARGV);
+		} elsif ($flag eq '-rm') {
+			if ($#ARGV < 0 || $ARGV[0] eq "") {
+				printf STDERR "%s:  -rm requires an argument\n", $p;
+				&usage(1);
+			}
+			$RM_OPT = 1;
+			@RM_LIST = split(',', shift(@ARGV));
+		} else {
+			&usage(1);
+		}
+    }
+
+	#ignore any other args...
+}
+
+sub init_env
+{
+	local($pathvar, $pathsep) = @_;
+	local ($path) = $ENV{$pathvar};
+
+#printf STDERR "init_env:  OS=%d pathvar='%s'\n", $OS, $pathvar;
+
+	#convert to lower case if NT:
+	$path =~ tr/A-Z/a-z/ if ($OS == $NT);
+
+    #get path environment var:
+    @PATH = split($pathsep, $path);
+
+    if ($#PATH < 0) {
+		printf STDERR ("%s:  can't get path variable!\n", $p);
+		exit(1);
+    }
+}
+
+################################ PATH UTILITIES ###############################
+
+sub pickfiles
+#pick the plain file entries from a directory listing.
+#<lsout> must be in CWD or contain full path refs.
+#list returned in <thefiles>.
+{
+	local (*thefiles, *lsout) = @_;
+
+	@thefiles = grep(!(-d $_), @lsout);
+}
+
+sub pwd
+#return full pathname of current working directory.
+{
+	local ($tmp);
+	if ($OS == $UNIX) {
+		$tmp = (`pwd`);
+		chop $tmp;
+		return($tmp);
+	}
+	if ($OS == $MACINTOSH) {
+		$tmp = (`Directory`);
+		chop $tmp;
+		$tmp =~ s/:$//;		#make sure no trailing :
+		return($tmp);
+	}
+
+	return("NULL");		#not handled
+}
+
+sub ls
+#<lsout> <-- `ls <dir>`
+{
+	local (*lsout, $dir) = @_;
+
+	if (!opendir(DIR, $dir)) {
+		@lsout = ();
+		return;
+	}
+
+	#skip drivers on mac, '.' & '..' on unix
+	if ($OS == $MACINTOSH) {
+		@lsout = readdir(DIR);
+	} else {
+		@lsout = grep(!/^\.\.?$/,readdir(DIR));
+	}
+
+	closedir(DIR);
+}
+
+sub path_separator
+#what is the separator char used by this filesystem, and how is
+#the current directory indicated?
+#Returns 9-tuple:
+# (current_dir_symbol,
+#	volume_separator,
+#	input_path_separator,
+#	output_path_separator,
+#	up_directory,
+#	command_PATH_env_var_separator,
+#	command_LIBPATH_env_var_separator,
+#	PATH_ENV_VAR_NAME
+# )
+{
+	$UNIX = 1; $MACINTOSH=2; $NT=3; $VMS = 4; $DOS = 5; $VMS=$VMS;
+	my @unix_setup = ('.', '/', '/', '/', '..', ':', ';', 'PATH');
+
+	if (defined($^O) &&  $^O =~ /cygwin/i) {
+		$OS = $UNIX;
+		return @unix_setup;
+	}
+
+	$OSENV = $ENV{'OS'};
+	if ((defined($OSENV) &&  $OSENV eq 'Windows_NT') || $0 =~ /\.ksh$/) {
+		$OS = $NT;
+		if (defined($ENV{"PATH"})) {
+			$PATHVAR = "PATH";
+		} else {
+			$PATHVAR = "Path";
+		}
+		return('.', ':', '[\\\/]', '/', '..', ';', ';', $PATHVAR);
+	}
+
+	$OSENV = $ENV{'COMSPEC'};
+	if (defined($OSENV) || $0 =~ /\.bat$/) {
+		$OS = $DOS;
+		return('.', ':', '[\\\/]', '/', '..', ';', ';', 'PATH');
+	}
+
+    for (@INC) {
+		if (/:/) {	#mac
+			$OS = $MACINTOSH;
+			return (':', ':', ':', ':', '::', ',', ';', 'Commands');
+		}
+    }
+
+	#default is unix:
+	$OS = $UNIX;
+	return @unix_setup;
+}
+
+sub init_pathname
+#initialize standard pathname variables.
+{
+    ($DOT, $VOLSEP, $PS_IN, $PS_OUT, $UPDIR, $CPS, $LIBPS, $PATHVAR) = &path_separator;
+
+    #set up program name argument:
+    local(@tmp) = split($PS_IN, $0);
+    # figure out the program name and put it into p
+    $p = $tmp[$#tmp];
+	$p =~ s/\.ksh$// if ($OS == $NT);
+}
+
+sub mkpathname
+#convert a list of pathname components to a local path name.
+{
+	local (@plist) = @_;
+
+	#strip trailing input path-separators:
+	for ($ii=0; $ii<=$#plist; $ii++) {
+		$plist[$ii] =~ s/${PS_IN}$//;
+	}
+	
+	return(join($PS_OUT, @plist));
+}

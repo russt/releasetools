@@ -1,0 +1,13 @@
+TEMPLATE	= file.mmf
+PKG		= bin
+PKG2	= lib
+PKG3	= man/man1
+
+MODE	= 0555
+MODE3	= 0444
+
+FILES	= makedrv.prl
+FILES2	= makedrv.pl
+FILES3	= makedrv.1
+
+CMDS    = ${FILES}

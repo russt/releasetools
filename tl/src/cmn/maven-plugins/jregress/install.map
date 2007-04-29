@@ -1,0 +1,10 @@
+TARGET_OS = cmn
+jregress-plugin.jar     java/maven/plugins/jregress-1.0.jar   0444
+
+TARGET_OS = cmn, ntcmn
+jregress.sh       bin/$TARGET_OS/jregress        0555
+jdiff.sh          bin/$TARGET_OS/jdiff           0555
+
+TARGET_OS = ntcmn
+jregress.sh       bin/$TARGET_OS/jregress.ksh    0555
+jdiff.sh          bin/$TARGET_OS/jdiff.ksh       0555

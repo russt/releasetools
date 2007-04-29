@@ -1,0 +1,5 @@
+TEMPLATE        = file.mmf
+PKG     = lib
+MODE	= 0444
+
+FILES   = os.pl unix.pl ntcmn.pl oscmn.pl path.pl tar.pl mac.pl

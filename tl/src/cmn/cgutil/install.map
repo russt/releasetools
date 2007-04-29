@@ -1,0 +1,9 @@
+TARGET_OS = cmn & shcg
+fixeol.cg     bin/$TARGET_OS/cgfixeol          0555
+signsrc.cg    bin/$TARGET_OS/signsrc           0555
+
+TARGET_OS = ntcmn & kshcg
+fixeol.cg     bin/$TARGET_OS/cgfixeol          0555
+fixeol.cg     bin/$TARGET_OS/cgfixeol.ksh      0555
+signsrc.cg    bin/$TARGET_OS/signsrc           0555
+signsrc.cg    bin/$TARGET_OS/signsrc.ksh       0555

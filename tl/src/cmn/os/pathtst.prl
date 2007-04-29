@@ -1,0 +1,176 @@
+perl -x -S $0 "$@"; exit $?
+#!/usr/bin/perl -w
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)pathtst.prl - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+
+&init_pathname();	#set up path name routines for this os.
+
+require "path.pl";
+
+
+#################################### MAIN #####################################
+
+printf "testing path_components subroutine...\n";
+
+$tstfn = "pathtst.dat";
+open (TSTDAT, $tstfn) || die ("$p:  can't open test data file, $tstfn\n");
+
+$linecnt = 0;
+while (<TSTDAT>) {
+	++$linecnt;
+
+	chop;
+	next if (/^\s*#/);		#skip comments
+
+	($osname, $tstpath) = split("\t", $_);
+	if (!defined($tstpath)) {
+		printf STDERR ("%s:  skipping line %d in %s, bad input format (check for tab)\n",
+			$p, $linecnt, $tstfn);
+	}
+
+	#re-write os vars in path package:
+	if ($osname =~ /^mac/i) {
+		$path'OS = $MACINTOSH;
+		$path'PS_OUT = ':'
+	} else {
+		printf STDERR ("%s:  skipping line %d in %s, osname '%s' not implemented\n",
+			$p, $linecnt, $osname);
+	}
+
+	@pc = &path'path_components($tstpath);
+
+	printf ("path='%s', #pc=%d components=(%s)\n", $tstpath, $#pc, join(',', @pc));
+}
+
+exit(0);
+&squawk_off;
+
+################################ PATH UTILITIES ###############################
+
+sub path_separator
+#what is the separator char used by this filesystem, and how is
+#the current directory indicated?
+#Returns 9-tuple:
+# (current_dir_symbol,
+#	volume_separator,
+#	input_path_separator,
+#	output_path_separator,
+#	up_directory,
+#	command_PATH_env_var_separator,
+#	command_LIBPATH_env_var_separator,
+#	PATH_ENV_VAR_NAME
+# )
+{
+	$UNIX = 1; $MACINTOSH=2; $NT=3; $VMS = 4; $DOS = 5; $VMS=$VMS;
+	my @unix_setup = ('.', '/', '/', '/', '..', ':', ';', 'PATH');
+
+	if (defined($^O) &&  $^O =~ /cygwin/i) {
+		$OS = $UNIX;
+		return @unix_setup;
+	}
+
+	$OSENV = $ENV{'OS'};
+	if ((defined($OSENV) &&  $OSENV eq 'Windows_NT') || $0 =~ /\.ksh$/) {
+		$OS = $NT;
+		if (defined($ENV{"PATH"})) {
+			$PATHVAR = "PATH";
+		} else {
+			$PATHVAR = "Path";
+		}
+		return('.', ':', '[\\\/]', '/', '..', ';', ';', $PATHVAR);
+	}
+
+	$OSENV = $ENV{'COMSPEC'};
+	if (defined($OSENV) || $0 =~ /\.bat$/) {
+		$OS = $DOS;
+		return('.', ':', '[\\\/]', '/', '..', ';', ';', 'PATH');
+	}
+
+    for (@INC) {
+		if (/:/) {	#mac
+			$OS = $MACINTOSH;
+			return (':', ':', ':', ':', '::', ',', ';', 'Commands');
+		}
+    }
+
+	#default is unix:
+	$OS = $UNIX;
+	return @unix_setup;
+}
+
+sub init_pathname
+#initialize standard pathname variables.
+{
+    ($DOT, $VOLSEP, $PS_IN, $PS_OUT, $UPDIR, $CPS, $LIBPS, $PATHVAR) = &path_separator;
+
+    #set up program name argument:
+    local(@tmp) = split($PS_IN, $0);
+    # figure out the program name and put it into p
+    $p = $tmp[$#tmp];
+	$p =~ s/\.ksh$// if ($OS == $NT);
+}
+
+sub init_libpath
+	#assert:  $PERL_LIBPATH is defined
+	#NOTE:  if you want $DOT in your path, go ahead and put it in.
+{
+	if (!$ENV{'PERL_LIBPATH'}) {
+
+		local($msg) = <<"!"
+$p:  ERROR: PERL_LIBPATH  undefined.
+
+You must set PERL_LIBPATH to the list of directories perl will search
+to find required libraries.
+
+Example (csh):
+	setenv PERL_LIBPATH "$DOT$LIBPS$DOT${PS_OUT}lib"
+!
+		;
+
+		&abort($msg, 1);
+	}
+	local(@libs) = split($LIBPS, $ENV{'PERL_LIBPATH'});
+	if (@libs) {
+		unshift(@INC, @libs);
+	}
+
+#printf STDERR ("LIBPS='%s' libs=(%s)\n", $LIBPS, join(',', @libs));
+}
+
+sub squawk_off
+{
+	if (1 > 2) {
+		*PATHVAR = *PATHVAR;
+		*UPDIR = *UPDIR;
+		*CPS = *CPS;
+		*VOLSEP = *VOLSEP;
+	}
+}

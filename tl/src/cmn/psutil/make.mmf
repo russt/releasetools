@@ -1,0 +1,13 @@
+TEMPLATE    = file.mmf
+
+PKG =  bin
+PKG2    =  lib
+PKG3    =  man/man1
+
+MODE    =  0555
+MODE2   =  0444
+
+FILES   = pstree.prl killchld.sh checkpid.prl
+FILES2  = checkpid.pl psutil.pl pstree.pl
+          
+CMDS    = ${FILES}

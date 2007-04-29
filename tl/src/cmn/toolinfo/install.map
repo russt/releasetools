@@ -1,0 +1,18 @@
+TARGET_OS = cmn & skel, mac & skel & mpw
+wheresrc.prl    bin/$TARGET_OS/wheresrc       0555
+
+TARGET_OS = ntcmn & skel & ksh
+wheresrc.prl    bin/$TARGET_OS/wheresrc.ksh   0555
+
+TARGET_OS = cmn & skel
+dupsrc.prl      bin/$TARGET_OS/dupsrc         0555
+
+TARGET_OS=cmn
+tlinf.pl    lib/$TARGET_OS/tlinf.pl           0444
+dupsrc.pl    lib/$TARGET_OS/dupsrc.pl         0444
+
+TARGET_OS=cmn, ntcmn, mac
+wheresrc.pl   lib/$TARGET_OS/wheresrc.pl      0444
+
+TARGET_OS = cmn
+wheresrc.1      man/man1/wheresrc.1           0444

@@ -1,0 +1,110 @@
+.TH mmfdrv 1 "25 October 1996" "Forte Software"
+.SH NAME
+mmfdrv \- Generate a Makefile and run make.
+.SH SYNOPSIS
+.B mmfdrv
+[-base base_dir]
+[-p platform1,platform2,... | -all]
+[-rc mmf_defs]
+[-t make_target1,make_target2,...]
+[-csv VARNAME=value1,value2,...]
+[-nommf]
+[-nomk]
+[-r]
+[-help]
+[-d]
+[-q]
+[-n]
+[VARNAME=value]*
+[directories...]
+.LP
+.SH DESCRIPTION
+.B Mmfdrv
+is a high level utility for generating and running Makefiles.
+It is a powerful and flexible command that can be tailored
+to drive sophisticated build systems.
+.LP
+The normal operation of \fImmfdrv\fP is to generate a makefile using
+\fImakemf(1)\fP, and then call make with any supplied definitions.
+Multiple targets in the makefile can be executed using the -t option -
+in this case, make will be called successively to build each specified
+target.  The command can be run recursively over an entire project
+using the -r option.  It can also iterate over a list of targets,
+supplying a different value for a variable designated using the -csv flag.
+Action within any one directory can be customized via local configuration files
+named by the -rc flag.
+.LP
+If the \fIdirectories\fP list is missing, then mmfdrv will
+run starting in the current directory.
+.LP
+.SH OPTIONS
+.TP
+.BI \-base " base_dir"
+Shorthand for BASE=<base_dir>
+.TP
+.BI \-csv " VARNAME=value1,value2,..."
+After generating the makefile, successively run make with VARNAME set
+to value1, value2, etc.  Only one -csv argument is allowed.
+.TP
+.BI \-rc " mmf_defs"
+Read definitions from the file \fImmf_defs\fP in each directory.
+Lines in the \fImmf_defs\fP file of the form:  VARNAME=value1[,value2...], have
+the same semantics as the -csv option.  Multiple definitions of the
+form:  VAR=value can appear also, one per line.
+.TP
+.BI \-p " platform1,platform2,..."
+Shorthand for -csv TARGET_OS=platform1,platform2,...
+.TP
+.BI \-all
+Shorthand for -csv TARGET_OS=$TARGET_OS_LIST.  $TARGET_OS_LIST must be
+defined in the environment.
+.TP
+.BI \-t " make_target1,make_target2,..."
+After generating the makefile, successively run make with
+make_target1, make_target2, etc.  Note that this option is
+multiplicative with any -csv generated substitution.
+.TP
+.BI \-nommf
+Don't call makemf; ie, don't regenerate the Makefile.  This is useful
+if you already have the Makefile.
+.TP
+.BI \-nomk
+Don't call make.  This is useful if you only want to generate the
+Makefile (via makemf).
+.TP
+.BI \-r
+Recursively descend into subdirectories.
+.TP
+.BI \-help
+Print out a useful / helpful message about how to use this program.
+.TP
+.BI \-d
+Debug: Print out usually nonuseful / nonhelpful information about the
+internal state of the program.
+.TP
+.BI \-q
+Quiet: print out only important things.
+.TP
+.BI \-n
+Call make with a -n option.
+
+.SH ENVIRONMENT VARIABLES
+.TP
+.BI TARGET_OS_LIST
+If the -all option is used, then TARGET_OS_LIST must be defined in the environment.
+.SH EXAMPLES
+  mmfdrv -r -t clean src
+
+  mmfdrv -p cmn,mac,ntcmn -t clean,install -base $DISTROOT devdirs testutil
+
+  mmfdrv -r TRANSLOG_DIR="" -p cmn,mac,nt
+
+.SH SEE ALSO
+.B minstall
+for installing files, often through an install map.
+
+
+.B makemf
+for generating Makefiles from make.mmf files.
+.SH BUGS
+None.

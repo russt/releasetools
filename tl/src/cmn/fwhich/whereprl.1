@@ -1,0 +1,76 @@
+.TH whereperl 1 "6 August 1996" "Forte Software"
+.SH NAME
+whereperl \- find perl include modules.
+.SH SYNOPSIS
+\fBwhereperl\fP [\fB-h\fP] [\fB-a\fP] [\fB-p\fP] [perl_libs...]
+.SH DESCRIPTION
+.LP
+The \fIwhereperl\fP command looks for perl library modules
+in the directories specified in the LIB_PERLPATH
+environment variable,
+followed by a search of the standard perl include areas.
+.LP
+With no options, \fIwhereperl\fP will find the first location of each \fIperl_lib\fP available
+in the perl include path.  If invoked with the \fB\-a\fP option, it will find all
+instances of each \fIperl_lib\fP listed.
+.LP
+The \fB\-p\fP option is the most powerful variant and can be used in combination
+with the \fB\-a\fP option to find all perl modules containing a certain word or pattern.
+.SH OPTIONS
+.TP 1.25i
+.B -h
+display the help message and exit normally.
+.TP
+.B -a
+find all instances of each \fIperl_lib\fP in the perl include path.
+.TP
+.B -p
+search the include directories taking \fIperl_libs\fP as \fIperl(1)\fP
+regular expression strings.
+.LP
+.SH EXAMPLES
+.TP 2.5i
+whereperl dumpvar.pl
+find the location of the "dumpvar.pl" perl package.
+.TP
+whereperl -a dumpvar.pl
+find all instances of the "dumpvar.pl" perl package.
+.TP
+whereperl -a -p time
+find all library modules containing the word "time".
+.TP
+whereperl -a -p '^find' '^get'
+find all library modules beginning with the word "find" or "get".
+.TP
+whereperl -a -p '\.pl$'
+find all library modules with the suffix ".pl".
+.SH PORTABILITY
+.LP
+The
+.B whereperl
+command is available in the Macintosh MPW environment,
+the MKS ksh environment for Microsoft Windows, and all Unix shells.
+It requires perl 4.0 or later.
+.SH ENVIRONMENT
+.TP 1.25i
+$PERL_LIBPATH
+Unix and MKS environment variable containing the perl include path.
+.TP 1.25i
+{PERL_LIBPATH}
+Macintosh MPW environment variable containing the perl include path.
+.LP
+On all platforms, directories in
+the path are separated by semi-colons, e.g., ".;/usr/local/perl/lib" (Unix, MKS) or
+":;MyDisk:usr:local:perl:lib" (Macintosh).
+.SH "SEE ALSO"
+fwhich(1), perl(1)
+.LP
+.SH NOTES
+.LP
+The internal perl search path (@INC) is installation dependent, and is always lower in
+precedence then the directories specified in
+.B
+PERL_LIBPATH.
+.SH AUTHOR
+.LP
+Russ Tremain

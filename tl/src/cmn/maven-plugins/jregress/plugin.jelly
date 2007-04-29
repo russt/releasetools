@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<!--
+#
+# BEGIN_HEADER - DO NOT EDIT
+#
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)plugin.jelly - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+#
+# END_HEADER - DO NOT EDIT
+#
+-->
+
+
+<project
+    xmlns:j="jelly:core"
+    xmlns:ant="jelly:ant"
+    xmlns:maven="jelly:maven">
+
+  <goal name="jregress:run" prereqs="jar:jar"
+      description="Run the jregress tests for a specified directory">
+    
+    <maven:property var="dir" name="jregress.dir" defaultValue="${plugin.resources}/tests/regress"/>
+    <maven:property var="srcroot" name="jregress.srcroot" defaultValue="${plugin.resources}"/>
+    <maven:property var="timeout" name="jregress.timeout" defaultValue="400"/>
+      
+    <ant:java classname="com.sun.jbi.internal.tools.jregress.Tool" dir="${dir}" fork="true">
+
+      <ant:classpath>
+        <ant:pathelement location="${basedir}/target/jregress-1.0.jar"/>
+        <ant:pathelement location="${maven.repo.local}/tools/java/maven/plugins/jregress-1.0.jar"/>
+		<ant:path refid="maven.dependency.classpath"/>
+      </ant:classpath>
+
+	  <sysproperty key="com.sun.jbi.internal.tools.jregress.CMD_ANT" value="ant -f"/>
+	  <sysproperty key="com.sun.jbi.internal.tools.jregress.CMD_KSH" value="sh"/>
+	  <sysproperty key="com.sun.jbi.internal.tools.jregress.DIFF_CMD" value="java -Dcom.sun.jbi.internal.tools.jdiff.IGNORE=yes -Djbi.srcroot=${srcroot} com.sun.jbi.internal.tools.jdiff.Tool %ref% %out% IGNORE"/>
+<!--
+	  <sysproperty key="com.sun.jbi.internal.tools.jregress.LogLevel" value="SEVERE"/>
+-->
+	  <sysproperty key="com.sun.jbi.internal.tools.jregress.LogLevel" value="INFO"/>
+	  <sysproperty key="com.sun.jbi.internal.tools.jregress.SRCROOT" value="${srcroot}"/>
+	  <sysproperty key="com.sun.jbi.internal.tools.jregress.TIMEOUT_SECS" value="${timeout}"/>
+	  <sysproperty key="com.sun.jbi.internal.tools.jregress.TYPES" value="ant,ksh"/>
+    </ant:java>
+    
+  </goal>
+
+</project>

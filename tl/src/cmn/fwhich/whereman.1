@@ -1,0 +1,66 @@
+.TH whereman 1 "6 August 1996" "Forte Software"
+.SH NAME
+whereman \- find man page modules.
+.SH SYNOPSIS
+\fBwhereman\fP [\fB-h\fP] [\fB-a\fP] [\fB-p\fP] [commands...]
+.SH DESCRIPTION
+.LP
+The \fIwhereman\fP command looks for man pages
+in the directories specified in the MANPATH
+environment variable.  If MANPATH is undefined, then it looks for
+man pages in the default locations.
+.LP
+With no options, \fIwhereman\fP will find the first man page entry for each \fIcommand\fP.
+If invoked with the \fB\-a\fP option, it will find all
+man pages of each \fIcommand\fP listed.
+.LP
+The \fB\-p\fP option is the most powerful variant and can be used in combination
+with the \fB\-a\fP option to find all man page file names containga certain word or pattern.
+.SH OPTIONS
+.TP 1.25i
+.B -h
+display the help message and exit normally.
+.TP
+.B -a
+find all man pages available for each \fIcommand\fP.
+.TP
+.B -p
+search the man path taking \fIcommands\fP as \fIperl(1)\fP
+regular expressions.
+.LP
+.SH EXAMPLES
+.TP 2.5i
+whereman cat
+find the location of the "cat" man page.
+.TP
+whereman -a cat
+find all instances of the "cat" man page.
+.TP
+whereman -a -p time
+find all man pages containing the word "time".
+.TP
+whereman -a -p '^time' '^date'
+find all man pages beginning with the word "find" or "get".
+.TP
+whereman -a -p '\.pl$'
+find all man pages with the suffix ".1".
+.SH PORTABILITY
+.LP
+The
+.B whereman
+command is available in the MKS ksh environment for Microsoft Windows, and in all
+Unix environments.
+It requires perl 4.0 or later.
+.SH ENVIRONMENT
+.TP 1.25i
+$MANPATH
+Unix and MKS environment variable containing the man search path.
+.LP
+On Unix, MANPATH defaults to /usr/man.  In the MKS environment, it defaults to
+$ROOTDIR/etc.
+.SH "SEE ALSO"
+.LP
+fwhich(1), whereperl(1), perl(1)
+.SH AUTHOR
+.LP
+Russ Tremain

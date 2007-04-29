@@ -1,0 +1,5 @@
+TEMPLATE	= file.mmf
+PKG	= packages
+MODE	= 0444
+
+FILES	= readme.txt

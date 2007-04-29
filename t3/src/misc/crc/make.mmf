@@ -1,0 +1,8 @@
+TEMPLATE = file.mmf
+
+PKG  = bin
+
+BINFILES = crc
+
+CMDHELPFLAG = -c
+CMDS     = crc

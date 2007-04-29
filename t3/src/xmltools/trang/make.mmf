@@ -1,0 +1,9 @@
+TEMPLATE= file.mmf
+
+PKG	= bin
+PKG3	= java/lib
+
+POST_INSTALL3 =
+
+FILES	= trang.sh
+FILES3	= trang.jar

@@ -1,0 +1,12 @@
+TEMPLATE = file.mmf
+
+#turn of perl checking for this module, due to a problem in mime.pm.  RT 2/6/05
+PERL_CHECKER = none
+
+PKG      = bin
+PKG2     = lib
+
+FILES    = bmail.prl
+FILES2   = bmail.pl
+                    
+CMDS    = ${FILES}

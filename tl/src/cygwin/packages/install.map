@@ -1,0 +1,2 @@
+TARGET_OS = cygwin
+../../solsparc/packages/readme.txt  packages/$TARGET_OS/readme.txt   0444

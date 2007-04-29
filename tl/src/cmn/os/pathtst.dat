@@ -1,0 +1,11 @@
+mac	a
+mac	a:
+mac	a:b
+mac	a:b:
+mac	:a:b
+mac	:a:b:
+mac	a:b:c:d:e:f:g
+mac	:a:b:c:d:e:f:g
+mac	:a:b:c:d:e:f:g:
+mac	::a
+mac	a::b:c

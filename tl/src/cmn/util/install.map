@@ -1,0 +1,107 @@
+#notes:
+# 10/11/96 RT
+#   -renamed the installed version of crc to be pcrc,
+#    so as not to conflict with the system command.
+#   -took out the & sh munge for skel programs, as this
+#    addes a double startup line.
+#
+
+TARGET_OS=cmn & sh
+lddtree.prl     bin/$TARGET_OS/lddtree         0555
+fulltime.prl    bin/$TARGET_OS/fulltime        0555
+fixeol.prl      bin/$TARGET_OS/fixeol          0555
+cnvtln.prl      bin/$TARGET_OS/cnvtln          0555
+cshdrv.prl      bin/$TARGET_OS/cshdrv          0555
+#install again for sh - program sets its shell env by it's install name.  RT 8/11/99
+cshdrv.prl      bin/$TARGET_OS/shdrv           0555
+setand.prl      bin/$TARGET_OS/setand          0555
+newshell.prl    bin/$TARGET_OS/newshell        0555
+
+TARGET_OS=cmn & sh, mac & mpw
+cntnulls.prl    bin/$TARGET_OS/cntnulls        0555
+optpath.prl     bin/$TARGET_OS/optpath         0555
+showtimes.prl   bin/$TARGET_OS/showtimes       0555
+
+TARGET_OS = ntcmn & ksh
+cntnulls.prl    bin/$TARGET_OS/cntnulls.ksh     0555
+optpath.prl     bin/$TARGET_OS/optpath.ksh      0555
+setand.prl      bin/$TARGET_OS/setand.ksh       0555
+showtimes.prl   bin/$TARGET_OS/showtimes.ksh    0555
+#install again for mks ksh - program sets its shell env by it's install name.  RT 8/11/99
+cshdrv.prl      bin/$TARGET_OS/shdrv.ksh        0555
+
+TARGET_OS = cmn & skel
+shsyntax.prl    bin/$TARGET_OS/shsyntax         0555
+shsyntax.prl    bin/$TARGET_OS/url              0555
+hlp2html.prl    bin/$TARGET_OS/help2html        0555
+
+TARGET_OS = cmn
+shsyntax.pl     lib/$TARGET_OS/shsyntax.pl      0444
+hlp2html.pl     lib/$TARGET_OS/help2html.pl     0444
+
+TARGET_OS = cmn & skel, mac & skel & mpw
+localtxt.prl    bin/$TARGET_OS/localtxt         0555
+pls.prl         bin/$TARGET_OS/pls              0555
+crc.prl         bin/$TARGET_OS/pcrc             0555
+walkdir.prl     bin/$TARGET_OS/walkdir          0555
+ddiff.prl       bin/$TARGET_OS/ddiff            0555
+cpmode.prl      bin/$TARGET_OS/cpmode           0555
+cpup.prl        bin/$TARGET_OS/cpup             0555
+gencopy.prl     bin/$TARGET_OS/gencopy          0555
+bldmsg.prl      bin/$TARGET_OS/bldmsg           0555
+bldmsg.prl      bin/$TARGET_OS/filterFiles      0555
+bldwait.prl     bin/$TARGET_OS/bldwait          0555
+chckjdoc.prl    bin/$TARGET_OS/checkjdoc        0555
+shprops.prl     bin/$TARGET_OS/shprops          0555
+clendist.prl    bin/$TARGET_OS/cleandist        0555
+
+TARGET_OS = ntcmn & skel & ksh
+pls.prl         bin/$TARGET_OS/pls.ksh          0555
+localtxt.prl    bin/$TARGET_OS/localtxt.ksh     0555
+crc.prl         bin/$TARGET_OS/pcrc.ksh         0555
+walkdir.prl     bin/$TARGET_OS/walkdir.ksh      0555
+ddiff.prl       bin/$TARGET_OS/ddiff.ksh        0555
+cpmode.prl      bin/$TARGET_OS/cpmode.ksh       0555
+cpup.prl        bin/$TARGET_OS/cpup.ksh         0555
+gencopy.prl     bin/$TARGET_OS/gencopy.ksh      0555
+bldmsg.prl      bin/$TARGET_OS/bldmsg.ksh       0555
+bldmsg.prl      bin/$TARGET_OS/filterFiles.ksh  0555
+bldwait.prl     bin/$TARGET_OS/bldwait.ksh      0555
+chckjdoc.prl    bin/$TARGET_OS/checkjdoc.ksh    0555
+shprops.prl     bin/$TARGET_OS/shprops.ksh      0555
+clendist.prl    bin/$TARGET_OS/cleandist.ksh    0555
+
+TARGET_OS=cmn
+cmdhelp.txt     lib/$TARGET_OS/cmdhelp.txt      0444
+
+TARGET_OS=cmn, ntcmn, mac
+crc.pl         lib/$TARGET_OS/pcrc.pl           0444
+listutil.pl    lib/$TARGET_OS/listutil.pl       0444
+localtxt.pl    lib/$TARGET_OS/localtxt.pl       0444
+numutil.pl     lib/$TARGET_OS/numutil.pl        0444
+pls.pl         lib/$TARGET_OS/pls.pl            0444
+url.pl         lib/$TARGET_OS/url.pl            0444
+vars.pl        lib/$TARGET_OS/vars.pl           0444
+walkdir.pl     lib/$TARGET_OS/walkdir.pl        0444
+ddiff.pl       lib/$TARGET_OS/ddiff.pl          0444
+cpmode.pl      lib/$TARGET_OS/cpmode.pl         0444
+cpup.pl        lib/$TARGET_OS/cpup.pl           0444
+gencopy.pl     lib/$TARGET_OS/gencopy.pl        0444
+suffix.pl      lib/$TARGET_OS/suffix.pl         0444
+transact.pl    lib/$TARGET_OS/transact.pl       0444
+bldmsg.pl      lib/$TARGET_OS/bldmsg.pl         0444
+bldwait.pl     lib/$TARGET_OS/bldwait.pl        0444
+filtrfil.pl    lib/$TARGET_OS/filterFiles.pl    0444
+chckjdoc.pl    lib/$TARGET_OS/checkjdoc.pl      0444
+shprops.pl     lib/$TARGET_OS/shprops.pl        0444
+clendist.pl    lib/$TARGET_OS/cleandist.pl      0444
+
+TARGET_OS = cmn
+inherit.csh    bin/$TARGET_OS/inherit           0555
+runallpj.sh    bin/$TARGET_OS/runinallpj        0555
+
+TARGET_OS = cmn
+comparejars.sh   bin/$TARGET_OS/comparejars       0555
+
+TARGET_OS = ntcmn
+comparejars.sh   bin/$TARGET_OS/comparejars.ksh   0555

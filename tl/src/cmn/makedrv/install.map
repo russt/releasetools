@@ -1,0 +1,11 @@
+TARGET_OS = ntcmn & skel & ksh
+makedrv.prl 	bin/$TARGET_OS/makedrv.ksh	0555
+
+TARGET_OS = cmn & skel, ntcmn & skel & noprlheader
+makedrv.prl 	bin/$TARGET_OS/makedrv	0555
+
+TARGET_OS=cmn, ntcmn
+makedrv.pl 	lib/$TARGET_OS/makedrv.pl	0555
+
+TARGET_OS = cmn
+makedrv.1	man/man1/makedrv.1	0444

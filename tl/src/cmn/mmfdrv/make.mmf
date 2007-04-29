@@ -1,0 +1,10 @@
+TEMPLATE= file.mmf
+PKG		= bin
+PKG2	= lib
+PKG3	= man/man1
+
+FILES	= mmfdrv.prl
+FILES2	= mmfdrv.pl
+FILES3	= mmfdrv.1
+
+CMDS    = ${FILES}

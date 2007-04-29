@@ -1,0 +1,6 @@
+#C-Shell scripts:
+TARGET_OS	= cmn
+toolsbld.csh	bin/$TARGET_OS/toolsBuild	555
+
+TARGET_OS	= cmn,ntcmn
+bldcmn.sh	lib/$TARGET_OS/bldcmn.sh	444

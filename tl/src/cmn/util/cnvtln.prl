@@ -1,0 +1,75 @@
+#!/bin/perl -w
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)cnvtln.prl - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+
+$test = 0;
+
+$expr = shift @ARGV;
+
+if (!defined($expr) || $expr eq "-help" || $expr eq "-h") {
+	print "convert links\n";
+	print "usage: cnvtln [-t] <perl expression> <list of symlink files>\n";
+	print "   eg: cnvtln \"s#/forte1/d#\$SRCROOT#\" link1 link2\n";
+	print "\n";
+	print "  -t  test mode: don't actually replace the symlink\n";
+	exit;
+}
+if ($expr eq "-t" || $expr eq "-test") {
+	$test = 1;
+	$expr = shift @ARGV;
+}
+
+while ($file = shift @ARGV) {
+	if (! -l $file) {
+		print "$file is not a symlink.\n";
+		next;
+	}
+	$link = readlink($file);
+	if (!defined($link)) {
+		print "Unable to find '$file'\n";
+		next;
+	}
+	$before = $link;
+	eval "\$link =~ $expr";
+	if ($before ne $link) {
+		print "before: $before\n";
+		print " after: $link\n";
+		if (! $test) {
+			if (!unlink($file)) {
+				print "Unable to unlink $file\n";
+			}
+			symlink($link, $file);
+		}
+	}
+	if (! -e $link) {
+		print "Warning: $link does not exist.\n";
+	}
+}

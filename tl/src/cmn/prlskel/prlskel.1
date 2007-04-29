@@ -1,0 +1,105 @@
+.TH PRLSKEL 1 "16 August 1996" "Forte Software"
+.SH NAME
+prlskel \- For starting up the Forte perl library tools.
+.SH SYNOPSIS
+.B prlskel.prl
+
+.SH DESCRIPTION
+.B prlskel.prl
+is the bootstrapping front-end perl script.  It sets up some variables and
+provides a few standard functions.  It is not intended to be run as a
+separate standalone program.  prlskel gets the computer to the main
+part of host script.
+
+It is intended that prlskel.prl be installed as the script which will
+be run.  After it is run, prlskel will determine what script name it
+has and then look for a library of that name with the extension of
+".pl" (pl standing for perl library).  For example, if I were to write a perl
+library called "mmfdrv.pl", I would copy prlskel.prl to "mmfdrv".
+When mmfdrv (really just a copy of prlskel.prl) ran, it would figure
+out to load in mmfdrv.pl.  It is assumed that the file mmfdrv.pl has
+defined the perl package "mmfdrv".  After loading in mmfdrv.pl, it
+will call the main function like &mmfdrv'main(*ARGV, *ENV).  Your
+package's main is expected to return an integer representing the
+success (0) or failure (nonzero) of the programs execution.  Please do
+not call exit from anywhere but in prlskel.  If you need to exit the
+program, call &'abort("message").
+
+.SH WHAT DOES PRLSKEL DO FOR YOU
+.TP
+.BI 1
+It sets up the path related variables, like directory separators.
+These are used in the path package.
+.TP
+.BI 2
+It provides a default signal handler.  Currently, it will abort
+the program unless it's a HUP signal.
+.TP
+.BI 3
+It provides several standard functions which either should not be part
+of a library or can not be.
+.TP
+.BI 4
+A list of temporary files is kept and will be unlinked upon cleanup.
+The TempFile routine (in the os package) will provide you with a
+temporary filename and augment this temporary file list.
+.TP
+.BI 5
+Before the program exits it will call a cleanup function in the host
+package if one is defined.
+.TP
+.BI 6
+It sets up the @INC variable from the environment variable PERL_LIBPATH.
+.SH CALLABLE FUNCTIONS
+.TP
+.BI &run_pkg "($pkg_name, *ARGV, *ENV)"
+If you're going to be executing packages as programs, use run_pkg.
+This function will load in the package $pkg_name via $pkg_name.pl and 
+then call package $pkg_name's main function.  After doing that,
+run_pkg will call that package's cleanup function.  Remember that if
+package A calls package B which in turn calls package A, there might
+be some subtle bugs with global package variables if package A is not
+reentrant.
+.TP
+.BI &abort "($message[, $error number])
+If you want to leave the entire program now, call abort.  Give it a
+message for the user and an optional exit code.  Your cleanup routine
+will be called if it exists.  Please avoid using this routine, as it's
+much more polite to simply return a nonzero error code from main.
+.TP
+.BI &dump_inc
+Print out where we got included perl libraries from.  It's typically
+called when debugging is on as it can be useful to know exactly which
+source code is being run.
+.TP
+.BI &require_os
+If you want to use the os package, run this function.  Since there are
+multiple implementations of the os package, a different perl library
+is required depending on your OS.
+.SH ENVIRONMENT VARIABLES
+.TP
+.BI OS
+On Windows NT, this env var is assumed to have NT in it.
+.TP
+.BI PERL_LIBPATH
+This is a ';' separated path of where to find perl libraries. The
+library of the host package is found through this path.  Technically,
+the list of directories is added the the @INC list.
+.SH EXAMPLES
+cp `which prlskel` $DEST/bin/mmfdrv
+.LP
+cp mmfdrv.pl $DEST/lib/mmfdrv.pl
+.LP
+setenv PERL_LIBPATH "$DEST/lib;$PERL_LIBPATH"
+.LP
+set path = ($DEST/bin $path)
+.LP
+mmfdrv
+
+.SH SEE ALSO
+.B minstall
+The installation utility that is aware of prlskel (see the skel option).
+
+.SH BUGS
+If abort is called, cleanup may not be called for all included
+packages.

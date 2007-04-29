@@ -1,0 +1,14 @@
+TARGET_OS=cmn
+unix.pl lib/$TARGET_OS/unix.pl 444
+tar.pl  lib/$TARGET_OS/tar.pl  444
+
+TARGET_OS=ntcmn
+ntcmn.pl lib/$TARGET_OS/ntcmn.pl 444
+
+TARGET_OS=cmn,ntcmn,mac
+os.pl lib/$TARGET_OS/os.pl 444
+oscmn.pl lib/$TARGET_OS/oscmn.pl 444
+path.pl lib/$TARGET_OS/path.pl 444
+
+TARGET_OS=mac
+mac.pl   lib/$TARGET_OS/mac.pl 444

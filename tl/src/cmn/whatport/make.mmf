@@ -1,0 +1,7 @@
+TEMPLATE        = file.mmf
+PKG     = bin
+PKG2    = boot
+MAPOPTS2	= -map boot.map ${BASEOPT}
+
+FILES   = whatport.sh
+FILES2   = whatport.sh

@@ -1,0 +1,13 @@
+TEMPLATE	= file.mmf
+PKG	=  bin
+PKG2	=  lib
+PKG3	=  man/man1
+
+MODE	=  0555
+MODE3	=  0444
+
+FILES	= wheresrc.prl dupsrc.prl
+FILES2	= dupsrc.pl tlinf.pl wheresrc.pl
+FILES3	= wheresrc.1
+
+CMDS    = ${FILES}

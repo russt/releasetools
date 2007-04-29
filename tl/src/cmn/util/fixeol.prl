@@ -1,0 +1,187 @@
+#!/usr/bin/perl -w
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)fixeol.prl - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+# fixeol - write a EOL if a file doen't end with it.
+#
+#  24-Mar-97 (russt)
+#	Initial revision
+#
+
+&init;
+
+#################################### MAIN #####################################
+
+#set global flags:
+exit (1) if (&parse_args != 0);
+exit (0) if ($HELPFLAG);
+
+$nerrs = 0;
+for $fn (@FILES) {
+	++$nerrs unless(&fix_last_eol($fn));
+}
+
+exit 0 unless ($nerrs > 0);
+exit 1;
+
+############################## LOCALTXT ROUTINES ##############################
+
+sub fix_last_eol
+#make sure that the file has an EOL char just before EOF
+#this is to prevent RCS from getting confused.
+#return true if successful, otherwise false.
+{
+	local($infile) = @_;
+	local($nbytes, $cc) = ("","");
+
+	if (! -f $infile ) {
+		printf STDERR ("%s: '%s' not a regular file - skipping\n", $p, $infile);
+		return(0);
+	} elsif (-z _) {
+		printf STDERR ("%s: '%s' is zero size - skipping\n", $p, $infile);
+		return(0);
+	}
+
+	if (!open(INFILE, $infile)) {
+		printf STDERR ("%s: can't open '%s' for reading - skipping.\n", $p, $infile);
+		return(0);
+	}
+
+	#binmode INFILE;		#important! o'wise, perl converts to unix EOL under dos.
+
+	#seek usage:  returns TRUE if success. 0,2 <==> -1 bytes from EOF
+	if (!seek(INFILE,-1,2)) {
+		printf STDERR ("%s: can't seek EOF '%s'\n", $p, $infile);
+		return(0);
+	}
+
+	if (defined($nbytes = read(INFILE, $cc, 1))) {
+		if ($nbytes != 1) {
+			printf STDERR ("%s: can't read 1 byte from '%s'\n", $p, $infile);
+			return(0);
+		}
+	} else {
+		printf STDERR ("%s: read error: %s: %s\n", $p, $infile, $!);
+		return(0);
+	}
+	$nn = ord($cc);
+#printf("%s:	LAST BYTE IS 0x%02X\n", $infile, $nn); 
+	close (INFILE);
+
+	if ($TEST_MODE || $VERBOSE) {
+		if ($nn == $EOL) {
+			printf ("HAS EOL:	%s\n", $infile);
+		} else {
+			printf ("NO EOL:	%s\n", $infile);
+		}
+	}
+	
+	if (!$TEST_MODE && $nn != $EOL) {
+		if (!open(OUTFILE, ">>$infile")) {
+			printf STDERR ("%s: can't open '%s' for append - skipping.\n", $p, $infile);
+			return(0);
+		}
+		#Add an EOL char:
+		print OUTFILE "\n";
+
+		printf("\tAdded EOL to %s\n") if ($VERBOSE);
+	}
+
+	return(1);		#success
+}
+
+################################ USAGE SUBROUTINES ###############################
+
+sub usage
+{
+	local($status) = @_;
+
+    print STDERR <<"!";
+Usage:  $p [-h] [-t] [-v] filenames ...
+
+Synopsis:
+  Check that EOL is the last char of each file in <filenames> list.
+  If not, then add one.
+
+Options:
+  -h    display this usage message and exit.
+  -t    test mode - show the conversion, but don't do it.
+  -v    verbose output
+
+Example:  $p foo.cc
+!
+    return($status);
+}
+
+sub parse_args
+#proccess command-line aguments
+{
+	local ($flag);
+
+	$HELPFLAG = 0;
+	$VERBOSE = 0;
+	$TEST_MODE = 0;
+
+    #eat up flag args:
+    while ($#ARGV+1 > 0 && $ARGV[0] =~ /^-/) {
+		$flag = shift(@ARGV);
+
+		if ($flag eq '-v') {
+			$VERBOSE = 1;
+		} elsif ($flag eq '-t') {
+			$TEST_MODE = 1;
+		} elsif ($flag =~ '^-h') {
+			$HELPFLAG = 1;
+			return(&usage(0));
+		} else {
+			return(&usage(1));
+		}
+    }
+
+    #take remaining args as file names
+    if ($#ARGV >= 0) {
+		@FILES = @ARGV;
+    } else {
+		return(&usage(1));
+	}
+
+	return(0);
+}
+
+sub init
+#initialize standard pathname variables.
+{
+    #set up program name argument:
+    local(@tmp) = split('/', $0);
+    # figure out the program name and put it into p
+    $p = $tmp[$#tmp];
+
+	$EOL = 0x0A;
+}

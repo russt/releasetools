@@ -1,0 +1,11 @@
+TARGET_OS = solsparc
+readme.txt	packages/$TARGET_OS/README		0444
+
+TARGET_OS = macosx
+readme.txt	packages/$TARGET_OS/README		0444
+
+TARGET_OS = linux
+readme.txt	packages/$TARGET_OS/README		0444
+
+TARGET_OS = nt
+readme.txt	packages/$TARGET_OS/README		0444

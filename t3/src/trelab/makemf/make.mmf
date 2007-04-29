@@ -1,0 +1,18 @@
+TEMPLATE = file.mmf
+PKG	=  bin
+PKG3	=  man/man1
+
+MODE	=  0555
+MODE3	=  0444
+
+BINDIR =
+DISTRIBFILE = makemf.stz
+BUILD_COMMAND =
+
+# Source files that got changed locally.
+SRCFILES = makemf.c
+
+# Binary files to pick up.
+BINFILES = makemf
+
+FILES3	= makemf.1

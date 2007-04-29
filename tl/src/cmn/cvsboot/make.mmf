@@ -1,0 +1,9 @@
+TEMPLATE	= file.mmf
+
+PKG	=  boot
+
+MODE	=  0555
+
+FILES	= updatedist.sh updatedist2.sh
+		  
+CMDS    = ${FILES}

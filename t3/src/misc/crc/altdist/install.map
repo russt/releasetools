@@ -1,0 +1,2 @@
+TARGET_OS	= solsparc,solx86,macosx,nt,cygwin,linux
+../crc.c	bin/$TARGET_OS/src/crc.c	444

@@ -1,0 +1,15 @@
+TARGET_OS = test2
+test.lnk cmn/installer/test1 0444 symlink
+
+TARGET_OS = cmn
+test1 foo%20bar 444
+test1 a/te%a2st1%b0 444
+
+TARGET_OS = test
+$TARGET_OS  foo1 444
+${TARGET_OS} bar2 444
+a${HOST_NAME}b foo3 444
+
+TARGET_OS = cmn
+src/foo a  /   b  /c 444
+bar def 555

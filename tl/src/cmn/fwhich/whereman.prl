@@ -1,0 +1,394 @@
+#!/usr/bin/perl -w
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)whereman.prl - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+# whereman  - look for man pages in $MANPATH
+#
+#  07-Aug-96 (russt)
+#	Initial revision
+
+&init_pathname();	#set up path name routines for this os.
+
+
+#################################### MAIN #####################################
+
+&parse_args;
+if ($OS == $UNIX) {
+	&init_env(*MANROOTS, 'MANPATH', ':');
+} else {
+	&init_env(*MANROOTS, 'MANPATH', ';');
+}
+
+#first, expand man directories:
+@MANDIRS = ();
+for $dir (@MANROOTS) {
+	&ls(*lsout, $dir);
+
+#printf("before: dir='%s' (%s)\n", $dir, join(',', @lsout));
+
+	#find all subdirs:
+	@lsout = grep(($_ =~ /^(man|cat|MAN|CAT)(\w+)$/), @lsout);
+
+#printf("after: dir='%s' (%s)\n", $dir, join(',', @lsout));
+
+	#generate full pathnames for all sub-dirs:
+	for (@lsout) {
+		@MANDIRS = (@MANDIRS, &mkpathname($dir, $_));
+	}
+}
+
+#make sure they are all dirs:
+#@MANDIRS = grep(-d $_, @MANDIRS);
+
+for $arg (@ARGV) {
+	@whichpages = &which($arg, *MANDIRS);
+	&path_report(*whichpages);
+}
+
+exit(0);
+&squawk_off;
+
+############################### WHEREMAN ROUTINES #############################
+
+sub path_report
+{
+	local (*whereman) = @_;
+
+	for $cmd (@whereman) {
+		printf("%s\n", $cmd);
+		last unless ($PATTERN_FLAG);
+	}
+}
+
+sub which
+#look for a tool name expression in the @PATH
+{
+	local ($tool, *PATH) = @_;
+	local (@lsout, @files, @foundpaths, @new);
+
+	@foundpaths = ();
+
+	if (!$PATTERN_FLAG) {
+		#look for patterns of the form "cat.1", etc. unless
+		# already specified.
+		if ($tool =~ /\.\w+$/) {
+			$tool = '^' . $tool;
+		} else {
+			$tool = '^' . $tool . '\.';
+		} 
+	} 
+
+
+	for $path (@PATH) {
+		local ($ff);
+
+		$ff = &mkpathname($path, $tool);
+#printf("path='%s' tool='%s'\n", $path, $tool);
+		#get dir listing:
+		&ls(*lsout, $path);
+
+		#
+		#NOTE:  much faster to do the pattern match
+		#before picking out the files, since later operation
+		#stats each file.
+		#
+
+		if($PRESERVE_CASE) {
+		    @new = grep($_ =~ /$tool/o, @lsout);
+		}
+		else {
+		    @new = grep($_ =~ /$tool/oi, @lsout);
+		}
+
+		if (@new) {
+			@files = ();
+			for (@new) {
+				@files = (@files, &mkpathname($path, $_));
+			}
+
+			&pickfiles(*new, *files);
+			if (@new) {
+				@foundpaths = (@foundpaths, @new);
+			}
+		}
+	}
+
+	return(@foundpaths);
+}
+
+
+sub init_env
+{
+	local(*PATHOUT, $pathvar, $splitchar) = @_;
+
+	if ($ENV{$pathvar}) {
+		#get path environment var:
+		@PATHOUT = split($splitchar, $ENV{$pathvar});
+	} else {
+		#set up reasonable defaults:
+		if ($OS == $UNIX) {
+			@PATHOUT = ("/usr/man");
+		} elsif ($OS == $NT) {
+			#mostly this won't work because man pages are stored in
+			# $ROOTDIR/etc/man.dbz
+			if ($ENV{'ROOTDIR'}) {
+				@PATHOUT = &mkpathname($ENV{'ROOTDIR'}, "etc");
+			}
+		}
+	}
+
+    if ($#PATHOUT < 0) {
+		printf STDERR ("%s:  can't get path variable '%s'\n", $p, $pathvar);
+		exit(1);
+    }
+}
+
+################################ PATH UTILITIES ###############################
+
+sub pickfiles
+#pick the plain file entries from a directory listing.
+#<lsout> must be in CWD or contain full path refs.
+#list returned in <thefiles>.
+{
+	local (*thefiles, *lsout) = @_;
+
+	@thefiles = grep(!(-d $_), @lsout);
+}
+
+sub pwd
+#return full pathname of current working directory.
+{
+	local ($tmp);
+	if ($OS == $UNIX) {
+		$tmp = (`pwd`);
+		chop $tmp;
+		return($tmp);
+	}
+	if ($OS == $MACINTOSH) {
+		$tmp = (`Directory`);
+		chop $tmp;
+		$tmp =~ s/:$//;		#make sure no trailing :
+		return($tmp);
+	}
+
+	return("NULL");		#not handled
+}
+
+sub ls
+#<lsout> <-- `ls <dir>`
+{
+	local (*lsout, $dir) = @_;
+
+	if (!opendir(DIR, $dir)) {
+		@lsout = ();
+		return;
+	}
+
+	#skip drivers on mac, '.' & '..' on unix
+	if ($OS == $MACINTOSH) {
+		@lsout = readdir(DIR);
+	} else {
+		@lsout = grep(!/^\.\.?$/,readdir(DIR));
+	}
+
+	closedir(DIR);
+}
+
+sub path_separator
+#what is the separator char used by this filesystem, and how is
+#the current directory indicated?
+#Returns 9-tuple:
+# (current_dir_symbol,
+#	volume_separator,
+#	input_path_separator,
+#	output_path_separator,
+#	up_directory,
+#	command_PATH_env_var_separator,
+#	command_LIBPATH_env_var_separator,
+#	PATH_ENV_VAR_NAME
+# )
+{
+	$UNIX = 1; $MACINTOSH=2; $NT=3; $VMS = 4; $DOS = 5; $VMS=$VMS;
+	my @unix_setup = ('.', '/', '/', '/', '..', ':', ';', 'PATH');
+
+	if (defined($^O) &&  $^O =~ /cygwin/i) {
+		$OS = $UNIX;
+		return @unix_setup;
+	}
+
+	$OSENV = $ENV{'OS'};
+	if ((defined($OSENV) &&  $OSENV eq 'Windows_NT') || $0 =~ /\.ksh$/) {
+		$OS = $NT;
+		if (defined($ENV{"PATH"})) {
+			$PATHVAR = "PATH";
+		} else {
+			$PATHVAR = "Path";
+		}
+		return('.', ':', '[\\\/]', '/', '..', ';', ';', $PATHVAR);
+	}
+
+	$OSENV = $ENV{'COMSPEC'};
+	if (defined($OSENV) || $0 =~ /\.bat$/) {
+		$OS = $DOS;
+		return('.', ':', '[\\\/]', '/', '..', ';', ';', 'PATH');
+	}
+
+    for (@INC) {
+		if (/:/) {	#mac
+			$OS = $MACINTOSH;
+			return (':', ':', ':', ':', '::', ',', ';', 'Commands');
+		}
+    }
+
+	#default is unix:
+	$OS = $UNIX;
+	return @unix_setup;
+}
+
+sub init_pathname
+#initialize standard pathname variables.
+{
+    ($DOT, $VOLSEP, $PS_IN, $PS_OUT, $UPDIR, $CPS, $LIBPS, $PATHVAR) = &path_separator;
+
+    #set up program name argument:
+    local(@tmp) = split($PS_IN, $0);
+    # figure out the program name and put it into p
+    $p = $tmp[$#tmp];
+	$p =~ s/\.ksh$// if ($OS == $NT);
+}
+
+sub mkpathname
+#convert a list of pathname components to a local path name.
+{
+	local (@plist) = @_;
+
+	#strip trailing input path-separators:
+	for ($ii=0; $ii<=$#plist; $ii++) {
+		$plist[$ii] =~ s/${PS_IN}$//;
+	}
+	
+	return(join($PS_OUT, @plist));
+}
+
+################################ USAGE SUBROUTINES ###############################
+
+sub usage
+{
+	local($status) = @_;
+
+    print STDOUT <<"!";
+Usage:  $p [-p] [-P] command ...
+
+Options:
+ -p    take <command> as pattern and show all man pages that match.
+ -P    take <command> as pattern and show all man pages that match, preserve case.
+
+Environment:
+ \$MANPATH	specifies locations of man pages.
+
+Example:
+ $p dumpvar.pl
+!
+    exit($status);
+}
+
+sub parse_args
+#proccess command-line aguments
+{
+	$PATTERN_FLAG = 0;
+	$PRESERVE_CASE= 0;
+
+	local ($flag);
+
+    #eat up flag args:
+    while ($#ARGV+1 > 0 && $ARGV[0] =~ /^-/) {
+		$flag = shift(@ARGV);
+
+		if ($flag eq '-P') {
+			$PATTERN_FLAG = 1;
+			$PRESERVE_CASE= 1;
+		} elsif ($flag eq '-p') {
+			$PATTERN_FLAG = 1;
+		} elsif ($flag =~ '^-h') {
+			&usage(0);
+		} else {
+			&usage(1);
+		}
+    }
+
+    #take remaining args as command names:
+    if ($#ARGV < 0) {
+		&usage(1);
+	}
+}
+
+sub squawk_off
+#shut up extraneous warnings from perl -w option:
+{
+    if (1 > 2) {
+		*pickfiles = *pickfiles;
+		*pwd = *pwd;
+		*FsType = *FsType;
+		*LoginName = *LoginName;
+		*NodeName = *NodeName;
+		*RegUnloadKey = *RegUnloadKey;
+		*RegSetValueEx = *RegSetValueEx;
+		*RegSetValue = *RegSetValue;
+		*RegSetKeySecurity = *RegSetKeySecurity;
+		*RegSaveKey = *RegSaveKey;
+		*RegRestoreKey = *RegRestoreKey;
+		*RegReplaceKey = *RegReplaceKey;
+		*RegQueryValueEx = *RegQueryValueEx;
+		*RegQueryValue = *RegQueryValue;
+		*RegQueryInfoKey = *RegQueryInfoKey;
+		*RegOpenKeyEx = *RegOpenKeyEx;
+		*RegOpenKey = *RegOpenKey;
+		*RegNotifyChangeKeyValue = *RegNotifyChangeKeyValue;
+		*RegLoadKey = *RegLoadKey;
+		*RegGetKeySecurity = *RegGetKeySecurity;
+		*RegFlushKey = *RegFlushKey;
+		*RegEnumValue = *RegEnumValue;
+		*RegEnumKeyEx = *RegEnumKeyEx;
+		*RegEnumKey = *RegEnumKey;
+		*RegDeleteValue = *RegDeleteValue;
+		*RegDeleteKey = *RegDeleteKey;
+		*RegCreateKeyEx = *RegCreateKeyEx;
+		*RegCreateKey = *RegCreateKey;
+		*RegConnectRegistry = *RegConnectRegistry;
+		*RegCloseKey = *RegCloseKey;
+		*Spawn = *Spawn;
+		*UPDIR = *UPDIR;
+		*VOLSEP = *VOLSEP;
+		*CPS = *CPS;
+		*DOT = *DOT;
+		*PATHVAR = *PATHVAR;
+		*LIBPS = *LIBPS;
+    }
+}

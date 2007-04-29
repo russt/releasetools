@@ -1,0 +1,5 @@
+TARGET_OS = cmn, ntcmn
+ant.sh   bin/$TARGET_OS/ant          0555
+
+TARGET_OS = ntcmn
+ant.sh   bin/$TARGET_OS/ant.ksh      0555

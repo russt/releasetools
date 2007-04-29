@@ -1,0 +1,2 @@
+TARGET_OS = cmn
+makemf.1	man/man1/makemf.1	0444

@@ -1,0 +1,175 @@
+#!/bin/perl -w
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)lddtree.prl - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+#lddtree - display the library tree an executable is dependent on.
+#
+#  12-Dec-96 (russt)
+#	Initial revision
+#
+
+
+#################################### MAIN #####################################
+
+&init_globals();
+
+&parse_args;
+
+&build_tree($AOUT,0);
+
+if ($UNIQUE) {
+	for (sort keys %LDDUNIQUE) {
+		printf("%s\n", $_);
+	}
+}
+
+for $lib (sort keys %NOTFOUND) {
+	printf("'%s' not in current \$LD_LIBRARY_PATH\n", $lib);
+}
+
+exit(0);
+&squawk_off;
+
+################################ LDDTREE ROUTINES ##############################
+
+sub build_tree
+{
+	local ($exe, $level) = @_;
+	local (@kids) = ();
+	local (@rec) = ();
+	local (@rec) = ();
+	local ($theNode) = "NULL";
+
+	printf("%s%s\n", $INDENTSTR x $level, $exe) if ($VERBOSE);
+	$LDDUNIQUE{$exe}++ if ($level > 0);
+
+	local (@ldd) = `ldd $exe`;
+
+	if ($? != 0) {
+		printf STDERR ("%s:  ldd command failed for '%s', error %s\n", $p, $exe, $?); 
+		return;
+	}
+
+	for (grep(/not found/, @ldd)) {
+		@rec = split(/\s+/, $_, 12);
+		$theNode = $rec[1];
+#printf STDERR ("#rec=%d rec=(%s) theNode='%s'\n", $#rec, join(',', @rec), $theNode);
+		++$NOTFOUND{$theNode};
+	}
+	@ldd = grep($_ !~ /not found/, @ldd);
+
+	return if ($#ldd < 0 || $level >= $MAXDEPTH);		#HALT
+
+	for (@ldd) {
+		chop;
+		@rec = split(/\s+/, $_);
+		$theNode = $rec[$#rec];
+		@kids = (@kids, $theNode);
+	}
+#printf STDERR ("exe='%s', kids=(%s)\n", $exe, join(',', @kids));
+
+	for (@kids) {
+		&build_tree($_, $level+1);
+	}
+}
+
+################################ USAGE SUBROUTINES ###############################
+
+sub usage
+{
+	local($status) = @_;
+
+    print STDERR <<"!";
+Usage:  $p [-h] [-v] [-u] executable
+
+ -h     display usage message.
+ -u     display sorted unique list of library dependencies.
+ -v     display dependency tree.
+
+Example:  $p /bin/vi
+
+!
+    exit($status);
+}
+
+sub parse_args
+#proccess command-line aguments
+{
+	local ($flag);
+
+	$VERBOSE = 0;
+	$UNIQUE = 0;
+
+    #eat up flag args:
+    while ($#ARGV+1 > 0 && $ARGV[0] =~ /^-/) {
+		$flag = shift(@ARGV);
+
+		if ($flag =~ '^-h') {
+			&usage(0);
+		} elsif ($flag eq '-v') {
+			$VERBOSE = 1;
+			$UNIQUE = 1;
+		} elsif ($flag eq '-u') {
+			$UNIQUE = 1;
+		} else {
+			&usage(1);
+		}
+    }
+
+	if (($VERBOSE + $UNIQUE) == 0) {
+		$VERBOSE = 1;
+	}
+
+    #take remaining args as command names:
+    if ($#ARGV == 0) {
+		$AOUT = $ARGV[0];
+    } else {
+		&usage(1);
+	}
+}
+
+sub squawk_off
+#shut up extraneous warnings from perl -w option:
+{
+    if (1 > 2) {
+    }
+}
+
+sub init_globals
+#initialize globals
+{
+    #set up program name argument:
+    local(@tmp) = split('/', $0);
+    # figure out the program name and put it into p
+    $p = $tmp[$#tmp];
+
+	$MAXDEPTH = 10;
+	$INDENTSTR = '. ';
+}

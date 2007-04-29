@@ -1,0 +1,349 @@
+#!/bin/perl -w
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)cshdrv.prl - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+#
+
+$status = &main();
+exit $status;
+
+sub main
+{
+	&init;
+
+	#set global flags:
+	return (1) if (&parse_args(*ARGV, *ENV) != 0);
+	return (0) if ($HELPFLAG);
+
+	return &RunIt;
+
+	&squawk_off;	#never called - shut up extraneous warnings
+}
+
+sub usage
+{
+	local($status) = @_;
+
+    print STDERR <<"!";
+Usage:  $p [-help] [-debug] [-test]
+        [-i<script>] [-o<outfile>] [ -s<s_expr>[,<s_expr>...] ]
+Synopsis:
+ Regress test-driver for csh/tsh test scripts.
+ Default is to read stdin and write output to stdout.
+
+Options:
+ -help      display this usage message.
+ -test      run in test mode - don't execute commands
+ -debug     run in debug mode.
+ -i<script> take <script> as the test script to run.       
+            defaults to STDIN.
+ -o<out>    put output in file <out>
+            defaults to STDOUT.
+ -s<elist>  perform <elist> substitutions on output file
+            after running script.  <elist> is a comma
+            separated list of perl substitution commands.
+
+Example:
+ $p -imyscript.scr -omyscript.out -s=\$ENV{'TOOLROOT'}=TOOLROOT=g,-s=\$ENV{'USER'}=user=g
+
+ $p
+echo this is a test script
+^D
+
+!
+    return($status);
+}
+
+sub parse_args
+#return 0 if okay.
+{
+	my($flag);
+	$HELPFLAG = 0;
+	
+    #eat up flag args:
+    while ($#ARGV+1 > 0 && $ARGV[0] =~ /^-/) {
+		$flag = shift(@ARGV);
+
+		if ($flag =~ /^-i/) {
+			$cmdScript = $flag;
+			$cmdScript =~ s/^-i//;
+		} elsif ($flag =~ /^-o/) {
+			$outputFile = $flag;
+			$outputFile =~ s/^-o//;
+		} elsif ($flag =~ /^-s/) {
+			$flag =~ s/^-//;
+			push(@modifyOutput, $flag);
+#print "Modify by: $flag\n";
+			$doModifyOutput = 1;
+		} elsif ($flag eq "-debug") {
+			$DEBUG = 1;
+		} elsif ($flag eq "-test") {
+			$TEST = 1;
+		} elsif ($flag =~ '^-h') {
+			$HELPFLAG = 1;
+			return &usage(0);
+		} else {
+			printf STDERR "%s:  unknown argument: '%s'\n", $p, $flag;
+			return(&usage(1));
+		}
+	}
+
+	if ($#ARGV+1  > 0 && $ARGV[0] ne "") {
+		printf STDERR "%s:  unknown argument(s): '%s'\n", $p, join("' '", @ARGV);
+		return(&usage(1));
+	}
+
+	return 0;
+}
+
+sub RunIt
+{
+	local($cmd) = "$SHELL ";
+	local($myCshScript) = "";
+	
+	if ($cmdScript ne "-") {
+		$myCshScript = "/tmp/cshdrv.$$";
+		&ConvertCshScript($cmdScript, $myCshScript);
+		system("cat $myCshScript") if ($DEBUG);
+		$cmd .= $myCshScript . "</dev/null ";
+	}
+	if ($doModifyOutput) {
+		if ($outputFile ne "-") {
+			$cmd .= "> $outputFile.$$ ";
+		} else {
+			$cmd .= "> /tmp/cshdrv_out.$$ ";
+		}
+	} else {
+		if ($outputFile ne "-") {
+			$cmd .= "> " . $outputFile . " ";
+		}
+	}
+	local($result) = 0;
+	print "Before running $cmd\n\n" if ($DEBUG);
+	$result = system($cmd) unless $TEST;
+	if ($cmdScript ne "-") {
+		unlink $myCshScript;
+	}
+	if ($doModifyOutput) {
+		if ($outputFile ne "-") {
+			&ModifyFile("$outputFile.$$", $outputFile);
+			unlink "$outputFile.$$";
+		} else {
+			&ModifyFile("/tmp/cshdrv_out.$$", "-");
+			unlink "/tmp/cshdrv_out.$$";
+		}
+	}
+	return $result;
+}
+
+sub ModifyFile
+{
+	my($inFile, $outFile) = @_;
+	my($line, $expr, $expr2);
+
+	if (!open(IN, $inFile)) {
+		print STDERR "BUILD_ERROR: Failed to open $inFile for read: $!\n";
+		return 1;
+	}
+	if (!open(OUT, ">$outFile")) {
+		print STDERR "BUILD_ERROR: Failed to open $outFile for write: $!\n";
+		return 1;
+	}
+
+	while (defined($line = <IN>)) {
+		foreach $expr (@modifyOutput) {
+			$expr2 = "\$line =~ $expr";
+			eval $expr2;
+			print "expr2 = '$expr2' line = $line\n" if ($DEBUG);
+		}
+		print OUT $line;
+	}
+	
+	close(OUT);
+	close(IN);
+	return 0;
+}
+
+sub ConvertCshScript
+{
+	local($infile, $outfile) = @_;
+	local($line, $echoLine, $lineNumber);
+
+	open(IN, $infile) || die "ERROR: Unable to open $infile for read: $!\n";
+	open(OUT, ">$outfile") || die "ERROR: Unable to open $outfile for write : $!\n";
+	$lineNumber = 0;
+	while (defined($line = <IN>)) {
+		++$lineNumber;
+		chop($line);
+		$echoLine = $line;
+		$echoLine =~ s/\!/\\!/g;
+		$echoLine =~ s/\'/*/g;
+		if ($line ne "") {
+			printf OUT ("echo '(%d) CMD: %s'\n", $lineNumber, $echoLine);
+			print OUT "echo ''\n";
+		}
+		print OUT "$line\n";
+	}
+	close OUT;
+	close IN;
+}
+
+################################ PATH UTILITIES ###############################
+
+sub path_separator
+#what is the separator char used by this filesystem, and how is
+#the current directory indicated?
+#Returns 9-tuple:
+# (current_dir_symbol,
+#	volume_separator,
+#	input_path_separator,
+#	output_path_separator,
+#	up_directory,
+#	command_PATH_env_var_separator,
+#	command_LIBPATH_env_var_separator,
+#	PATH_ENV_VAR_NAME
+# )
+{
+	$UNIX = 1; $MACINTOSH=2; $NT=3; $VMS = 4; $DOS = 5; $VMS=$VMS;
+	my @unix_setup = ('.', '/', '/', '/', '..', ':', ';', 'PATH');
+
+	if (defined($^O) &&  $^O =~ /cygwin/i) {
+		$OS = $UNIX;
+		return @unix_setup;
+	}
+
+	$OSENV = $ENV{'OS'};
+	if ((defined($OSENV) &&  $OSENV eq 'Windows_NT') || $0 =~ /\.ksh$/) {
+		$OS = $NT;
+		if (defined($ENV{"PATH"})) {
+			$PATHVAR = "PATH";
+		} else {
+			$PATHVAR = "Path";
+		}
+		return('.', ':', '[\\\/]', '/', '..', ';', ';', $PATHVAR);
+	}
+
+	$OSENV = $ENV{'COMSPEC'};
+	if (defined($OSENV) || $0 =~ /\.bat$/) {
+		$OS = $DOS;
+		return('.', ':', '[\\\/]', '/', '..', ';', ';', 'PATH');
+	}
+
+    for (@INC) {
+		if (/:/) {	#mac
+			$OS = $MACINTOSH;
+			return (':', ':', ':', ':', '::', ',', ';', 'Commands');
+		}
+    }
+
+	#default is unix:
+	$OS = $UNIX;
+	return @unix_setup;
+}
+
+sub init_pathname
+#initialize standard pathname variables.
+{
+    ($DOT, $VOLSEP, $PS_IN, $PS_OUT, $UPDIR, $CPS, $LIBPS, $PATHVAR) = &path_separator;
+
+    #set up program name argument:
+    # figure out the program name and put it into p
+	my($head, $tail);
+	($head, $tail) = ($0 =~ /^(.*)$PS_IN(.*)$/);
+	if (!defined($head) || !defined($tail)) {
+		$head = $DOT;
+		$tail = $0;
+	}
+	$p = $tail;
+	if ($OS == $NT || $OS == $DOS) {
+		# We want to get the right case for the filename, so we search in
+		# the directory case insensitively.  This is so that users can
+		# command xyzzy, when the command is really xYzZy; perl does care
+		# when you load the package in and try to run main from the
+		# wrong case package name.
+		my(@dirFiles, @candidates);
+		if (opendir(DIR, $head)) {
+			@dirFiles = readdir(DIR);
+			closedir(DIR);
+			my($searchFor) = quotemeta($tail);
+			@candidates = grep(/^$searchFor$/i, @dirFiles);
+			if ($#candidates+1 > 0) {
+				$p = $candidates[0];
+				#print "Switched p to $p (from $tail): " . join(" ", @candidates) . "\n";
+			}
+		}
+		$p =~ s/\.ksh$//;
+		$p =~ s/\.bat$//;
+	}
+}
+
+sub init_shell_name
+{
+	if ($p =~ /csh/) {
+		$SHELL = "csh -f";
+	} else {
+		$SHELL = "sh -c";
+	}
+}
+
+sub init
+{
+	&init_pathname;
+
+	#figure out the shell we want to run from the name we are called with:
+	$SHELL = &init_shell_name();
+
+	$DEBUG = 0;
+	$TEST = 0;
+	$cmdScript = "-";
+	$outputFile = "-";
+	# list of things to do to modify the output
+	@modifyOutput = ();
+	$doModifyOutput = 0;
+
+	$ENV{"ORIG_SRCROOT"} = $ENV{"SRCROOT"};
+	delete $ENV{"SRCROOT"};
+}
+
+sub squawk_off
+#shut up extraneous warnings from perl -w option:
+{
+    if (1 > 2) {
+		*CPS = *CPS;
+		*PS_OUT = *PS_OUT;
+		*DOT = *DOT;
+		*LIBPS = *LIBPS;
+		*MAC = *MAC;
+		*VMS = *VMS;
+		*PATHVAR = *PATHVAR;
+		*UPDIR = *UPDIR;
+		*VOLSEP = *VOLSEP;
+    }
+}

@@ -1,0 +1,2 @@
+TARGET_OS=cmn,ntcmn
+txtm.pl lib/$TARGET_OS/txtm.pl 444

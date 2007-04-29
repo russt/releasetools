@@ -1,0 +1,99 @@
+.TH MAKEMF 1 "22 February 1989"
+.SH NAME
+makemf \- generate a makefile from a template
+.SH SYNOPSIS
+\fBmakemf\fP [\fB-u\fP] [\fB-t prefix\fP] [\fB-o outfile\fP] [\fB-f def_file\fP] [defs...]
+.SH DESCRIPTION
+.LP
+The \fImakemf\fP utility is for generating makefiles from a template.
+\fIMakemf\fP accepts specifications of the form:
+.sp
+\fIvar = text\fP
+.br
+\fIvar = text\fP
+.br
+\|.\|.\|.
+.LP
+The syntax is the same as \fImake\fP variable definitions.
+As with \fImake\fP, a single definition may extend over
+many lines by escaping the end of each extension line
+with a back-slash (`\\').
+.LP
+\fIMake\fP style comments are allowed.
+.LP
+Definitions are collected from the command line and from
+\fIdef_file\fP, if named.
+If \fIdef_file\fP is not specified, \fImakemf\fP will attempt
+to read definitions from the file \fI.makemf\fP.
+.LP
+After collecting variable definitions, \fImakemf\fP attempts
+to locate a makefile template.
+The default template directory is \fI/usr/local/lib/makemf\fP.  The
+default template file is \fIbin.Makefile\fP.
+The default template prefix (\fIbin\fP) may be overridden
+on the command line using the \fB-t\fP option.
+The default template directory
+may be overridden by specifying an alternate value for the builtin variable,
+\fBMAKEMF_LIB\fP.  This can be done on the command line, in the program file, or
+in the shell environment.
+.LP
+Once a template makefile is successfully opened, \fImakemf\fP performs the
+substitutions specified by the \fImakemf\fP definitions on any like-named
+variables in the makefile template.  The result is written
+to standard out, or to \fIoutfile\fP, if specified.
+.SH OPTIONS
+.TP 1.25i
+\fB\-u\fP
+Print the usage message and exit normally.
+.TP
+\fB\-t prefix\fP
+change the name of the default template from \fIbin\fP.Makefile to
+\fIprefix\fP.Makefile
+.TP
+\fB\-o outfile\fP
+place the output in the named file
+.TP
+\fB\-f def_file\fP
+read \fImakemf\fP definitions from the named file
+.PD
+.SH ENVIRONMENT
+.TP 1.25i
+MAKEMF_LIB
+environment variable naming default template directory
+.PD
+.SH FILES
+.PD 0
+.TP 2.25i
+/usr/local/lib/makemf
+default template directory
+.TP
+\|.makemf
+default definition file
+.TP
+bin.Makefile
+default template file
+.PD
+.SH "DIAGNOSTICS"
+.LP
+There are two parse phases: parsing of the \fImakemf\fP definitions, and parsing
+of the makefile template.  Syntax errors encountered during either of these
+phases evoke an error message of the form:
+.nf
+
+Line #6:
+bad definition
+              ^
+syntax error
+.fi
+.LP
+Note that definitions entered on the command line are collected in a
+temporary file, one definition per line.  You must therefore subtract
+the number of command line definitions from the line number displayed
+in the syntax error message to
+arrive at a correct line number in \fIdef_file\fP.
+.SH "SEE ALSO"
+make(1), gendepend(1), cpp(1)
+.SH BUGS
+.LP
+There should be an way to preserve comments added
+by hand in a previously generated makefile.

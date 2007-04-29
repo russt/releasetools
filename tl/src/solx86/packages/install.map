@@ -1,0 +1,2 @@
+TARGET_OS = solx86
+../../solsparc/packages/readme.txt  packages/$TARGET_OS/readme.txt   0444

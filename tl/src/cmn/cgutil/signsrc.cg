@@ -1,0 +1,387 @@
+if [ $# -eq 0 ]; then exec codegen -u -x -S $0; exit $? ; else exec codegen -u -x -S $0 "$@"; exit $? ; fi
+#!/bin/codegen
+
+Usage := << EOF
+{
+    UsageStr = << EOFSTR
+Usage:  $p [-help] [-verbose] file_names directory_names 
+
+This utility signs source files with the CDDL license header.
+
+Options:
+ -help           Display this message.
+ -verbose        Show statistics
+
+Example:
+ $p ./file1.java dir_1 dir_2 ./file2.xml
+EOFSTR
+
+    %echo $UsageStr
+}
+EOF
+
+parse_options := << EOF
+#parse options
+{
+    badOptions=0
+    parsedOption=0
+    CG_MATCH_SPEC = /^-/
+
+    %ifnot $theArg:match %return
+
+    #we have an option:
+    parsedOption=1
+
+    CG_MATCH_SPEC = /^-h/
+    %if $theArg:match DO_HELP = 1
+    %if $theArg:match %return
+
+    CG_MATCH_SPEC = /^-v/
+    %if $theArg:match VERBOSE = 1
+    %if $theArg:match %return
+
+    badOptions=1
+    %eecho ${p}: bad option, $theArg
+}
+EOF
+
+process_one_arg := << EOF
+#if simple file, then add to stack
+#if directory, then get list of files in dir and add to stack
+#skip non-existent files.
+{
+    theArg = $arg
+    %shift arg CG_ARGV
+
+#%eecho process_one_arg T0 arg='$arg' theArg='$theArg'
+
+    %call parse_options
+    %if $parsedOption %return
+
+    #is it a directory?
+    %if $theArg:d %call push_dir_list
+    %if $theArg:d %return
+
+    #is it a plain file?
+    %if $theArg:f %call push_file_name
+    %if $theArg:f %return
+
+    #otherwise, the arg is unrecognized - display error:
+    %eecho ${p}: bad arg, $theArg - IGNORED
+}
+EOF
+
+push_file_name := << EOF
+{
+    theArg2 = ./$theArg
+    %push FILESTACK $theArg2
+    %void $FILE_CNT:incr:assign
+}
+EOF
+
+push_dir_list := << EOF
+{
+    #use walkdir to get file-list:
+    CG_SHELL_COMMAND_ARGS = -ftxt $theArg
+    %void $theDirList:walkdir:assign
+
+#%echo BEFORE SUBSTITUTION:  theDirList=$theDirList
+    #$; is used to delimit stack elements:
+    CG_SUBSTITUTE_SPEC := s/\n/$;/g
+    %void $theDirList:substitute:assign
+
+#%echo AFTER SUBSTITUTION:  theDirList=$theDirList
+
+    %push FILESTACK $theDirList
+
+    %void $DIR_CNT:incr:assign
+}
+EOF
+
+dump_stats := << EOF
+{
+    %echo Processed $FILE_CNT file arguments
+    %echo Processed $DIR_CNT directory arguments
+    %echo Processed Found $UNREADABLE_FILE_CNT unreadable files
+    %echo Processed a total of $TOTAL_FILE_CNT files
+}
+EOF
+
+reset_stats := << EOF
+{
+    FILE_CNT = 0
+    DIR_CNT = 0
+    UNREADABLE_FILE_CNT = 0
+    TOTAL_FILE_CNT = 0
+}
+EOF
+
+process_one_file := << EOF
+{
+    theTextFile = $aTextFile
+    infile = $aTextFile
+    %shift aTextFile FILESTACK
+
+
+    %void $TOTAL_FILE_CNT:incr:assign
+
+    %ifnot $theTextFile:r %void UNREADABLE_FILE_CNT:incr:assign
+    %ifnot $theTextFile:r EXIT_STATUS = 1
+    %ifnot $theTextFile:r %return ${p}:  ${theTextFile} is not readable - SKIPPED.
+
+    %readtemplate ECHO_TXT $theTextFile
+
+    CG_COMPARE_SPEC = $ECHO_TXT
+
+    #SIGNSRC
+    %call process_source_file
+}
+EOF
+
+################################ HEADER TEMPLATE ###############################
+
+HEADER_TEMPLATE := << EOF
+{=$COMMENT_BEG:newline=}
+{=$COMMENT_MID=} BEGIN_HEADER - DO NOT EDIT
+{=$COMMENT_MID:newline=}
+{=$COMMENT_MID=} The contents of this file are subject to the terms
+{=$COMMENT_MID=} of the Common Development and Distribution License
+{=$COMMENT_MID=} (the "License").  You may not use this file except
+{=$COMMENT_MID=} in compliance with the License.
+{=$COMMENT_MID:newline=}
+{=$COMMENT_MID=} You can obtain a copy of the license at
+{=$COMMENT_MID=} {=LICENCE_URL=}.
+{=$COMMENT_MID=} See the License for the specific language governing
+{=$COMMENT_MID=} permissions and limitations under the License.
+{=$COMMENT_MID:newline=}
+{=$COMMENT_MID=} When distributing Covered Code, include this CDDL
+{=$COMMENT_MID=} HEADER in each file and include the License file at
+{=$COMMENT_MID=} {=LICENCE_URL=}.
+{=$COMMENT_MID=} If applicable add the following below this CDDL HEADER,
+{=$COMMENT_MID=} with the fields enclosed by brackets "[]" replaced with
+{=$COMMENT_MID=} your own identifying information: Portions Copyright
+{=$COMMENT_MID=} [year] [name of copyright owner]
+{=$COMMENT_END:newline=}
+
+{=$COMMENT_BEG:newline=}
+{=$COMMENT_MID=} @(#){=SOURCE_FILENAME=}
+{=$COMMENT_MID=} Copyright {=COPYRIGHT_YEARS=} {=COPYRIGHT_HOLDER=}. All Rights Reserved.
+{=$COMMENT_MID:newline=}
+{=$COMMENT_MID=} END_HEADER - DO NOT EDIT
+{=$COMMENT_END:newline=}
+EOF
+
+################################ PRODUCT TOOLS SIGNAGE LIST ###############################
+
+set_template_vars := << EOF
+{
+    #set default dates:
+    INCEPTION_YEAR=2004
+
+    CG_SHELL_COMMAND_ARGS = '+%Y'
+    CURRENT_YEAR=
+    CURRENT_YEAR=$CURRENT_YEAR:date
+
+    CG_SHELL_COMMAND_ARGS = '+%m/%d/%Y'
+    TODAY=
+    TODAY=$TODAY:date
+
+    #set template variables:
+    %ifndef LICENCE_URL           LICENCE_URL =         https://open-esb.dev.java.net/public/CDDLv1.0.html
+    %ifndef COPYRIGHT_YEARS       COPYRIGHT_YEARS =     $INCEPTION_YEAR-$CURRENT_YEAR
+    %ifndef COPYRIGHT_HOLDER      COPYRIGHT_HOLDER =    Sun Microsystems, Inc
+
+    #%undef CG_SHELL_COMMAND_ARGS
+}
+EOF
+
+############################# LANGUAGE PROCESSORS ##############################
+
+emit_default := << EOF
+#default processor for file types that we don't know or care about -
+#we just copy input to output.
+{
+    %eecho Ignoring $SOURCE_TYPE file $SOURCE_FILENAME
+}
+EOF
+
+emit_text := << EOF
+#process a generic text file
+{
+    %if $VERBOSE %eecho Processing $SOURCE_TYPE file $SOURCE_FILENAME
+    s=
+    s=$s:space
+    COMMENT_BEG = #
+    COMMENT_MID = #
+    COMMENT_END = #
+
+    #run the header text:
+    %evalmacro HEADER_NOTICE HEADER_TEMPLATE
+
+    #read the txt file into a string:
+    %readtemplate tmpA $SOURCE_FULLNAME
+
+    #this replaces current header with the macro {=HEADER_NOTICE=}
+    tmpB = $tmpA:striptextheader
+
+    #now insert our new header notice:
+    %evalmacro ECHO_TXT tmpB
+
+    echo $SOURCE_FULLNAME
+}
+EOF
+
+emit_xml := << EOF
+#process a xml file
+{
+    %if $VERBOSE %eecho Processing $SOURCE_TYPE file $SOURCE_FILENAME
+    s=
+    s=$s:space
+    COMMENT_BEG = <!--
+    COMMENT_MID = $s#
+    COMMENT_END = -->
+
+    #run the header text:
+    %evalmacro HEADER_NOTICE HEADER_TEMPLATE
+
+    #read the java file into a string:
+    %readtemplate tmpA $SOURCE_FULLNAME
+
+    #this replaces current header with the macro {=HEADER_NOTICE=}
+    tmpB = $tmpA:stripxmlheader
+
+    #now insert our new header notice:
+    %evalmacro ECHO_TXT tmpB
+
+    echo        $SOURCE_FULLNAME
+}
+EOF
+
+emit_java := << EOF
+#process a java file
+{
+    %if $VERBOSE %eecho Processing $SOURCE_TYPE file $SOURCE_FILENAME
+    s=
+    s=$s:space
+    COMMENT_BEG =  /*
+    COMMENT_MID = $s*
+    COMMENT_END = $s*/
+
+    #run the header text:
+    %evalmacro HEADER_NOTICE HEADER_TEMPLATE
+
+    #read the java file into a string:
+    %readtemplate tmpA $SOURCE_FULLNAME
+
+    #this replaces current header with the macro {=HEADER_NOTICE=}
+    tmpB = $tmpA:stripjavaheader
+
+    #now insert our new header notice:
+    %evalmacro ECHO_TXT tmpB
+
+    echo        $SOURCE_FULLNAME
+}
+EOF
+
+process_source_file := << EOF
+# process a single source file
+{
+    SOURCE_FULLNAME = $infile
+
+    SOURCE_FILENAME = $SOURCE_FULLNAME:basename
+    SOURCE_TYPE = $SOURCE_FILENAME:suffix
+
+    %ifdef DEBUG %eecho process_source_file: SOURCE_TYPE=$SOURCE_TYPE SOURCE_FILENAME=$SOURCE_FILENAME
+
+    processor = emit_$SOURCE_TYPE
+
+    %ifdef DEBUG %eecho T1 processor is $processor
+
+    #######
+    # found a processor matching suffix - call and return:
+    #######
+    %ifdef $processor %call $processor
+    %ifdef $processor %return
+  
+    %undef processor
+    CG_COMPARE_SPEC = xml
+    %if $SOURCE_TYPE:eq processor=emit_xml
+    CG_COMPARE_SPEC = html
+    %if $SOURCE_TYPE:eq processor=emit_xml
+    CG_COMPARE_SPEC = bpel
+    %if $SOURCE_TYPE:eq processor=emit_xml
+    CG_COMPARE_SPEC = wsdl
+    %if $SOURCE_TYPE:eq processor=emit_xml
+    CG_COMPARE_SPEC = xsd
+    %if $SOURCE_TYPE:eq processor=emit_xml
+    CG_COMPARE_SPEC = ant
+    %if $SOURCE_TYPE:eq processor=emit_xml
+    CG_COMPARE_SPEC = java
+    %if $SOURCE_TYPE:eq processor=emit_java
+    CG_COMPARE_SPEC = txt
+    %if $SOURCE_TYPE:eq processor=emit_text
+    CG_COMPARE_SPEC = pl
+    %if $SOURCE_TYPE:eq processor=emit_text
+    CG_COMPARE_SPEC = sh
+    %if $SOURCE_TYPE:eq processor=emit_text
+    CG_COMPARE_SPEC = ksh
+    %if $SOURCE_TYPE:eq processor=emit_text
+    CG_COMPARE_SPEC = csh
+    %if $SOURCE_TYPE:eq processor=emit_text
+    CG_COMPARE_SPEC = properties
+    %if $SOURCE_TYPE:eq processor=
+
+    %undef CG_COMPARE_SPEC
+    %ifndef processor %return signsrc:  WARNING: no processor for suffix $SOURCE_TYPE, $SOURCE_FULLNAME
+
+    %ifdef DEBUG %eecho T2 processor is $processor
+
+    #if processor is non-empty and defined...
+    %if $processor %ifdef $processor %call $processor
+}
+EOF
+
+
+
+
+
+##################################### MAIN #####################################
+CG_ROOT = .
+DO_HELP = 0
+VERBOSE = 0
+EXIT_STATUS = 0
+
+p = $CG_INFILE:basename
+
+
+%ifndef CG_ARGV %call Usage
+%ifndef CG_ARGV %halt 1
+
+%call reset_stats
+
+#this stack holds final list of files to process
+FILESTACK =
+
+#%pragma debug 1
+
+#process arguments:
+%shift arg CG_ARGV
+%whiledef arg %call process_one_arg
+
+%if $badOptions %call Usage
+%if $badOptions %halt 1
+
+%if $DO_HELP %call Usage
+%if $DO_HELP %halt 0
+
+#process files from argument expansion:
+
+%pragma require licenses/signsrc_ops.pl
+%call set_template_vars
+
+%shift aTextFile FILESTACK
+%whiledef aTextFile %call process_one_file
+
+%if $VERBOSE %call dump_stats
+
+%halt $EXIT_STATUS

@@ -1,0 +1,488 @@
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)bldres.dat - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+# buildResults.dat
+# The Rules used by buildResults to parse the log files.
+#
+# Every block begins with some assignments.  The first and the only required
+# assignment is "BUILDRESULTS_TYPE = x".  Where "x" is the name of the block.
+# Other assignments change the default parameters (this is per log):
+#    MaxContext: max amount of lines before error to print out.
+#    MaxLinesPrinted: max number of lines to print after an error.
+#    MaxErrors: max number of errors to print out before giving up on this
+#               log.
+#    MaxHeaderLineCount: max number of lines to have as the header for
+#                        the error.
+# Rules syntax:
+#   This section must begin with "begin rules" and end with "end rules".
+#   You may specify a single rule on multiple lines by putting a
+#     backslash at the end of the line to continue it.
+#   Comments begin with a '#' and goto the end of the line.  Do not put
+#     comments on the same line as a rule.
+#   You can include the rules of another block by saing "include x".
+#   A rule is made up of a result and a perl expression separated by a colon.
+#   The perl expression is as if it were put into the test part of
+#     an if statement.
+
+# general errors that get appended (at the end) of the other error lists
+BUILDRESULTS_TYPE = general
+MaxContext = 8
+MaxErrors = 100
+MaxLinesPrinted = 30
+MaxHeaderLineCount = 5
+begin rules
+	error:/BUILD_ERROR/
+	error:/^USER ERROR/
+	error:/^SYSTEM ERROR/
+	error:/^Fault at/
+	error:/Segmentation Fault/i
+	error:/segmentation or access violation/
+	error:/^Fault at/
+	error:/core dumped/i
+	error:/refused/
+	error:/command not found/i
+	# alphaosf
+	error:/cxx: Severe/  
+	# alphaosf
+	error:/cxx: Error/
+	error:/License failure/i
+	error:/syntax error/
+	error:/Deleting executable .* due to linkage error/
+	error:/file system is full/i || /file system full/i
+	error:/No space left on device/i
+	# VMS Fatal errors
+	error:/CXX-F/
+	# VMS regular Errors
+	error:/CXX-E/
+	# other VMS possible errors
+	error:($os eq "alpha" || $os eq "vax" || $os eq "vms" || $os eq "alphavms") && /\-W\-|\-F\-|\-E\-/   
+end rules
+
+BUILDRESULTS_TYPE = compile
+MaxContext = 8
+MaxErrors = 100
+MaxLinesPrinted = 30
+MaxHeaderLineCount = 5
+begin rules
+	header:/MARK/ || /^=+/
+	start major header:/^Starting \S+ for path/
+	finish major header:/^Finished \S+ for path/
+	header:/CMD: setenv PROJECTNAME/
+	header:/CMD: setenv SRCNAME/
+	good:/ignore/i
+	good:/^Makemaking/i
+	good:/^makedepend/i
+	hide:$header =~ /makedepend/ && $os eq "dgux88k" && /UX:mkdir: ERROR: Cannot create directory/
+	good:$os eq "snimips" && /ld: \/usr\/lib\/libXm\.so: warning:/
+	good:$os eq "snimips" && /got error while trying to open \/cure3\/wf\/d\/paths.dat for read: Stale NFS file handle, will try again in a second/
+	good:$os eq "mvs390" && (/error\/GNUmakefile/ || /error\/ls001\.tmp/)
+	good:$os eq "mvs390" && (/hd\/obj\/mvs390/ || /error\/mvs390$/)
+	good:$os eq "mvs390" && (/kn\/obj\/mvs390\/libqq.* No such file or directory/)
+	good:$os eq "mvs390" && /CBC1398/
+	good:$os eq "mvs390" && /sp\/regress\/cmn\/error/
+	good:$os eq "mvs390" && /sp\/tst\/cmn\/error/
+	good:$os eq "mvs390" && /tl\/src\/dos\/spe\/errorfix\.pel/
+	good:$os eq "mvs390" && /\.(cc|cdf)\"\,\s+line\s+\d+\.\d+:\s+CBC\d+\(W\)/
+	good:$header =~ /=+.*tuxedo/ && $os eq "mvs390"
+	good:/.*: [0-9].*redefined/
+	good:/the previous command returned 256/
+	good:/.*, line [0-9]*.[0-9]*:.*hides the virtual/
+	good:/no errors detected/i
+	good:/skipping/
+	good:/warning: attempted multiple inclusion of file/
+	good:/make\[.\]:/
+	good:/Failed to remake makefile \`GNUmakefile\'/
+	good:/don\'t know how to make \'exes\'/
+	good:! $is_primary_log && \
+	       (/^\s*Imported method/ || /^\s*Imported class/ || \
+			/^\s*Imported mapped class/ || /^\s*Integrating class/ \
+			|| /www\/fatal/ || /qqsp_ErrorManager/ || \
+			/qqsp_ErrorDescriptor/ || \
+			/ - A class$/ || / - A constant$/)
+	good:/qq.._Error/
+	good:/ 0 error/ || /Error messages:.*None/ || /errors: 0/
+	good:/error\.o/ || /error\.c/ || /error\.e/ || /\/error/ || \
+	       /yynewerror/ || /qq.._error/ || \
+	       /\\error\\/ || /src\/cmn\/error/ || /fatal\.gif/ || \
+	       (/error$/ && ! / /) || /Errors get emailed/
+	good:/Generated.*Error/
+	good:/Imported .*class.*Error/
+	good:/CMD.*Compile.*Error/
+   # You see this error from classParsing sometimes
+	good:/Can\'t open \.\/solsparc\/depend/
+	good:$os eq "nt" && /warning C4554/ 
+	good:($os eq "axpnt" || $os eq "nt") \
+	       && (/error\.lib/ || /error\\\\/ || /error$/ || /error>/ || \
+			   /cmn\/error/ || /^[^:]+: warning [^:]+:/)
+	good:$os eq "dgux88k" && /^.*:[0-9]+:\s*warning:/i
+	good:$os eq "rs6000" && /^ld: 0711-345/
+	good:$os eq "rs6000" && /line [0-9]*.[0-9]*: [0-9]*-[0-9]*: \(I\)/
+	good:/line [0-9]+: warning:/
+	good:/ld: [0-9]+-[0-9]+ WARNING:/ || /ld: warning:/
+	good:/line [0-9]*.[0-9]*: [0-9]*-[0-9]*: \(W\)/
+	good:/In function .*error/i
+	good:$os eq "alphaosf" && /\-expect_unresolved/
+	good:$os eq "alphaosf" && /^Warning: Unresolved:$/
+	good:$os eq "dguxi86" && /Undefined\s+first referenced$/
+	ignoreUntilBlank:$os eq "ptxi86" && /Undefined\s+first referenced$/
+	contheader:/qqlex/ || /qqyacc/ || /^classParsing/ || \
+	           /^Compiling/ || /\/bin\/ld/ || /^make\s/ || \
+	           /^Linking/
+	hide:($os eq "alpha" || $os eq "vms") && $PRODUCT eq "conductor" && /DCE Logical is undefined/
+	good:/Error Time:/
+	 #Cleanup of .cdf warnings on ptxi86
+	good:$os eq "ptxi86" && /Warning: Can't open [a-z4]+\.cdf!/
+	include general
+	 # Some platforms have a well defined set of errors (like
+	 # the macs).
+	error:($os eq "mac" || $os eq "powermac") && /Error:/
+	error:($os eq "mac" || $os eq "powermac") && /^Fatal error:/i
+	good:$os eq "mac" || $os eq "powermac"
+	error:($os eq "windows" || $os eq "w30") && (/fatal/i || /Error/)
+	good:$os eq "windows" || $os eq "w30"
+	error:/Project.*not in repository/
+	error:! ($os eq "alpha" || $os eq "vax" || $os eq "vms" || $os eq "alphavms") && (/[^no]+fatal/i)
+	error:! ($os eq "alpha" || $os eq "vax" || $os eq "vms" || $os eq "alphavms") && (/\Werrors?\W/i || /^errors?\W/i || /\Werrors?$/i || /^errors?$/i)
+	error:/has not been assigned a value/i
+	error:(/undefined/i && ! /warning/)
+	error:/^chmod:.*WARNING.*\.c.g/
+	error:/timed out/i
+	error:/^make.*Stop/
+	error:/AT\&T/
+	error:/^ld:/ || /unresolved/i
+	error:/unknown flag/i
+	error:/used but not set/i
+	error:/Arg list too long/i
+	error:/system error/i
+	error:/error:Line [0-9]+:/
+	error:/Cannot find or read import file/
+	error:/Can\'t open/ || /cannot access/
+	error:/Text file busy/i
+	error:/loader error/
+	error:/syntax error/ || /Can\'t read all of/
+	error:/Unable to open file/ || /Unable to locate/
+	error:/Can\'t locate file for/
+	error:($os eq "rs6000" && /.*, line [0-9]*.[0-9]*: [0-9]*-[0-9]*: \([^W]\)/)
+	error:/site-code is inconsistent/
+	error:/No such file or directory/i
+	error:/failed to/i
+	error:/Permission denied/i
+end rules
+
+BUILDRESULTS_TYPE = log
+MaxContext = 1
+MaxErrors = 15
+MaxLinesPrinted = 5
+MaxHeaderLineCount = 3
+begin rules
+	good:/SKIPPED: echo BUILD_ERROR:/
+	hide:/There is already a plan named/
+	hide:/USER ERROR: Project FTLaunch does not exist./
+	hide:/USER ERROR: Project AppletSupport does not exist./
+	hide:/USER ERROR: Project EnvWWWGateway does not exist./
+	hide:/USER ERROR: Project HTML does not exist./
+	hide:/USER ERROR: Project HTTP does not exist./
+	hide:$header =~ /=+.*encina/ && \
+	 ($os eq "alphaosf" || $os eq "dgux88k" || $os eq \
+	  "rs6000" || $os eq "sequent" || $os eq "ptxi86" || \
+	  $os eq "dguxi86" || $os eq "snimips")
+	hide:$header =~ /makedepend/ && $os eq "dgux88k" && /UX:mkdir: ERROR: Cannot create directory/
+	error:/ERROR: Errors in compile/
+	error:/ERROR: Missing command parameter/
+	error:/differ: /
+	error:/error:Line [0-9]+:/
+	error:/line [0-9]+: error:/
+	error:/The project .* was not found/
+	error:/Can\'t locate file for/
+	error:/Must have a current project in order to perform this operation/
+	error:/Service object named .* not found/
+	error:/Project.*not in repository/
+	error:/Native poll failed/
+	error:/qqos_Panic:/
+	error:/Permission denied/i
+	include general
+end rules
+
+# where SYSTEM_ERRORs are okay
+BUILDRESULTS_TYPE = regress
+# Setting 20M as the max file size.
+MaxFileSize = 20971520
+MaxContext = 1
+MaxErrors = 15
+MaxLinesPrinted = 5
+MaxHeaderLineCount = 3
+begin rules
+	# It's okay for regression tests to have these sorts of errors.
+	good:/^USER ERROR/
+	good:/^SYSTEM ERROR/
+	hide:/There is already a plan named/
+	error:/ERROR: Errors in compile/
+	error:/ERROR: Missing command parameter/
+	error:/differ: /
+	error:/error:Line [0-9]+:/
+	error:/line [0-9]+: error:/
+	error:/The project .* was not found/
+	error:/Can\'t locate file for/
+	error:/Must have a current project in order to perform this operation/
+	error:/Service object named .* not found/
+	error:/Project.*not in repository/
+	error:/Native poll failed/
+	error:/qqos_Panic:/
+	include general
+end rules
+
+BUILDRESULTS_TYPE = 4gl
+MaxContext = 5
+MaxErrors = 50
+MaxLinesPrinted = 5
+MaxHeaderLineCount = 3
+begin rules
+	# ignore commands that generate MARKs
+	good:/CMD: execcmd .echo .MARK/
+	header:/MARK/ || /^=+/
+	hide:/There is already a plan named/
+	hide:/USER ERROR: Project FTLaunch does not exist./
+	hide:/USER ERROR: Project AppletSupport does not exist./
+	hide:/USER ERROR: Project EnvWWWGateway does not exist./
+	hide:/USER ERROR: Project HTML does not exist./
+	hide:/USER ERROR: Project HTTP does not exist./
+	good:/SKIPPED: echo BUILD_ERROR:/
+	error:/Cannot open file/
+	header:/CMD: setPath/
+	header:/CMD: setenv PROJECTNAME/
+	header:/CMD: setenv SRCNAME/
+	contheader:/CMD: Compile/
+	#incstate_contheader:/CompileProj/
+	#resetstate:/CMD:/
+	## garbage collection marks
+	#good:$state >= 1 && /!.* Collect/  
+	## garbage collection marks
+	#good:$state >= 1 && /!.* Expand/
+	#incstate:$state >= 1 && /^$/
+	#error:$state >=1 && ! /^$/
+	error:/ERROR: Errors in compile/
+	error:/ERROR: Missing command parameter/
+	error:/differ: /
+	error:/error:Line [0-9]+:/
+	error:/line [0-9]+: error:/
+	error:/The project .* was not found/
+	error:/Can\'t locate file for/
+	error:/Must have a current project in order to perform this operation/
+	error:/Service object named .* not found/
+	error:/Project.*not in repository/
+	error:/The name specified is not recognized as an/
+	error:/Permission denied/i
+	include general
+end rules
+
+BUILDRESULTS_TYPE = javacompile
+MaxContext = 8
+MaxErrors = 100
+MaxLinesPrinted = 30
+MaxHeaderLineCount = 5
+begin rules
+	good:/Error\.java/
+	good:/Error\.class/
+	include compile
+end rules
+
+BUILDRESULTS_TYPE = rpcopy
+MaxContext = 8
+MaxErrors = 100
+MaxLinesPrinted = 30
+MaxHeaderLineCount = 5
+begin rules
+	error:/SYSTEM ERROR/
+	error:/BUILD_ERROR/
+end rules
+
+BUILDRESULTS_TYPE = syncRegress
+MaxContext = 3
+MaxErrors = 30
+MaxLinesPrinted = 100
+begin rules
+	good:/mkdir errors?$/
+	good:/created (error\.inc|fatal(exc)?\.4gl)/
+	good:/z:\\.*\\errors$/
+end rules
+
+# Rules for ffj
+
+BUILDRESULTS_TYPE = testrules
+MaxContext = 3
+MaxErrors = 10
+MaxHeaderLineCount = 3
+MaxLinesPrinted = 10
+KeepHeader = 1
+begin rules
+        start major header:/MAJOR/
+        header:/HEADER/
+        contheader:/More/
+        ignoreUntilBlank:/IGNORE/
+        error:/BAD/
+end rules
+
+# check_cvsupdatelog
+# echo 'egrep -v "cvs server:|^U |MARK " cvs_update.log'
+# egrep -v "cvs server:|^U |MARK " cvs_update.log
+#
+
+BUILDRESULTS_TYPE = ffj_cvsupdate
+MaxContext = 0
+MaxErrors = 100
+MaxHeaderLineCount = 0
+MaxLinesPrinted = -1
+begin rules
+        good:/cvs server:/
+        good:/^U /
+        good:/MARK /
+        good:/^ffjBuild.update_src: redirecting closed update log /
+        error:/./
+end rules
+
+
+# check_javalog
+# echo "egrep -i note|warning|not found|fail|InternalError|cannot resolve javaBuild.log | grep -v deprecat"
+# egrep -i "note|warning|not found|fail|InternalError|cannot resolve" javaBuild.log | grep -v deprecat
+#
+
+BUILDRESULTS_TYPE = ffj_javabuild
+MaxContext = 3
+MaxErrors = 100
+MaxHeaderLineCount = 0
+MaxLinesPrinted = -1
+begin rules
+        good:/deprecat/
+        good:/\[antlr\] warning: lexical nondeterminism/
+        good:/\[exec\] Font specified in font.properties not found /
+        good:/\[exec\] Warning: Cannot convert string /
+        good:/^    \[javac\] [0-9]+ warnings?$/
+        error:/note/i
+        error:/warning/i
+        error:/not found/i
+        error:/internalerror/i
+        error:/cannot resolve/i
+end rules
+
+# echo "egrep \"firststart:|Starting the IDE with locale|firststart_|Product Version|Exception:| at |stacktrace:|BUILD_ERROR\"" javaBuild.log
+# egrep  "firststart:|Starting the IDE with locale|firststart_|Product Version|Exception:| at |stacktrace:|BUILD_ERROR"   javaBuild.log
+#
+
+BUILDRESULTS_TYPE = ffj_firststart
+MaxContext = 3
+MaxErrors = 100
+MaxHeaderLineCount = 3
+MaxLinesPrinted = 3
+KeepHeader = 1
+begin rules
+        start major header:/firststart:/
+        start major header:/firststart_(en|ja):/
+        header:/Starting the IDE with locale/
+        contheader:/Product Version/
+        error:/Exception:/
+        error:/ at /
+        error:/stacktrace:/
+        error:/BUILD_ERROR/
+end rules
+
+
+# set matchstring='note|warning|not found|fail|Exception:|InternalError|cannot resolve'
+# echo $SEP 'egrep -i "'$matchstring'" buildExZipfile.log | egrep -v " Tag \@(link|see):"'
+# egrep -i "$matchstring" buildExZipfile.log | egrep -v " Tag \@(link|see):"
+#
+
+BUILDRESULTS_TYPE = ffj_buildExZip
+MaxContext = 3
+MaxErrors = 100
+MaxHeaderLineCount = 0
+MaxLinesPrinted = 3
+begin rules
+        good:/Tag @(link|see):/
+        good:/^  \[javadoc\] [0-9]+ warnings?$/
+        error:/note/
+        error:/warning/
+        error:/not found/
+        error:/fail/
+        error:/Exception:/
+        error:/InternalError/
+        error:/cannot resolve/
+end rules
+
+# set matchstring='cannot resolve|Exception:|fail|fault|InternalError|not found|note|panic|stacktrace|terminated|warning'
+# echo $SEP 'egrep -i "'$matchstring'" buildNbm.log | egrep -v deprecat'
+# egrep -i "$matchstring" buildNbm.log | egrep -v deprecat
+#
+
+BUILDRESULTS_TYPE = ffj_buildNbm
+MaxContext = 3
+MaxErrors = 100
+MaxHeaderLineCount = 0
+MaxLinesPrinted = 3
+begin rules
+        good:/deprecat/
+        good:/^warning:$/
+        error:/cannot resolve/i
+        error:/Exception:/
+        error:/fail/i
+        error:/fault/i
+        error:/InternalError/
+        error:/not found/i
+        error:/note/i
+        error:/panic/i
+        error:/stacktrace/i
+        error:/terminated/i
+        error:/warning/i
+end rules
+
+# echo $SEP "grep '\[javac\]' buildNbm.log"
+# if ("`grep '\[javac\]' buildNbm.log`" != "") echo "buildNbm.log ERROR! FFJ build not completely incremental:"
+# grep '\[javac\]' buildNbm.log
+#
+
+BUILDRESULTS_TYPE = ffj_buildNbm_inc
+MaxContext = 3
+MaxErrors = 100
+MaxHeaderLineCount = 0
+MaxLinesPrinted = 3
+begin rules
+        error:/\[javac\]/
+end rules
+
+#
+
+BUILDRESULTS_TYPE = ffj_installer
+MaxContext = 0
+MaxErrors = 100
+MaxHeaderLineCount = 0
+MaxLinesPrinted = -1
+begin rules
+        good:/ERROR: an error occurred resolving C:\\sources\\setupja\.jpg: java\.io\.FileNotFoundException:/
+        error:/error:/i
+end rules

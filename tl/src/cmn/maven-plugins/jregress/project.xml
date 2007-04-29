@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<!--
+#
+# BEGIN_HEADER - DO NOT EDIT
+#
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)project.xml - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+#
+# END_HEADER - DO NOT EDIT
+#
+-->
+
+
+<project>
+  <pomVersion>3</pomVersion>
+  <artifactId>jregress</artifactId>
+  <name>Jregress Tester</name>
+  <groupId>jbi</groupId>
+  <currentVersion>1.0</currentVersion>
+  <organization>
+    <name>Sun Microsystems, Inc.</name>
+    <url>http://java.sun.com/integration</url>
+  </organization>
+  <inceptionYear>2005</inceptionYear>
+
+  <shortDescription>Jregress Tester</shortDescription>
+  <description>
+    Run a regression suite
+  </description>
+
+  <url>http://localhost:8080/</url>
+    
+  <mailingLists/>
+
+  <developers/>
+
+  <dependencies>
+    <dependency> 
+      <groupId>ant</groupId>
+      <artifactId>ant</artifactId>
+      <version>1.5</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <defaultGoal>jregress:run</defaultGoal>
+    <sourceDirectory>src/java/com/sun/jbi/internal/tools</sourceDirectory>
+    <resources>
+      <resource>
+        <directory>src/plugin-resources</directory>
+        <targetPath>plugin-resources</targetPath>
+      </resource>
+      <resource>
+        <directory>.</directory>
+        <includes>
+          <include>plugin.jelly</include>
+          <include>plugin.properties</include>
+          <include>project.xml</include>
+        </includes>
+      </resource>
+    </resources>
+  </build>
+
+</project>

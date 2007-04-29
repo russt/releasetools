@@ -1,0 +1,122 @@
+#!/bin/perl -w
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)cntnulls.prl - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+#cntnulls - count the number of ascii NULL characters found in a file.
+#
+#  12-Dec-96 (russt)
+#	Initial revision
+#
+
+#set up program name argument:
+local(@tmp) = split('/', $0);
+# figure out the program name and put it into p
+$p = $tmp[$#tmp];
+
+#################################### MAIN #####################################
+
+&parse_args;
+
+($nulls, $cnt) = &count_nulls($THEFILE);
+print "$nulls/$cnt\n" unless ($QUIET);
+
+exit 2 if ($nulls < 0);		#errors
+exit 1 if ($nulls == 0);       #none found
+exit 0;		#yes, we have nulls
+
+################################# SUBROUTINES #################################
+
+sub count_nulls
+{
+	local ($infile) = @_;
+	local ($nnulls, $nbytes, $totbytes) = (0, 0, 0);
+	local($BUFSIZE) = 1024*8;
+	local($ibuf) = "";
+
+	if (!open(INFILE, $infile)) {
+		printf STDERR ("%s: can't open '%s'\n", $p, $infile);
+		return(-1, -1);
+	}
+
+	while ($nbytes = read(INFILE, $ibuf, $BUFSIZE)) {
+		#unpack as unsigned:
+
+		$nnulls += grep($_ == 0, unpack("C*", $ibuf));
+		$totbytes += $nbytes;
+	}
+
+	close (INFILE);
+	return($nnulls, $totbytes);
+}
+
+################################ USAGE SUBROUTINES ###############################
+
+sub usage
+{
+	local($status) = @_;
+
+    print STDERR <<"!";
+Usage:  $p [-h] [-v] [-u] executable
+
+ -h     display usage message.
+ -q     show status only - 0 for nulls, 1 for none, 2 for errors
+
+Example:  $p /bin/vi
+
+!
+    exit($status);
+}
+
+sub parse_args
+#proccess command-line aguments
+{
+	local ($flag);
+
+	$QUIET = 0;
+
+    #eat up flag args:
+    while ($#ARGV+1 > 0 && $ARGV[0] =~ /^-/) {
+		$flag = shift(@ARGV);
+
+		if ($flag =~ '^-h') {
+			&usage(0);
+		} elsif ($flag eq '-q') {
+			$QUIET = 1;
+		} else {
+			&usage(1);
+		}
+    }
+
+    if ($#ARGV == 0) {
+		$THEFILE = $ARGV[0];
+    } else {
+		&usage(1);
+	}
+}

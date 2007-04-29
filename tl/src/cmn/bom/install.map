@@ -1,0 +1,21 @@
+TARGET_OS = cmn & skel
+makebom.prl bin/$TARGET_OS/makebom 555
+ppbom.prl bin/$TARGET_OS/ppbom 555
+release.prl bin/$TARGET_OS/release 555
+
+TARGET_OS = ntcmn & skel & ksh
+makebom.prl bin/$TARGET_OS/makebom.ksh 555
+ppbom.prl bin/$TARGET_OS/ppbom.ksh 555
+release.prl bin/$TARGET_OS/release.ksh 555
+
+TARGET_OS = w30 & skel & bat
+makebom.prl bin/$TARGET_OS/makebom.bat 555
+ppbom.prl bin/$TARGET_OS/ppbom.bat 555
+release.prl bin/$TARGET_OS/release.bat 555
+
+TARGET_OS = cmn, ntcmn, w30, mac
+makebom.pl  lib/$TARGET_OS/makebom.pl 444
+ppbom.pl  lib/$TARGET_OS/ppbom.pl 444
+bomparse.pl  lib/$TARGET_OS/bomparse.pl 444
+bomsuprt.pl  lib/$TARGET_OS/bomsuprt.pl 444
+release.pl  lib/$TARGET_OS/release.pl 444

@@ -1,0 +1,7 @@
+TARGET_OS = cmn
+check_maven.sh   bin/$TARGET_OS/check_maven     0555
+mkpom.sh         bin/$TARGET_OS/mkpom           0555
+
+TARGET_OS = ntcmn
+check_maven.sh   bin/$TARGET_OS/check_maven.ksh 0555
+mkpom.sh         bin/$TARGET_OS/mkpom.ksh       0555

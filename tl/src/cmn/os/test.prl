@@ -1,0 +1,70 @@
+#!/bin/perl -w
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)test.prl - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+
+$PS_IN = "/";
+$PS_OUT = "/";
+
+require "oscmn.pl";
+require "path.pl";
+
+$os'DEBUG = 1;
+
+printf("BUFFERSIZE = %d\n", $os'BUFFERSIZE);
+
+if (0) {
+	print "About to copy test.prl -> /tmp/test.foo\n";
+	$ret = &os'copy_file("test.prl", "/tmp/test.foo");
+	
+	print "return value is $ret\n";
+	
+	$ret = &os'cat("test.prl");
+	
+	print "return value is $ret\n";
+}
+
+if (0) {
+	$file = "db/regress/cmn/rsmgr/cmn/envsyb.inc";
+	$head = &path'head($file);
+	$tail = &path'tail($file);
+	print "file = '$file'\n";
+	print "head = '$head' tail = '$tail'\n";
+}
+
+if (1) {
+	$file1 = shift @ARGV;
+	$file2 = shift @ARGV;
+	if (&os'cmpFiles($file1, $file2)) {
+		print "$file1 is DIFFERENT than $file2.\n";
+	} else {
+		print "$file1 is the same as $file2.\n";
+	}
+}

@@ -1,0 +1,10 @@
+#####
+#NOTE:  this map is used to install whatport in the "boot"
+#       directory of the distribution
+#####
+
+TARGET_OS = cmn
+whatport.sh   boot/$TARGET_OS/whatport 555
+
+TARGET_OS = ntcmn
+whatport.sh   boot/$TARGET_OS/whatport.ksh 555

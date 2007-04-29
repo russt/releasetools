@@ -1,0 +1,178 @@
+.TH makedrv 1 "13 September 1993" "Forte Software"
+.SH NAME
+makedrv \- build automation utility
+.SH SYNOPSIS
+.B makedrv
+.B -c command
+[
+.B -k
+] [
+.B -m
+] [
+.B -not
+] [
+.B -w
+] [
+.B -s services
+] [
+.B -S services
+] [
+.B -p flags
+]
+.SH DESCRIPTION
+The
+.I makedrv
+command automates the build process.  It references a database of flat files
+known as the builds database which is located in the $SRCROOT/bdb directory.
+The database includes the following files:
+.IP ccgs.cmn 
+lists all dirs for all platforms where ccgs should be generated;
+.IP exe.<port>
+lists all dirs for each port where exes are linked;
+.IP lib.<port>
+lists all dirs on each port where libs are compiled;
+.IP tstexe.<port>
+lists all dirs on each port where test exes are linked;
+.IP tstlib.<port>
+lists all dirs where test libs are compiled;
+.IP scope.cmn
+dirs where to do scopeParsing (similar to classParsing)
+.IP ports
+lists valid port names.
+.SH OPTIONS
+.TP
+.B\-c command
+The following commands are available:
+.RS
+.RS
+.TP
+.B makemake
+runs makemake.gnu
+.TP
+.B makedepend
+runs 
+.I "make makedepend"
+.TP
+.B makemakedepend
+runs both
+.I makemake
+and
+.I makedepend
+.TP
+.B ccgs
+runs
+.I "make ccgs"
+.TP
+.B scope
+runs
+.I "make scope"
+.TP
+.B lib
+runs
+.I "make lib"
+.TP
+.B shlib
+runs
+.I "make shlib"
+(shared libraries)
+.TP
+.B exe
+runs
+.I "make exe"
+.TP
+.B mmf
+runs
+.I "mmfdrv -glean install.map -all"
+.TP
+.B cplib
+copies all $PATHREF/<service>/lib/$QQ_PORT/*.a to the
+$SRCROOT/<service>/lib/$QQ_PORT directory and touches all files
+listed in $SRCROOT/changes.dat.
+.TP
+.B cpbin
+copies all executables from $PATHREF/bin/$QQ_PORT to
+the $SRCROOT/bin/$QQ_PORT directory and all shared libraries
+from /forte1/d/lib/$QQ_PORT to the $SRCROOT/lib/$QQ_PORT directory.
+.TP
+.B clean_all
+cleans all the $SRCROOT/bin/$QQ_PORT, $SRCROOT/<service>/lib/$QQ_PORT, and 
+$SRCROOT/<service>/obj/$QQ_PORT/* directories of executables, archives,
+and objects.
+.RE
+.PP
+Multiple values may be specified for
+.B command
+separated by colons.  For example:
+.sp .5
+.RS
+makedrv -c:makemakedepend:ccgs:lib:exe
+.RE
+.RE
+.TP
+.B \-k
+Runs
+.I "make"
+with the 
+.B \-k
+option for debugging purposes.
+.TP
+.B \-m
+Performs
+.I command
+against the mainline.  The default is to work in the
+.B $SRCROOT
+temporary path.
+.TP
+.B \-not
+Does not perform
+.I command
+against the
+.I tst
+directories.
+.TP
+.B \-w
+Builds for the Windows 3.x environment.
+.TP
+.B \-s service
+Performs    
+.I command
+against all the specified services.  The default is to work on each
+directory in the database for every service in mainline.  If a service
+is not included in the temporary path, they are skipped with appropriate
+warnings.
+.RS
+.PP
+Multiple values may be specified for
+.B service
+separated by colons.  For example:
+.sp 1
+.RS
+makedrv -c:makemakedepend -s:sp:os:lo
+.RE
+.RE
+.TP
+.B \-S service
+Excludes the specified services.  Common services to exclude are 
+.I ds
+and 
+.I tools,
+because the former is time consuming and the later is unnecessary.
+.RS
+.PP
+Multiple values may be specified for
+.B service
+separated by colons.  For example:
+.sp .5
+.RS
+makedrv -c:makemakedepend -S:sp:os:lo
+.RE
+.RE
+.TP
+.B \-p flags
+Passes
+.I flags
+as
+.B QQ_PLAGS to   
+.I make.
+.SH SEE ALSO
+.BR nightBuild (1)

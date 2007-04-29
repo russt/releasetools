@@ -1,0 +1,11 @@
+TEMPLATE= file.mmf
+
+PKG	= bin
+PKG2	= lib
+
+FILES	= minstall.prl instldir.prl
+FILES2	= instgram.pl minstall.pl instldir.pl
+FILES3	= minstall.1
+FILES4	= instlmap.5
+
+CMDS    = ${FILES}

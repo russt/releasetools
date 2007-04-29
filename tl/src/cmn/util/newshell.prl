@@ -1,0 +1,125 @@
+#!/bin/perl -w
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)newshell.prl - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+
+#################################### MAIN ######################################
+&init;
+&parse_args;
+
+#printf "SHELLPATH='%s' SHELLNAME='%s'\n", $SHELLPATH, $SHELLNAME;
+
+&reset_env;
+
+exec $SHELLPATH  "-$SHELLNAME";
+
+exit 2;
+
+################################ SUBROUTINES ###################################
+
+sub reset_env
+{
+	%NEWENV = ();
+	@savevars = ("HOME", "LOGNAME", "HZ", "TZ", "MAIL");
+
+	for $var (@savevars) {
+#printf "savevar='%s'\n", $var;
+		$NEWENV{$var} = $ENV{$var} if (defined($ENV{$var}));
+	}
+
+	foreach $kk (keys %ENV) {
+		delete $ENV{$kk}
+	}
+
+	%ENV = %NEWENV;
+
+	#add the SHELLPATH:
+	$ENV{'SHELL'} = $SHELLPATH;
+}
+
+################################# INIT,USAGE ###################################
+
+sub init
+{
+    #set up program name argument:
+    my(@tmp) = split('/', $0);
+    # figure out the program name and put it into p
+    $p = $tmp[$#tmp];
+	#@path = split(":", $ENV{"PATH"});
+}
+
+sub usage
+{
+	local($status) = @_;
+
+    print STDERR <<"!";
+Usage:  $p [-h] path-to-shell
+
+Synopsis:
+ Replace the current shell with a new login shell.
+
+Options:
+ -h    display usage message
+
+Example:
+
+ $p /bin/ksh
+
+!
+    exit($status);
+}
+
+sub parse_args
+#proccess command-line aguments
+{
+	local ($flag);
+
+    #eat up flag args:
+    while ($#ARGV+1 > 0 && $ARGV[0] =~ /^-/) {
+		$flag = shift(@ARGV);
+
+		if ($flag =~ '^-h') {
+			&usage(0);
+		} else {
+			&usage(1);
+		}
+    }
+
+	#ignore any other args...
+    if ($#ARGV+1 > 0) {
+		$SHELLPATH= shift(@ARGV);
+
+		my(@tmp) = split('/', $SHELLPATH);
+		# figure out the shell name:
+		$SHELLNAME = $tmp[$#tmp];
+	} else {
+		&usage(1);
+	}
+}

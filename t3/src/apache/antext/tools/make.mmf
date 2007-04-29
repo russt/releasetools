@@ -1,0 +1,7 @@
+TEMPLATE= file.mmf
+
+PKG3    = java/ant/lib
+
+POST_INSTALL3 =
+
+FILES3  = ../jmx4ant.jar

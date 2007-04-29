@@ -1,0 +1,639 @@
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)cvs.pl - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+#
+# cvs - package to run cvs commands from perl.
+#
+
+package cvs;
+
+#use strict;
+
+# declare global variables:
+my (
+    $pkg,           #pkg name
+    $p,             #program name inherited from prlskel caller.
+    $DOT,
+    $CVSROOT,
+    $CVS_BRANCH_NAME,
+    $VERBOSE,
+    $TRUE,
+    $FALSE,
+    $DIRMODE,
+) = (
+    "cvs",          #pkg
+    $main::p,
+    $main::DOT,
+    $ENV{'CVSROOT'},
+    $ENV{'CVS_BRANCH_NAME'},
+    0,              #VERBOSE
+    1,              #TRUE
+    0,              #FALSE
+    0777,           #DIRMODE (this will be modified by umask on unix)
+);
+
+require "path.pl";
+require "os.pl";
+
+sub newdir      ##PUBLIC BOOLEAN##
+{
+    my ($srcroot, $cwd) = @_;
+    my ($savedir) = &path::pwd;
+
+    &os::chdir($srcroot);
+
+    #create root CVS metadir with correct BRANCH info.
+    if (!-d "CVS") {
+        if (!defined($CVS_BRANCH_NAME)) {
+            printf STDERR "%s [cvs::newdir]: ERROR: %s/CVS does not exist, and \$CVS_BRANCH_NAME is undefined - cannot create new dirs if I don't know the correct branch.\n", $p, $srcroot;
+            &os::chdir($savedir);
+            return $FALSE;
+        }
+        if (!defined($CVSROOT)) {
+            printf STDERR "%s [cvs::newdir]: ERROR: %s/CVS does not exist, and \$CVSROOT is undefined - cannot create new dirs if I don't know the correct CVSROOT.\n", $p, $srcroot;
+            &os::chdir($savedir);
+            return $FALSE;
+        }
+
+        my $revarg = &compute_revarg($CVS_BRANCH_NAME);
+
+        #check out the top-level metadir.  NOTE the -l option to checkout:
+        my ($cmd) = sprintf("cvs -f -Q -d %s checkout -l %s %s", $CVSROOT, $revarg, '.');
+        if (&os::run_cmd($cmd,0,0) != 0) {
+            printf STDERR "%s [cvs::newdir]: ERROR: command '%s' FAILED\n", $p, $cmd;
+            &os::chdir($savedir);
+            return $FALSE;
+        }
+    }
+
+    #split $cwd into parts, and create each intermediate:
+    my(@dlist) = &path::path_components($cwd);
+
+    while ($#dlist >= 0) {
+        my ($subdir) = shift @dlist;
+        $subdir = &path::remove_initial_PS($subdir);
+        next if ($subdir eq $DOT || $subdir eq "");
+
+		#if subdir is not created...
+        if (! -d $subdir) {
+            if (!mkdir($subdir, $DIRMODE)) {
+                printf STDERR "%s [cvs::newdir]: ERROR: mkdir '%s' FAILED\n", $p, $subdir;
+                &os::chdir($savedir);
+                return($FALSE);
+            }
+
+			my ($cmd) = sprintf("cvs -f -Q -d '%s' add '%s'", $CVSROOT, $subdir);
+			if (&os::run_cmd($cmd,0,0) != 0) {
+				printf STDERR "%s [cvs::newdir]: ERROR: command '%s' FAILED\n", $p, $cmd;
+				&os::chdir($savedir);
+				return $FALSE;
+			}
+        }
+
+        &os::chdir($subdir);
+    }
+
+    &os::chdir($savedir);
+    return $TRUE;
+}
+
+sub newfile     ##PUBLIC BOOLEAN##
+{
+    my ($srcroot, $cwd, $fn, $newfn) = @_;
+    my ($savedir) = &path::pwd;
+    my ($fulldir) = &path::mkpathname($srcroot, $cwd);
+
+    #if working dir does not yet exist...
+    if (! -d $fulldir) {
+        #... then we need to newdir it:
+        if (!&newdir($srcroot,$cwd)) {
+            printf STDERR "%s [cvs::newfile]: ERROR: cannot add new directory '%s'.\n", $p, $fulldir;
+            return $FALSE;
+        }
+    } else {
+        if (!&checkWorkingDir($srcroot, $cwd, "newfile")) {
+            printf STDERR "%s [cvs::newfile]: ERROR: directory '%s' exists, but not a proper CVS dir.\n",
+                            $p, $fulldir;
+            return $FALSE;
+        }
+    }
+
+    if (&os::chdir($fulldir) != 0) {
+        printf STDERR "%s [cvs::newfile %s]: ERROR: chdir to '%s' FAILED\n", $p, $cwd, $fulldir;
+        &os::chdir($savedir);
+        return $FALSE;
+    }
+
+    if (-e $fn) {
+        printf STDERR "%s [cvs::newfile %s]: WARNING: file '%s' already exists, not creating.\n", $p, $cwd, $fulldir;
+        &os::chdir($savedir);
+        return $TRUE;
+    }
+
+    #I have to be able to read the new file from the working dir:
+    if (!-r $newfn) {
+        printf STDERR "%s [cvs::newfile %s]: ERROR: cannot access new file '%s' from working dir.\n", $p, $cwd, $newfn;
+        &os::chdir($savedir);
+        return $FALSE;
+    }
+
+    my ($cmd) = sprintf("cp '%s' '%s'", $newfn, $fn);
+    if (&os::run_cmd($cmd,0,0) != 0) {
+        printf STDERR "%s [cvs::newfile %s]: ERROR: command '%s' FAILED\n", $p, $cwd, $cmd;
+        &os::chdir($savedir);
+        return $FALSE;
+    }
+
+    $cmd = sprintf("cvs -f -Q add '%s'", $fn);
+    if (&os::run_cmd($cmd,0,0) != 0) {
+        printf STDERR "%s [cvs::newfile %s]: ERROR: command '%s' FAILED\n", $p, $cwd, $cmd;
+        &os::chdir($savedir);
+        return $FALSE;
+    }
+
+    &os::chdir($savedir);
+    return $TRUE;
+}
+
+sub genpatch        ##PUBLIC BOOLEAN##
+#generate a patch between two arbitrary revisions
+#true if okay.  output goes to <patchfn>.
+#if binary file, then return TRUE and set <isBinary> to TRUE.
+{
+    my ($patchfn, $isBinary_ref, $cvsroot, $cwd, $fn, $oldrev, $newrev) = @_;
+    my ($wfname) = &path::mkpathname($cwd, $fn);
+    my ($errout) = &os::TempFile();
+
+    $$isBinary_ref = $FALSE;    #this is a RESULT parameter.
+
+    #create/run the rdiff command
+    my ($cmd) = sprintf("cvs -f -Q -d '%s' rdiff -r '%s' -r '%s' '%s' > '%s' 2> %s",
+                            $cvsroot, $oldrev, $newrev, $wfname, $patchfn, $errout);
+    if (&os::run_cmd($cmd,0,0) != 0) {
+        # if it is a binary file, we will get some output like this:
+        if (&isBinaryRdiffOutput($errout)) {
+            $$isBinary_ref = $TRUE;     #set RESULT parameter.
+            unlink $patchfn;    #get rid of bogus patch file
+        } else {
+            printf STDERR "%s [cvs::genpatch]: ERROR: command '%s' FAILED\n", $p, $cmd;
+            return $FALSE;
+        }
+    }
+
+    return $TRUE;
+}
+
+sub isBinaryRdiffOutput
+# if it is a binary file, we will get some output like this:
+#   cvs server: failed to read diff file header /tmp/cvsCAAnUaalH for ebxml.jar,v: end of file
+# scan for this and return $TRUE if found.
+{
+    my($outfn) = @_;
+
+    return $FALSE if (!open(INFILE, $outfn));
+
+    my ($line) = <INFILE>;
+    close INFILE;
+
+    return ($line =~ /failed to read diff file header/);
+}
+
+sub applypatch      ##PUBLIC BOOLEAN##
+{
+    my ($srcroot, $cwd, $fn, $patchfn) = @_;
+
+    #my working dir and file must exist:
+    return $FALSE if (!&checkWorkingFile($srcroot, $cwd, $fn, "applypatch"));
+
+    my ($savedir) = &path::pwd;
+    my ($fulldir) = &path::mkpathname($srcroot, $cwd);
+    if (&os::chdir($fulldir) != 0) {
+        printf STDERR "%s [cvs::applypatch %s]: ERROR: chdir to '%s' FAILED\n", $p, $cwd, $fulldir;
+        &os::chdir($savedir);
+        return $FALSE;
+    }
+
+    #I have to be able to read the patch file from the working dir:
+    if (!-r $patchfn) {
+        printf STDERR "%s [cvs::applypatch %s]: ERROR: cannot access patch file '%s' from working dir.\n", $p, $cwd, $patchfn;
+        &os::chdir($savedir);
+        return $FALSE;
+    }
+
+    #make the file writable:
+    &make_writable($srcroot, $cwd, $fn);
+
+    #apply the patch:
+    my $cmd = sprintf("patch -s '%s' < '%s'", $fn, $patchfn);
+    if (&os::run_cmd($cmd,0,0) != 0) {
+        printf STDERR "%s [cvs::applypatch %s]: ERROR: command '%s' FAILED\n", $p, $cwd, $cmd;
+        &os::chdir($savedir);
+        return $FALSE;
+    }
+
+    &os::chdir($savedir);
+    return $TRUE;
+}
+
+sub deletefile      ##PUBLIC BOOLEAN##
+{
+    my ($srcroot, $cwd, $fn) = @_;
+    return $FALSE if (!&checkWorkingFile($srcroot, $cwd, $fn, "deletefile"));
+
+    my ($savedir) = &path::pwd;
+    my ($fulldir) = &path::mkpathname($srcroot, $cwd);
+    if (&os::chdir($fulldir) != 0) {
+        printf STDERR "%s [cvs::deletefile %s]: ERROR: chdir to '%s' FAILED\n", $p, $cwd, $fulldir;
+        &os::chdir($savedir);
+        return $FALSE;
+    }
+
+    my $cmd = sprintf("cvs -f -Q remove -f '%s'", $fn);
+    if (&os::run_cmd($cmd,0,0) != 0) {
+        printf STDERR "%s [cvs::deletefile %s]: ERROR: command '%s' FAILED\n", $p, $cwd, $cmd;
+        &os::chdir($savedir);
+        return $FALSE;
+    }
+
+    &os::chdir($savedir);
+    return $TRUE;
+}
+
+sub make_writable
+{
+    my ($srcroot, $cwd, $fn) = @_;
+
+    my ($savedir) = &path::pwd;
+    my ($fulldir) = &path::mkpathname($srcroot, $cwd);
+    if (&os::chdir($fulldir) != 0) {
+        printf STDERR "%s [make_writable %s]: ERROR: chdir to '%s' FAILED\n", $p, $cwd, $fulldir;
+        &os::chdir($savedir);
+        return $FALSE;
+    }
+
+    my $cmd = sprintf("chmod +w '%s'", $fn);
+    if (&os::run_cmd($cmd,0,0) != 0) {
+        printf STDERR "%s [make_writable %s]: ERROR: command '%s' FAILED\n", $p, $cwd, $cmd;
+        &os::chdir($savedir);
+        return $FALSE;
+    }
+
+    &os::chdir($savedir);
+    return $TRUE;
+}
+
+sub edit
+{
+    my ($srcroot, $cwd, $fn) = @_;
+    return $FALSE if (!&checkWorkingFile($srcroot, $cwd, $fn, "edit"));
+
+    my ($savedir) = &path::pwd;
+    my ($fulldir) = &path::mkpathname($srcroot, $cwd);
+    if (&os::chdir($fulldir) != 0) {
+        printf STDERR "%s [cvs::edit %s]: ERROR: chdir to '%s' FAILED\n", $p, $cwd, $fulldir;
+        &os::chdir($savedir);
+        return $FALSE;
+    }
+
+    my $cmd = sprintf("cvs -f -Q edit '%s'", $fn);
+    if (&os::run_cmd($cmd,0,0) != 0) {
+        printf STDERR "%s [cvs::edit %s]: ERROR: command '%s' FAILED\n", $p, $cwd, $cmd;
+        &os::chdir($savedir);
+        return $FALSE;
+    }
+
+    &os::chdir($savedir);
+    return $TRUE;
+}
+
+sub getversion      ##PUBLIC BOOLEAN##
+#copy a specified revision into a file specified by caller.
+{
+    my ($outfile, $cvsroot, $cwd, $fn, $rev) = @_;
+    my ($fullpath) = &path::mkpathname($cwd, $fn);
+
+    my ($cmd) = sprintf("cvs -f -Q -d '%s' checkout -p %s '%s' > '%s'",
+                    $cvsroot, &compute_revarg($rev), $fullpath, $outfile);
+    if (&os::run_cmd($cmd,0,0) != 0) {
+        printf STDERR "%s [cvs::getversion]: ERROR: command '%s' FAILED\n", $p, $cmd;
+        return $FALSE;
+    }
+
+    return $TRUE;
+}
+
+sub checkout    ##PUBLIC BOOLEAN##
+#checkout a file or directory into current working directory.
+#true if successful.  if errors, return error text in <errtxt_ref>.
+{
+    my ($cvsroot, $revarg, $fn, $errtxt_ref) = @_;
+
+    $$errtxt_ref = "";
+
+    my ($cmd) = sprintf("cvs -f -Q -d %s checkout -A  %s '%s'", $cvsroot, $revarg, $fn);
+
+    printf "running cvs command '%s'\n", $cmd if ($VERBOSE);
+
+    if (&os::run_cmd($cmd,0,0) != 0) {
+        return 0;
+    }
+
+    return 1;
+}
+
+sub meta_checkout
+# create dummy CVS/* files necessary to trick cvs log (or other process).
+# this assumes that the argument passed as filename is a file, not a dir. 
+# specify which files will need to be created in options.
+{
+    my ($cvsroot, $fn, $filelist_ref, $errtxt_ref) = @_;
+    $$errtxt_ref = "";
+    my($fulldir) = "";
+    my(%contents)=();
+
+    $contents{"Entries"} = "D";
+    $contents{"Root"} = $cvsroot; #unnecessary definition.
+
+    my(@dirs) = split(/\//,$fn); #last item is filename, not dir.
+    for (my($x)=0; $x<@dirs-1; $x++) {
+        if ($fulldir eq "") {
+            $fulldir = $dirs[$x];
+        } else {
+            $fulldir = "$fulldir/$dirs[$x]";
+        }
+        $contents{"Repository"} = $fulldir;
+
+        unless (mkdir "$fulldir", 0777) {
+            $$errtxt_ref = "Could not create dir $fulldir, check permissions.\n";
+            return 0;
+        }
+        unless (mkdir "$fulldir/CVS", 0777) {
+            $$errtxt_ref = "Could not create dir $fulldir/CVS\n";
+            return 0;
+        }
+        
+        my($d);
+        for $d (@$filelist_ref) {
+            unless (open (OUT, ">$fulldir/CVS/$d")) {
+                $$errtxt_ref = "Could not open file $fulldir/CVS/$d for writing.\n";
+                return 0;
+            } else {
+                print OUT "$contents{$d}";
+                close OUT;
+            }
+        } #for
+    } #for
+    return 1;
+}
+
+sub mk_tmp_dir
+#create temporary directories and get the current working dir.
+#return true if successful.
+#on error, return false with errref set to the error message.
+{
+    my ($cvswork,$cwd, $errref) = @_;       ### RESULTS
+    my ($tmpdir, $aa);
+    my ($id) = sprintf("%s [%s/mk_tmp_dir]", $pkg, $p);
+
+    ##### RESULT PARAMETERS
+    $$cvswork = "NO_DIR";
+    $$cwd = "NO_DIR";
+    $$errref = "";
+
+    if ($'OS == $'NT && defined($ENV{'TMPDIR'})) {
+        $tmpdir = $ENV{'TMPDIR'};
+    } else {
+        $tmpdir = "/tmp";
+    }
+
+    $aa = &path'pwd;
+    if ($aa eq "NULL") {
+        $$errref = sprintf("%s: cannot determine current working directory.\n", $id);
+        return(0);
+    } else {
+        $$cwd = $aa;        #okay - save it in caller's var.
+    }
+                                    
+    
+    $aa = &path::mkpathname($tmpdir, "${p}_$$");
+
+    if (&os::mkdir_p($aa, 0777) != 0) {
+        $$errref = sprintf("%s: cannot create CVS working dir in '%s'\n", $id, $aa);
+        return (0);
+    }
+
+
+    $$cvswork = $aa;        #okay - save it in caller's var.
+    printf STDERR "cvswork=%s\n", $$cvswork if ($VERBOSE);
+
+    if (!chdir($$cvswork)) {
+        $$errref = sprintf("%s: cannot change working dir to '%s'\n", $id, $aa);
+        &cleanup($$cvswork, $$cwd);
+        return (0);
+    }
+
+    return 1;       #NO ERRORS
+}
+
+sub cleanup
+{
+    my ($cvswork, $cwd) = @_;
+
+    if ($cvswork ne "" && -d $cvswork) {
+        printf STDERR "%s[cleanup]: removing cvs working dir '%s'\n", $p, $cvswork if ($VERBOSE);
+        chdir $cwd if ($cwd ne "");     #make sure we are not sitting in $cvswork
+        &os::run_cmd("rm -rf $cvswork")
+    }
+
+    return 1;
+}
+
+
+sub sa_get_commit_log  ## PUBLIC BOOLEAN ##
+## stand_alone_get_commit_log
+## create dummymetafiles & run log on those.
+## calls meta_checkout & get_commit_log & cleans up.
+## assumes you are already in the dir to which you intend to co.
+{
+    my($cvsroot, $revarg, $fn, $committxt_ref, $errtxt_ref) = @_;
+    my($cvsworking)="";
+    my($cwd) = "";
+    my ($id) = sprintf("%s [%s/sa_get_commit_log]", $pkg, $p);
+    
+    if ($VERBOSE) {
+        printf STDERR "%s:  CVSROOT=%s\nREVARG=%s\nFILE=%s\n", $id, $cvsroot, $revarg, $fn;
+    }
+    
+    if (!&mk_tmp_dir(\$cvsworking, \$cwd, $errtxt_ref)) {
+        return (0);
+    }
+
+    my(@metafiles) = ("Entries", "Repository");
+    if (!&meta_checkout($cvsroot,$fn,\@metafiles, $errtxt_ref)) {
+        &cleanup($cvsworking, $cwd);
+        return (0);
+    }
+                                          
+    if (!&get_commit_log($cvsroot, $revarg, $fn, $committxt_ref, $errtxt_ref)) {
+        &cleanup($cvsworking, $cwd);
+        return (0);
+    }
+
+    if (!&cleanup($cvsworking, $cwd)) {
+        $$errtxt_ref = sprintf("%s: cleanup failed", $id);
+        return (0);
+    }
+
+    return 1;
+
+}
+
+
+sub get_commit_log  ##PUBLIC BOOLEAN##
+#get the commit log text for a given revision of a cvs file,
+#and return it in <ctxt_ref>.
+#we assume that the file is already checked out, and that the
+#<fn> arg is a file name or dir name releative to the repository root,
+#and that caller is in the root of a valid cvs working directory.
+#
+#true if successful.  if errors, return error text in <errtxt_ref>.
+{
+    my ($cvsroot, $revarg, $fn, $ctxt_ref, $errtxt_ref) = @_;
+    @{$ctxt_ref} = ();
+    $$errtxt_ref = "";
+
+    my ($cmd) = sprintf("cvs -f -Q -d %s log %s '%s'", $cvsroot, $revarg, $fn);
+
+    printf "running cvs command '%s'\n", $cmd if ($VERBOSE);
+
+    #eval_cmd takes: ($cmdtxt, $userstatusref, $stderr_ref, $errtxt_ref) = @_;
+    my ($status) = 0;
+    my (@stderr) = ();
+    my (@list) = &os::eval_cmd($cmd, \$status, \@stderr, $errtxt_ref);
+
+    printf STDERR "cvs log returns status %d, (%s)\n", $status, join(",", @list) if ($VERBOSE);
+
+    if ($status != 0) {
+        return 0 ;
+    }
+
+    #eliminate all but the commit log from the output:
+    my (@newlist) = ();
+    my ($line);
+    my ($foundrevision, $founddate) = (0,0,0);
+    for $line (@list) {
+        if ($line =~ /^revision /) {
+            $foundrevision = 1;
+            next;
+        }
+        
+        if ($foundrevision && $line =~ /^date:/) {
+            $founddate = 1;
+            next;
+        }
+        
+        next if ($foundrevision && $founddate && $line =~ /^branches:/);
+        last if ($foundrevision && $founddate &&
+            $line eq "=============================================================================");
+
+#printf STDERR "get_commit_log line='%s' foundrevision=%d founddate=%d\n", $line, $foundrevision, $founddate;
+
+        if ($foundrevision && $founddate) {
+            push @newlist, $line;
+        }
+    }
+
+#printf STDERR "get_commit_log returns (%s)\n", join(",", @newlist);
+
+    @{$ctxt_ref} = @newlist;
+
+    return 1;
+}
+
+sub option_verbose
+#returns true if okay, false if error
+{
+    my($bool) = @_;
+    if (defined($bool) && $bool >= 0) {
+        $VERBOSE = $bool;
+    } else {
+        printf STDERR "%s:  ERROR: option_verbose requires boolean value (0=false, 1=true).\n", $pkg;
+        return(0);
+    }
+    return(1);
+}
+
+sub checkWorkingDir         ##PRIVATE BOOLEAN##
+#return TRUE if working directory is okay
+{
+    my ($srcroot, $cwd, $caller) = @_;
+
+    my ($fulldir) = &path::mkpathname($srcroot, $cwd);
+    if (!-d $fulldir) {
+        printf STDERR "%s [cvs::%s]: ERROR: '%s' is not a directory.\n", $p, $caller, $cwd;
+        return $FALSE;
+    }
+
+    my $reposMetaFile = &path::mkpathname($srcroot, $cwd, "CVS", "Repository");
+    if (!-e $reposMetaFile) {
+        printf STDERR "%s [cvs::%s]: ERROR: '%s' is not a CVS working directory.\n", $p, $caller, $cwd;
+        return $FALSE;
+    }
+
+    return $TRUE;
+}
+
+sub checkWorkingFile        ##PRIVATE BOOLEAN##
+#return TRUE if working file is present in <srcroot>
+{
+    my ($srcroot, $cwd, $fn, $caller) = @_;
+
+    return $FALSE if (!&checkWorkingDir($srcroot, $cwd, $caller));
+
+    my ($fullpath) = &path::mkpathname($srcroot, $cwd, $fn);
+    if (!-e $fullpath) {
+        printf STDERR "%s [cvs::%s]: ERROR: file '%s' does not exist in working directory '%s'.\n", $p, $caller, $fn, $cwd;
+        return $FALSE;
+    }
+
+    return $TRUE;
+}
+
+sub compute_revarg          ##PRIVATE STRING##
+#return a string of the form "-r revision" or empty-string if we want the trunk
+{
+    my ($rev) = @_;
+
+    return "" if (!defined($rev) || $rev eq "" || $rev eq "trunk" || $rev eq "main");
+
+    return "-r $rev";
+}
+
+1;

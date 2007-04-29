@@ -1,0 +1,59 @@
+.TH install.map 5 "20 August 1996" "Forte Software"
+.SH INSTALL MAP FILE
+The install map file must be of the following form:
+
+Comments begin with a '#'.
+
+A series of declarations should be followed 1 or more mappings.  Where
+a declaration looks like
+
+	TARGET_OS = cmn,nt,mac
+
+or
+
+	<VARIABLE> = <possible values of variable>
+
+If the actual value of that variable (as set on the command line or
+from the environment), does not correspond to one of the possible
+values, then every mapping in that block (until the next declaration
+section after the mappings) will be ignored.  Basically, the
+declarations are filters.  Optional special procedures can be tacked
+onto the filter to produce special effects for each installed file.
+
+	TARGET_OS = cmn & skel, nt & skel & ksh, mac & skel & mpw
+
+These special procedures are processed in order, before the file gets
+installed.
+
+.TP
+.BI ksh
+will format a perl program to run under MKS Toolkit's ksh (NT).
+.TP
+.BI mpw
+will format a perl program to run under the MPW mac environment.
+.TP
+.BI sh
+will format a perl program to run under the bourne shell (sh).
+Typically done for unix.
+.TP
+.BI skel
+will write prlskel to the destination file instead of the source
+file.  prlskel is the startup script for many Forte perl tools.
+minstall will copy the first prlskel it sees in your PATH.
+
+And a mapping looks like
+
+	foo.prl bin/util/$TARGET_OS/foo 555
+
+or
+
+	<source file> <destination file> <permissions>
+
+If base was set to "/forte1/d/tools" and TARGET_OS was "cmn", then
+foo.prl will get copied to /forte1/d/tools/bin/util/cmn/foo with
+permissions of 555.
+
+.SH See Also
+.B minstall
+
+.B updateDistDir

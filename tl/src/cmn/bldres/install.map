@@ -1,0 +1,9 @@
+TARGET_OS = cmn,ntcmn
+bldres.pl	lib/$TARGET_OS/buildResults.pl	0444
+bldres.dat	lib/$TARGET_OS/buildResults.dat	0444
+
+TARGET_OS = cmn & skel
+bldres.prl  bin/$TARGET_OS/buildResults  0555
+ 
+TARGET_OS = ntcmn & skel & ksh
+bldres.prl  bin/$TARGET_OS/buildResults.ksh  0555

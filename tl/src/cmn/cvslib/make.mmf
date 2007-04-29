@@ -1,0 +1,5 @@
+TEMPLATE        = file.mmf
+PKG     = lib
+MODE	= 0444
+
+FILES   = cvs.pl

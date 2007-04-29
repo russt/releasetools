@@ -1,0 +1,424 @@
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)release.mmf - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+#GENERAL USAGES:
+#	to eliminate transaction logging for FILES<n>, 
+#		TRANSACT<n>	=
+#	to eliminate install mapping:
+#		MAPOPTS	=
+#	to remove files from the install area and keep the transact.log
+#	in tact, do a "make uninstall BASE=<my_distribution_area>" before
+#	editing install.map and make.mmf to remove the files.
+#
+#	to collect install maps, do a "make printmap"
+#
+
+# Disable the default rules for installing .sh files and pulling files
+# out of RCS.
+%: %.sh
+%:: %,v
+%:: RCS/%,v
+
+#NOTE:  use "=' for recursivly expanded vars, ':=' for simple vars.  RT 10/25/00
+
+#if SHELL has a .exe suffix...
+ifeq ($(suffix ${SHELL}),.exe)
+	#...then assume windows env:
+SHELL_ENV := WINDOWS
+else
+SHELL_ENV := UNIX
+endif
+
+#NOTE:  MINSTALL does not get defined if I indent these assignment statements.  RT 10/25/00
+ifeq (${SHELL_ENV},WINDOWS)
+	#this is a work around - on nt, calling minstall directly truncates the
+	#argument list to 64 characters under mks toolkit. RT 10/25/00
+MINSTALL := sh minstall
+else
+MINSTALL := minstall
+endif
+PWD := $(shell pwd)
+
+#RELEASE_DISTROOT is the root of the distribution area. This should be set in your
+#environment or passed in at make time.
+BASE = ${RELEASE_DISTROOT}
+TARGET_OS	= cmn
+
+#BASE must be defined:
+ifeq ($(BASE),)
+	BASE=/dev/null
+endif
+
+ifeq ($(RWD),)
+	RWD=.
+endif
+
+ifeq ($(MAKEFILE),)
+	MAKEFILE=Makefile
+endif
+
+ifeq ($(MAKEMMF),)
+	MAKEMMF=make.mmf
+endif
+
+#intermediate directories under RELEASE_DISTROOT - generally this should follow
+#the source tree structure.
+#
+#These can be redefined as needed.
+#HINT:  if you redefine PKG<n>, then always verify the following:
+#	DEST<n>
+#	TRANSLOG_DIR<n>
+#	POST_INSTALL<n>
+#
+PKG 	= bin/util
+PKG2	= lib/util
+PKG3	= man/man1
+PKG4	= man/man5
+
+#a convenient default:
+MANBASE	= ${BASE}/man
+
+#default dest if not in map file:
+DEST	=  ${BASE}/${PKG}
+DEST2   =  ${BASE}/${PKG2}
+DEST3   =  ${BASE}/${PKG3}
+DEST4   =  ${BASE}/${PKG4}
+MAKEFILE =  Makefile
+
+MAPFILE	=  install.map
+MAPOPTS	= -map ${MAPFILE} -base ${BASE}
+#
+#override these if you need multiple install maps, e.g.,
+#	MAPOPTS2 = -map install2.map -base ${BASE}
+#
+MAPOPTS2	= ${MAPOPTS}
+MAPOPTS3	= ${MAPOPTS}
+MAPOPTS4	= ${MAPOPTS}
+
+TARGET	= TARGET_OS=${TARGET_OS}
+
+#define this for pullDist master directories.
+#override TRANSLOG_DIR if you want the transaction log somewhere else.
+TRANSLOG_DIR	= ${DEST}
+TRANSLOG_DIR2	= ${DEST2}
+TRANSLOG_DIR3	= ${MANBASE}
+TRANSLOG_DIR4	= ${MANBASE}
+TRANSACT	= -transact TRANSLOG_DIR=${TRANSLOG_DIR}
+TRANSACT2	= -transact TRANSLOG_DIR=${TRANSLOG_DIR2}
+TRANSACT3	= -transact TRANSLOG_DIR=${TRANSLOG_DIR3}
+TRANSACT4	= -transact TRANSLOG_DIR=${TRANSLOG_DIR4}
+
+# If CHECK is on, minstall will try to do some basic syntax checking of the
+# source files.
+CHECK = -check
+
+#VERBOSE	= -v
+VERBOSE	=
+#SHOWMMF	= -n
+SHOWMMF	=
+#undef update to force installs
+UPDATE	= -u
+
+#text opts added 10/23/96 RT
+TEXTOPTS	=
+#mac text attributes determined by server type.
+ifeq (${TARGET_OS},mac)
+	TEXTOPTS = -server kshare
+endif
+ifeq (${TARGET_OS},powermac)
+	TEXTOPTS = -server kshare
+endif
+ifeq (${TARGET_OS},nt)
+	TEXTOPTS = -text dos
+endif
+ifeq (${TARGET_OS},ntcmn)
+	TEXTOPTS = -text dos
+endif
+ifeq (${TARGET_OS},axpnt)
+	TEXTOPTS = -text dos
+endif
+ifeq (${TARGET_OS},dos)
+	TEXTOPTS = -text dos
+endif
+ifeq (${TARGET_OS},w30)
+	TEXTOPTS = -text dos
+endif
+
+SUFFIXOPT = -suffix_map ${SRCROOT}/bdb/suffix.dat
+
+INSTALLOPTS 	= ${SHOWMMF} ${VERBOSE} ${CHECK} ${SUFFIXOPT} ${TEXTOPTS} ${MAPOPTS} ${TRANSACT} ${TARGET}
+INSTALLOPTS2	= ${SHOWMMF} ${VERBOSE} ${CHECK} ${SUFFIXOPT} ${TEXTOPTS} ${MAPOPTS2} ${TRANSACT2} ${TARGET}
+INSTALLOPTS3	= ${SHOWMMF} ${VERBOSE} ${CHECK} ${SUFFIXOPT} ${TEXTOPTS} ${MAPOPTS3} ${TRANSACT3} ${TARGET}
+INSTALLOPTS4	= ${SHOWMMF} ${VERBOSE} ${CHECK} ${SUFFIXOPT} ${TEXTOPTS} ${MAPOPTS4} ${TRANSACT4} ${TARGET}
+INSTALL 	= ${MINSTALL} -f ${DIRMODE} -m ${MODE} ${INSTALLOPTS}
+INSTALL2	= ${MINSTALL} -f ${DIRMODE2} -m ${MODE2} ${INSTALLOPTS2}
+INSTALL3	= ${MINSTALL} -f ${DIRMODE3} -m ${MODE3} ${INSTALLOPTS3}
+INSTALL4	= ${MINSTALL} -f ${DIRMODE4} -m ${MODE4} ${INSTALLOPTS4}
+
+#RCS rule is builtin to gnu make:
+COFLAGS	= -q
+
+FILES	=
+FILES2	=
+FILES3	=
+FILES4	=
+ALLSRC	= ${FILES} ${FILES2} ${FILES3} ${FILES4}
+
+#assume executable - modify tool map if mixed.
+MODE	= 0555
+MODE2	= 0444
+MODE3	= 0444
+MODE4	= 0444
+DIRMODE	= 0775
+DIRMODE2	= 0775
+DIRMODE3	= 0775
+DIRMODE4	= 0775
+
+# DISTRIBFILE is the original t3 tgz file (from the 'net or whereever)
+DISTRIBFILE=
+# The file to be placed at the top of DEVENVDIR which is a copy of
+# this Makefile.  It's for convienence.
+COMPILEMAKEFILE=Makefile
+
+# SRCTGZ are the local source changes from DISTRIBFILE
+SRCTGZ       = $(TARGET_OS).stz
+# BINTGZ are the binary files to be installed under DISTROOT
+BINTGZ       = $(TARGET_OS).btz
+# LIBTGZ are the library files to be installed under DISTROOT
+LIBTGZ       = $(TARGET_OS).ltz
+
+# Specify these to use the t3 facility.
+# SRCFILES is the list of changed source files (see SRCTGZ)
+SRCFILES =
+# BINFILES is the list of generated binary (executable) files
+BINFILES =
+# LIBFILES is the list of generated library files.
+LIBFILES =
+
+# Where to get them from.  You don't want any subdirectories in BINTGZ
+# or LIBTGZ, so that we can just untgz them right under DISTROOT.
+# BINDIR (or LIBDIR) is the directory to cd to before tgz'ing up the
+# BINFILES (or LIBFILES).
+SRCDIR = .
+BINDIR = .
+LIBDIR = .
+
+MINSTALLOPTS_UNTAR = -untar -f 0775 -inef
+MINSTALLOPTS_UNTGZ = -untgz -f 0775 -inef
+
+TGZUPDATE = ${MINSTALL} -tgz -u
+
+T3_INSTALLOPTS 	= ${SHOWMMF} ${VERBOSE} ${CHECK} ${TRANSACT} ${TARGET}
+T3_INSTALLOPTS2 	= ${SHOWMMF} ${VERBOSE} ${CHECK} ${TRANSACT2} ${TARGET}
+T3_INSTALL = ${MINSTALL} -untgz -f ${DIRMODE} -m ${MODE} ${T3_INSTALLOPTS}
+T3_INSTALL2 = ${MINSTALL} -untgz -f ${DIRMODE2} -m ${MODE2} ${T3_INSTALLOPTS2}
+T3_UNINSTALLOPTS 	= ${SHOWMMF} ${VERBOSE} ${TRANSACT} ${TARGET}
+T3_UNINSTALLOPTS2 	= ${SHOWMMF} ${VERBOSE} ${TRANSACT2} ${TARGET}
+T3_UNINSTALL = ${MINSTALL} -rmtgz ${T3_UNINSTALLOPTS}
+T3_UNINSTALL2 = ${MINSTALL} -rmtgz ${T3_UNINSTALLOPTS2}
+
+#
+#in order to install manual pages that are readable on all platforms,
+#do a catman as a POST_INSTALL step, e.g.:
+#	POST_INSTALL3 = ${CATMAN}
+#
+#NOTE:  catman -w doesn't work except for /usr/man on solaris.
+#       With -M arg, it only indexes section 1. -n turns it off.
+#       Since windex prevents the man command from working, we
+#       make sure it is removed.
+#
+CATMAN	= rm -f ${MANBASE}/windex; catman -n -M ${MANBASE}
+
+POST_INSTALL1 =
+POST_INSTALL2 =
+POST_INSTALL3 = 
+POST_INSTALL4 = 
+
+#only define 2,3,4 targets if corresponding FILE<n> defined:
+ifneq ($(FILES),)
+	DOINSTALL1 = install1
+	UNINSTALL1 = un${DOINSTALL1}
+	PRINTMAP1 = printmap1
+endif
+ifneq ($(FILES2),)
+	DOINSTALL2 = install2
+	UNINSTALL2 = un${DOINSTALL2}
+	PRINTMAP2 = printmap2
+endif
+ifneq ($(FILES3),)
+	DOINSTALL3 = install3
+	UNINSTALL3 = un${DOINSTALL3}
+	PRINTMAP3 = printmap3
+endif
+ifneq ($(FILES4),)
+	DOINSTALL4 = install4
+	UNINSTALL4 = un${DOINSTALL4}
+	PRINTMAP4 = printmap4
+endif
+
+UPDATESRC=
+UPDATEBIN=
+UPDATELIB=
+PLACESRC=
+PLACEBIN=
+PLACELIB=
+ifneq ($(SRCFILES),)
+	UPDATESRC=updatesrc
+	PLACESRC=placesrc
+endif
+
+ifneq ($(BINFILES),)
+	UPDATEBIN=updatebin
+	PLACEBIN=placebin
+	T3BIN_INSTALL=t3bin_install
+	T3BIN_PRINTMAP=t3bin_printmap
+	T3BIN_UNINSTALL=t3bin_uninstall
+endif
+
+ifneq ($(LIBFILES),)
+	UPDATELIB=updatelib
+	PLACELIB=placelib
+	T3LIB_INSTALL=t3lib_install
+	T3LIB_PRINTMAP=t3lib_printmap
+	T3LIB_UNINSTALL=t3lib_uninstall
+endif
+
+#TARGETS:
+install:	$(MAKEFILE) ${DOINSTALL1} ${DOINSTALL2} ${DOINSTALL3} ${DOINSTALL4} ${T3BIN_INSTALL} ${T3LIB_INSTALL}
+printmap:	$(MAKEFILE) ${PRINTMAP1} ${PRINTMAP2} ${PRINTMAP3} ${PRINTMAP4} ${T3BIN_PRINTMAP} ${T3LIB_PRINTMAP}
+uninstall:  $(MAKEFILE) ${UNINSTALL1} ${UNINSTALL2} ${UNINSTALL3} ${UNINSTALL4} ${T3BIN_UNINSTALL} ${T3LIB_UNINSTALL}
+
+$(MAKEFILE): $(MAKEMMF)
+	@echo $(MAKEMMF) is newer than $(MAKEFILE), recommand rerunning makemf.
+
+install1:	${FILES}
+	@${INSTALL} ${UPDATE} ${FILES} ${DEST}
+	@${POST_INSTALL1}
+
+install2:	${FILES2}
+	@${INSTALL2} ${UPDATE} ${FILES2} ${DEST2}
+	@${POST_INSTALL2}
+
+install3:	${FILES3}
+	@${INSTALL3} ${UPDATE} ${FILES3} ${DEST3}
+	@${POST_INSTALL3}
+
+install4:	${FILES4}
+	@${INSTALL4} ${UPDATE} ${FILES4} ${DEST4}
+	@${POST_INSTALL4}
+
+onlyinstall:
+ifeq ($(INFILES),)
+	@echo ERROR: INFILES needs to be a list of files to install
+	exit 1
+else
+	@${INSTALL} ${UPDATE} $(filter $(INFILES),${FILES}) ${DEST}
+	@${INSTALL2} ${UPDATE} $(filter $(INFILES),${FILES2}) ${DEST2}
+	@${INSTALL3} ${UPDATE} $(filter $(INFILES),${FILES3}) ${DEST3}
+	@${INSTALL4} ${UPDATE} $(filter $(INFILES),${FILES4}) ${DEST4}
+endif
+
+uninstall1:	${FILES}
+	@${INSTALL} -uninstall ${FILES} ${DEST}
+
+uninstall2:	${FILES2}
+	@${INSTALL2} -uninstall ${FILES2} ${DEST2}
+
+uninstall3:	${FILES3}
+	@${INSTALL3} -uninstall ${FILES3} ${DEST3}
+
+uninstall4:	${FILES4}
+	@${INSTALL4} -uninstall ${FILES4} ${DEST4}
+
+onlyuninstall:
+ifeq ($(RMFILES),)
+	@echo ERROR: RMFILES needs to be a list of files to uninstall
+	exit 1
+else
+	@${INSTALL} -uninstall $(filter $(RMFILES),${FILES}) ${DEST}
+	@${INSTALL2} -uninstall $(filter $(RMFILES),${FILES2}) ${DEST2}
+	@${INSTALL3} -uninstall $(filter $(RMFILES),${FILES3}) ${DEST3}
+	@${INSTALL4} -uninstall $(filter $(RMFILES),${FILES4}) ${DEST4}
+endif
+
+printmap1:	${FILES}
+	@${INSTALL} -p ${FILES} ${DEST}
+
+printmap2:	${FILES2}
+	@${INSTALL2} -p ${FILES2} ${DEST2}
+
+printmap3:	${FILES3}
+	@${INSTALL3} -p ${FILES3} ${DEST3}
+
+printmap4:	${FILES4}
+	@${INSTALL4} -p ${FILES4} ${DEST4}
+
+echoallsrc:;	@echo $(ALLSRC)
+
+t3bin_install:
+	@if [ -f $(BINTGZ) ]; then \
+		$(T3_INSTALL) $(UPDATE) $(BINTGZ) ${DEST} ; \
+	fi
+
+t3lib_install:
+	@if [ -f $(LIBTGZ) ]; then \
+		$(T3_INSTALL2) $(UPDATE) $(LIBTGZ) ${DEST2} ; \
+	fi
+
+t3bin_uninstall:
+	@if [ -f $(BINTGZ) ]; then \
+		$(T3_UNINSTALL) $(BINTGZ) ${DEST} ; \
+	fi
+
+t3lib_uninstall:
+	@if [ -f $(LIBTGZ) ]; then \
+		$(T3_UNINSTALL) $(LIBTGZ) ${DEST} ; \
+	fi
+
+t3bin_printmap:
+	@if [ -f $(BINTGZ) ]; then \
+		$(T3_INSTALL) -p $(BINTGZ) ${DEST} ; \
+	fi
+
+t3lib_printmap:
+	@if [ -f $(LIBTGZ) ]; then \
+		$(T3_INSTALL) -p $(LIBTGZ) ${DEST2} ; \
+	fi
+
+help:
+	@echo Basic file.mmf help
+	@echo ""
+	@echo Typical makefile directives:
+	@echo 'install         Install files under RELEASE_DISTROOT'
+	@echo 'onlyinstall     Install only those files in INFILES'
+	@echo 'uninstall       Remove files from RELEASE_DISTROOT'
+	@echo 'onlyuninstall   A more friendly version of uninstall'
+	@echo '                set RMFILES to list of files to uninstall'
+	@echo 'printmap        Print out where files would be installed'

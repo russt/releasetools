@@ -1,0 +1,5 @@
+TARGET_OS = cmn
+
+#ant task for JMX:
+../jmx4ant.jar             java/ant/lib/jmx4ant.jar              0444
+

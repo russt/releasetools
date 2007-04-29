@@ -1,0 +1,5 @@
+TARGET_OS = cmn, ntcmn
+maven.sh   bin/$TARGET_OS/maven          0555
+
+TARGET_OS = ntcmn
+maven.sh   bin/$TARGET_OS/maven.ksh      0555

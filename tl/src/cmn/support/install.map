@@ -1,0 +1,3 @@
+TARGET_OS=cmn,ntcmn,mac
+sp.pl lib/$TARGET_OS/sp.pl 444
+targets.pl lib/$TARGET_OS/targets.pl 444

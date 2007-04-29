@@ -1,0 +1,59 @@
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)envvar.mmf - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+#
+# envvar.mmf
+#
+
+FILE1	=
+VAR1	=
+#this is the name of VAR1:
+VARNAME1	=
+
+FILES = $(FILE1)
+
+ifneq ($(FILE1),)
+DOINSTALL1 = install1
+DOPRINTMAP1 = printmap1
+endif
+
+install: $(DOINSTALL1)
+
+install1:
+	rm -f $(FILE1)
+	mkdir -p $(dir $(FILE1))
+	echo $(VAR1) > $(FILE1)
+	chmod 0444 $(FILE1)
+
+printmap: $(DOPRINTMAP1)
+
+#NOTE - must have tabs:
+printmap1:
+	@echo 'cmn	$$$(VARNAME1)	$(notdir $(FILE1))	$(dir $(FILE1))	0444'

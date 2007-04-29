@@ -1,0 +1,11 @@
+TEMPLATE	= file.mmf
+PKG	=  bin
+PKG3	=  man/man1
+
+MODE	=  0555
+MODE3	=  0444
+
+FILES	= fwhich.prl whereprl.prl whereman.prl
+FILES3	= fwhich.1 whereprl.1 whereman.1
+
+CMDS    = ${FILES}

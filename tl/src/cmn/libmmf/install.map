@@ -1,0 +1,7 @@
+TARGET_OS = cmn,ntcmn
+file.mmf	lib/$TARGET_OS/file.mmf		0444
+release.mmf	lib/$TARGET_OS/release.mmf		0444
+envvar.mmf	lib/$TARGET_OS/envvar.mmf		0444
+vlib.mmf	lib/$TARGET_OS/vlib.mmf		0444
+repos.mmf	lib/$TARGET_OS/repos.mmf		0444
+

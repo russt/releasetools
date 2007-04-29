@@ -1,0 +1,9 @@
+TARGET_OS = cmn & skel
+bmail.prl        bin/$TARGET_OS/bmail          0555
+
+TARGET_OS = ntcmn & skel & ksh
+bmail.prl        bin/$TARGET_OS/bmail          0555
+bmail.prl        bin/$TARGET_OS/bmail.ksh      0555
+
+TARGET_OS=cmn, ntcmn
+bmail.pl         lib/$TARGET_OS/bmail.pl       0444

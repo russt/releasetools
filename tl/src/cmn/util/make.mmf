@@ -1,0 +1,21 @@
+TEMPLATE    = file.mmf
+
+PKG =  bin
+PKG2    =  lib
+PKG3    =  man/man1
+
+MODE    =  0555
+MODE2   =  0444
+
+FILES   = pls.prl crc.prl clendist.prl\
+          localtxt.prl lddtree.prl cntnulls.prl cnvtln.prl\
+          inherit.csh fulltime.prl shsyntax.prl fixeol.prl cpmode.prl\
+          walkdir.prl ddiff.prl cpup.prl cshdrv.prl optpath.prl bldmsg.prl bldwait.prl\
+          gencopy.prl runallpj.sh setand.prl chckjdoc.prl hlp2html.prl showtimes.prl\
+          newshell.prl shprops.prl comparejars.sh
+FILES2  = listutil.pl numutil.pl pls.pl vars.pl crc.pl localtxt.pl url.pl \
+          shsyntax.pl walkdir.pl ddiff.pl cpmode.pl cpup.pl clendist.pl\
+          gencopy.pl suffix.pl transact.pl bldmsg.pl bldwait.pl filtrfil.pl chckjdoc.pl \
+          hlp2html.pl cmdhelp.txt shprops.pl
+          
+CMDS    = ${FILES}

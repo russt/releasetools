@@ -1,0 +1,10 @@
+TEMPLATE= file.mmf
+PKG            = bin
+PKG3    = java/maven/plugins
+
+POST_INSTALL3 =
+
+FILES          = jregress.sh jdiff.sh
+FILES3  =jregress-plugin.jar
+
+CMDS    = ${FILES}

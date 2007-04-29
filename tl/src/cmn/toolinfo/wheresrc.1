@@ -1,0 +1,127 @@
+.TH wheresrc 1 "11 September 1996" "Forte Software"
+.SH NAME
+wheresrc \- find the source for local commands and installed files.
+.SH SYNOPSIS
+.B wheresrc
+[-h]
+[-v]
+[-p]
+[-f printmap]
+[-os target_os]
+installed_name...
+.LP
+.B wheresrc
+-gen
+[-f printmap]
+.LP
+.B wheresrc
+[-sh|-csh]
+[-f printmap]
+.LP
+.SH DESCRIPTION
+.LP
+Given the name of an installed file or command,
+.B
+wheresrc
+attempts to locate the source directory and corresponding
+source files associated with the installed name.
+.LP
+Normally, 
+.B wheresrc
+looks in a file generated from a special
+"printmap" target defined in makefiles used to install
+commands in a central distribution area.  When make is run
+successively in all directories containing these makefiles,
+a global database showing the mapping between all source
+files and their installed components is the result (see
+EXAMPLES).
+.LP
+A second form of the command (-gen option) reads in the "raw"
+printmap data and generates a "clean" version that can
+be used to improve lookup performance.
+.LP
+The third form of the command displays information
+about the map file, including a list of all valid "-os" values.
+.SH OPTIONS
+.TP 1.25i
+.B -h
+display the help message and exit normally.
+.TP
+.B -p
+take \fIinstalled_names\fP as \fIperl(1)\fP
+regular expression strings.
+.TP
+.B -v
+verbose option.  Print informational messages to stderr.
+.TP
+.B -gen
+generate (to stdout) "clean" data file from raw printmap output.
+.TP
+.B -f printmap
+search \fIprintmap\fP instead of default ($SRCROOT/$TLMAP)
+.TP
+.B -sh
+with "info" form of command, generate sh or ksh command to set the
+TARGET_OS_LIST variable, which can be used with the \fBmmfdrv(1)\fP command.
+.TP
+.B -csh
+like -sh, except generate csh or tcsh syntax.
+.TP
+.B -os target_os
+look for commands only for \fItarget_os\fP, which is a value
+returned by the whatport(1) command, or a "pseudo" install
+target.  E.g., cmn, ntcmn, vmsinc, etc.  Use the "info"
+form of the command to get a list of all valid targets.
+.LP
+.SH EXAMPLES
+.LP
+To generate the wheresrc database:
+.LP
+% cd $SRCROOT
+.LP
+% mmfdrv -q -r -all -t printmap tl/src > $SRCROOT/tlmap.txt
+.LP
+To look for the Macintosh MPW source for the makedrv command:
+% wheresrc -os mac makedrv
+.LP
+To look for the source of the makedrv command on all platforms:
+.LP
+% wheresrc -p '^makedrv'
+.LP
+To generate a reduced form of the wheresrc database:
+.LP
+% wheresrc -gen -f myprintmap > cleanmap
+.LP
+To generate a csh statement to initialize the TARGET_OS_LIST
+environment variable:
+.LP
+% wheresrc -csh > mydefs
+.LP
+.SH PORTABILITY
+.LP
+The
+.B wheresrc
+command is available in the Unix shell enviornment only.
+It requires perl 4.0 or later.
+.SH ENVIRONMENT
+.TP 1.25i
+.B $SRCROOT
+Variable specifing the current path or subpath.
+If the -f option is not specified, then wheresrc
+looks for the printmap file in $SRCROOT/tlmap.txt.
+.TP 1.25i
+.B $MAINROOT
+Variable specifing the codeline master directory.  If $SRCROOT
+is not defined or has no tlmap.txt file, then wheresrc looks
+for the printmap database
+in $MAINROOT/tlmap.txt.
+.LP
+.SH "SEE ALSO"
+mmfdrv(1), minstall(1), fwhich(1), file.mmf(5)
+.LP
+.SH BUGS
+.LP
+Silently ignores inappropriate options.
+.SH AUTHOR
+.LP
+Russ Tremain

@@ -1,0 +1,102 @@
+#!/bin/perl
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)fulltime.prl - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+# fulltime
+# print out the times of files
+
+$p = "fulltime";
+
+$print_all_times = 1;
+$print_atime = 0;
+$print_mtime = 0;
+$print_ctime = 0;
+
+$file_count = 0;
+
+while ($filename = shift @ARGV) {
+	if ($filename =~ /^-/) {
+		if ($filename eq "-h" || $filename eq "-help") {
+			&Usage;
+			exit;
+		} elsif ($filename eq "-a") {
+			$print_all_times = 0;
+			$print_atime = 1;
+		} elsif ($filename eq "-m") {
+			$print_all_times = 0;
+			$print_mtime = 1;
+		} elsif ($filename eq "-c") {
+			$print_all_times = 0;
+			$print_ctime = 1;
+		} else {
+			print "ERROR: unknown argument: $filename\n";
+			&Usage;
+			exit 1;
+		}
+		next;
+	}
+
+	++$file_count;
+	local($d1,$d2,$d3,$d4,$d5,$d6,$d7,$d8,$atime,$mtime,$ctime) =
+        stat($filename);
+	if (!defined($ctime)) {
+		print STDERR "ERROR: fulltime, filename='$filename': $!\n";
+		next;
+	}
+	if ($print_all_times) {
+		print "$filename atime = $atime mtime = $mtime ctime = $ctime\n";
+	} else {
+		print "$filename";
+		print " $atime" if ($print_atime);
+		print " $mtime" if ($print_mtime);
+		print " $ctime" if ($print_ctime);
+		print "\n";
+	}
+}
+
+if ($file_count == 0) {
+	print STDERR "ERROR: no files specified.\n";
+	&Usage;
+	exit 1;
+}
+
+sub Usage
+{
+	print <<"!"
+Usage: $p [-help] [-a] [-m] [-c] <list of files>
+   eg: $p -m foo.cc
+
+    -a  will print out the atime of each file
+    -m  will print out the mtime (modify) of each file
+    -c  will print out the ctime (creation) of each file
+
+    Without the -a, -m, or -c parameters, $p will print out all of them.
+!
+}

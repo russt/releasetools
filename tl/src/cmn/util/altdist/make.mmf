@@ -1,0 +1,14 @@
+TEMPLATE    = file.mmf
+
+PKG     =  bin
+PKG2    =  lib
+PKG3    =  man/man1
+
+MODE    =  0555
+MODE2   =  0444
+
+FILES   = ../crc.prl ../localtxt.prl ../shsyntax.prl ../optpath.prl ../bldmsg.prl ../comparejars.sh ../ddiff.prl ../walkdir.prl 
+FILES2  = ../listutil.pl ../numutil.pl ../vars.pl ../crc.pl ../url.pl ../shsyntax.pl ../suffix.pl ../transact.pl ../bldmsg.pl \
+          ../ddiff.pl ../walkdir.pl ../localtxt.pl
+          
+CMDS    = ${FILES}

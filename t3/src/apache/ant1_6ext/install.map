@@ -1,0 +1,8 @@
+TARGET_OS = cmn
+junit.jar               java/ant/lib/junit.jar                0444
+ant-testutil.jar        java/ant/lib/ant-testutil.jar         0444
+checkstyle-all-3.3.jar  java/ant/lib/checkstyle-all-3.3.jar   0444
+ant-contrib.jar         java/ant/lib/ant-contrib.jar          0444
+
+#jdbc for build access to database
+ojdbc14.jar           java/ant/lib/ojdbc14.jar            0444

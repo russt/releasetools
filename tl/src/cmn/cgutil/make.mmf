@@ -1,0 +1,9 @@
+TEMPLATE= file.mmf
+
+#UPDATE = -udiff
+
+PKG	= bin
+
+FILES	= fixeol.cg signsrc.cg
+
+CMDS    = ${FILES}

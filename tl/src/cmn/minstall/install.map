@@ -1,0 +1,18 @@
+TARGET_OS = cmn & skel & sh
+minstall.prl     bin/$TARGET_OS/minstall          0555
+instldir.prl     bin/$TARGET_OS/installdir        0555
+
+TARGET_OS = ntcmn & skel & ksh
+minstall.prl     bin/$TARGET_OS/minstall          0555
+minstall.prl     bin/$TARGET_OS/minstall.ksh      0555
+instldir.prl     bin/$TARGET_OS/installdir        0555
+instldir.prl     bin/$TARGET_OS/installdir.ksh    0555
+
+TARGET_OS = cmn, ntcmn, mac
+minstall.pl      lib/$TARGET_OS/minstall.pl       0444
+instgram.pl      lib/$TARGET_OS/instgram.pl       0444
+instldir.pl      lib/$TARGET_OS/installdir.pl     0444
+
+TARGET_OS = cmn
+minstall.1       man/man1/minstall.1              0444
+instlmap.5       man/man5/install.map.5           0444

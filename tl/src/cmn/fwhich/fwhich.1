@@ -1,0 +1,74 @@
+.TH fwhich 1 "6 August 1996" "Forte Software"
+.SH NAME
+fwhich \- search path environment for command names.
+.SH SYNOPSIS
+\fBfwhich\fP [\fB-h\fP] [\fB-a\fP] [\fB-p\fP] [command_name...]
+.SH DESCRIPTION
+.LP
+The \fIfwhich\fP command is a faster, more flexible variant of the \fIwhich(1)\fP command.
+With no options, \fIfwhich\fP will find the first location of each \fIcommand_name\fP available
+in the command search path.  If invoked with the \fB\-a\fP option, it will find all
+instances of each \fIcommand_name\fP listed.  This is useful for debugging and
+testing the command path environment search order.
+.LP
+The \fB\-p\fP option is the most powerful variant and can be used in combination
+with the \fB\-a\fP option to find all commands containing a certain word or pattern.
+.SH OPTIONS
+.TP 1.25i
+.B -h
+display the help message and exit normally.
+.TP
+.B -a
+find all instances of each \fIcommand_name\fP in the command path.
+.TP
+.B -p
+search the command path directories taking \fIcommand_names\fP as \fIperl(1)\fP
+regular expression strings.
+.LP
+.SH EXAMPLES
+.TP 2.5i
+fwhich cat
+find the location of the "cat" command.
+.TP
+fwhich -a cat
+find all instances of the "cat" command.
+.TP
+fwhich -a -p cat
+find all commands containing the word "cat".
+.TP
+fwhich -a -p '^cat' '^vi'
+find all commands beginning with the word "cat" or "vi".
+.TP
+fwhich -a -p '\.ksh$'
+find all commands with the suffix ".ksh".
+.SH PORTABILITY
+.LP
+The
+.B fwhich
+command is available in the Macintosh MPW environment,
+the MKS ksh environment for Microsoft Windows, and all Unix shells.
+It requires perl 4.0 or later.
+.LP
+Under the MKS ksh environment, the simple form of the command (-p option not
+specified) will check for instances of the command name ending in '.ksh', '.exe', or
+'.bat', as well as the exact name specified.
+.SH ENVIRONMENT
+.TP 1.25i
+.B $PATH
+csh(1), sh(1), ksh(1), tcsh(1) environment variable containing command search directory specification.
+.TP 1.25i
+.B $Path
+MKS ksh(1) environment variable containing command search directory specification.
+.TP 1.25i
+.B {Commands}
+Macintosh MPW environment variable containing command search directory specification.
+.LP
+.SH "SEE ALSO"
+which(1), perl(1), whereperl(1)
+.LP
+.SH NOTES
+.LP
+Does not know about shell aliases - use which(1) to find aliases.
+.SH AUTHOR
+.LP
+Russ Tremain

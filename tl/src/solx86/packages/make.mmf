@@ -1,0 +1,5 @@
+TEMPLATE= file.mmf
+
+PKG3 = packages/${TARGET_OS}
+
+FILES3   = ../../solsparc/packages/readme.txt

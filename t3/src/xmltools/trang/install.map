@@ -1,0 +1,12 @@
+TARGET_OS = cmn & sh
+trang.sh    bin/$TARGET_OS/trang          0555
+
+TARGET_OS = ntcmn & ksh
+trang.sh    bin/$TARGET_OS/trang.ksh      0555
+
+#install a copy without .ksh for cygwin/tcsh users:
+TARGET_OS = ntcmn
+trang.sh    bin/$TARGET_OS/trang          0555
+
+TARGET_OS = cmn
+trang.jar   java/lib/trang.jar            0444

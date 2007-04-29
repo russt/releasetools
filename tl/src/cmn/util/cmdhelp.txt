@@ -1,0 +1,181 @@
+#build commands
+#command        help argument   tool type
+#----------------------------------------
+announceKits       -help           build
+bldhost            -help           build
+bldmsg             -help           build
+bldwait            -help           build
+buildKits          -help           build
+buildResults       -help           build
+build_4glShlib     -help           build
+checkjdoc          -help           build
+chkHang            -help           build
+cpForteKit         -help           build
+ddiff              -help           build
+findChanges        -help           build
+genJavaDoc         -help           build
+gencopy            -help           build
+genjava            -help           build
+help2html          -help           build
+import4glFiles     -help           build
+javaBuild          -help           build
+killChildren       -help           build
+make               -help           build
+makeRelease        -help           build
+makebom            -help           build
+makedrv            -help           build
+minstall           -help           build
+mkcdrom            -help           build
+mkvers             -help           build
+mmfdrv             -help           build
+nightBuild         -help           build
+nmgrchk            -h              build
+nmgrstop           -h              build
+nmgrstrt           -h              build
+nodemgrCheck       -h              build
+nodemgrStart       -h              build
+nodemgrStop        -h              build
+ppbom              -help           build
+promoteStableTools -help           build
+r4build_4gl        -help           build
+release            -help           build
+repnode            -help           build
+rpserverCheck      -h              build
+rpserverStart      -h              build
+rpserverStop       -h              build
+rpsvchk            -h              build
+rpsvstop           -h              build
+rpsvstrt           -h              build
+runinallpj         -help           build
+runwebbuild        -help           build
+runwfbuild         -help           build
+syncSR             -help           build
+toolsBuild         -h              build
+TOOLCodegen        -help           build
+uibuild            -h              build
+updateCodeLine     -help           build
+#
+#test commands
+#command        help argument   tool type
+#----------------------------------------
+chkreg             -help           test
+diffTests          -help           test
+failureReport      -help           test
+lsrg               -help           test
+mkregressdb        -help           test
+promoteRef         -help           test
+regress            -h              test
+rgrid              -help           test
+runAllTests        -help           test
+testBuildSystem    -help           test
+testResults        -help           test
+testTimes          -help           test
+testdrv            -help           test
+#
+#path commands
+#command        help argument   tool type
+#----------------------------------------
+addSrcTrans        -help           path
+changeForteRoot    -help           path
+changes            -help           path
+checkIn            -help           path
+checkIntegrity     -help           path
+checkOut           -help           path
+checkOutAll        -help           path
+checkPath          -help           path
+checkRCS           -help           path
+checkRCSfile       -help           path
+createMainRoot     -help           path
+createPath         -help           path
+createPath.sub     -help           path
+deleteDir          -help           path
+deleteFile         -help           path
+deletePath         -help           path
+diffPath           -help           path
+filterFiles        -help           path
+getSrc             -help           path
+includeService     -help           path
+includeService.sub -help           path
+integratePath      -help           path
+lockPath           -help           path
+makeForteRoot      -help           path
+makeMsg            -help           path
+newDir             -help           path
+newFile            -help           path
+newService         -help           path
+patch              --help          path
+patchPath          -help           path
+pullDist           -help           path
+pullSource         -help           path
+shadowTool         -help           path
+srcDiff            -help           path
+srvcname           -h              path
+uncheckOut         -help           path
+undeleteFile       -help           path
+updateDistDir      -help           path
+updateFiles        -help           path
+updatePath         -help           path
+url                -help           path
+usePathDef         -help           path
+usePathDef1        -help           path
+#
+#Shadow path commands
+#command        help argument   tool type
+#----------------------------------------
+#
+shcheckOut         -help         shadow
+shrun              -help         shadow
+shchanges          -help         shadow
+shcheckIn          -help         shadow
+shintegratePath    -help         shadow
+shincludeService   -help         shadow
+shupdatePath       -help         shadow
+shnewDir           -help         shadow
+shnewFile          -help         shadow
+shuncheckOut       -help         shadow
+shdeleteFile       -help         shadow
+shdeleteDir        -help         shadow
+shmakedrv          -help         shadow
+shupdateUnix       -help         shadow
+shmakeWritable     -help         shadow
+shpreIntegratePath -help         shadow
+shsrcDiff          -help         shadow
+shgetChanges       -help         shadow
+#
+#Other useful utilities/tools
+#command        help argument   tool type
+#----------------------------------------
+#
+cmp                --help          other
+cntnulls           -help           other
+cnvtln             -help           other
+cpmode             -help           other
+cpup               -help           other
+crc                -help           other
+diff               --help          other
+diff3              --help          other
+dupsrc             -help           other
+fixeol             -help           other
+fulltime           -help           other
+fwhich             -help           other
+gzip               -help           other
+lddtree            -help           other
+localtxt           -help           other
+makemf             -help           other
+optpath            -help           other
+perl               -help           other
+prlskel            -help           other
+pstree             -help           other
+sdiff              --help          other
+setand             -help           other
+shsyntax           -help           other
+splits             -help           other
+tar                --help          other
+unzip              -help           other
+walkdir            -help           other
+whereman           -help           other
+whereperl          -help           other
+wheresrc           -help           other
+zip                -help           other
+zipnote            -h              other
+zipsplit           -h              other

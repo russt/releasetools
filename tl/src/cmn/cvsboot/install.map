@@ -1,0 +1,9 @@
+TARGET_OS = cmn
+updatedist.sh      boot/$TARGET_OS/updateDist          0555
+updatedist2.sh      boot/$TARGET_OS/updateDist2.sh     0444
+
+#note - updatedist2.sh is not meant to be run directly, only from updateDist.
+
+TARGET_OS = ntcmn & ksh
+updatedist.sh      boot/$TARGET_OS/updateDist.ksh      0555
+updatedist2.sh     boot/$TARGET_OS/updateDist2.sh      0444

@@ -1,0 +1,7 @@
+TEMPLATE = file.mmf
+
+PKG  = bin
+
+DISTRIBFILE = wget153.tgz
+
+BINFILES = wget

@@ -1,0 +1,4 @@
+TEMPLATE        = file.mmf
+PKG2     = lib
+
+FILES2   = lex.pl screen.pl scan.pl

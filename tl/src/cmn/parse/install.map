@@ -1,0 +1,4 @@
+TARGET_OS = cmn,ntcmn,mac
+lex.pl lib/$TARGET_OS/lex.pl 444
+screen.pl lib/$TARGET_OS/screen.pl 444
+scan.pl lib/$TARGET_OS/scan.pl 444

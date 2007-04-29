@@ -1,0 +1,2 @@
+TARGET_OS=cmn, ntcmn
+recordreader.pl     lib/$TARGET_OS/recordreader.pl          0444

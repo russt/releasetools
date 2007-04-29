@@ -1,0 +1,10 @@
+TARGET_OS = cmn & sh, mac & mpw
+prlskel.prl bin/$TARGET_OS/prlskel 555
+
+TARGET_OS = ntcmn & ksh
+prlskel.prl bin/$TARGET_OS/prlskel.ksh 555
+
+TARGET_OS = cmn, mac, ntcmn
+prlskel.pl lib/$TARGET_OS/prlskel.pl 444
+prlskel.1 man/man1/prlskel.1 444
+pkgmap.pl  lib/$TARGET_OS/pkgmap.pl 444

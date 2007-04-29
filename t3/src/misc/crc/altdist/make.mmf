@@ -1,0 +1,10 @@
+TEMPLATE= file.mmf
+
+PKG	= bin
+
+PKG     =  bin
+DEST    =  ${BASE}/${PKG}/${TARGET_OS}/src
+
+MODE    =  0444
+
+FILES  = ../crc.c 

@@ -1,0 +1,14 @@
+TARGET_OS = cmn & sh, mac & mpw
+fwhich.prl	bin/$TARGET_OS/fwhich	0555
+whereman.prl	bin/$TARGET_OS/whereman	0555
+whereprl.prl	bin/$TARGET_OS/whereperl	0555
+
+TARGET_OS = ntcmn & ksh
+fwhich.prl	bin/$TARGET_OS/fwhich.ksh	0555
+whereman.prl	bin/$TARGET_OS/whereman.ksh	0555
+whereprl.prl	bin/$TARGET_OS/whereperl.ksh	0555
+
+TARGET_OS = cmn
+fwhich.1	man/man1/fwhich.1	0444
+whereprl.1	man/man1/whereperl.1	0444
+whereman.1	man/man1/whereman.1	0444

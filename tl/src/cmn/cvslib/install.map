@@ -1,0 +1,2 @@
+TARGET_OS=cmn, ntcmn
+cvs.pl         lib/$TARGET_OS/cvs.pl          0444

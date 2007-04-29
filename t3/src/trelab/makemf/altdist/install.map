@@ -1,0 +1,2 @@
+TARGET_OS	= solsparc,solx86,macosx,nt,cygwin,linux
+../makemf.c	bin/$TARGET_OS/src/makemf.c	444

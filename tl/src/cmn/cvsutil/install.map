@@ -1,0 +1,14 @@
+TARGET_OS = cmn & skel
+fixcvsroot.prl      bin/$TARGET_OS/fixcvsroot          0555
+changes.prl         bin/$TARGET_OS/changes             0555
+tagBuild.prl        bin/$TARGET_OS/tagBuild            0555
+
+TARGET_OS = ntcmn & skel & ksh
+fixcvsroot.prl      bin/$TARGET_OS/fixcvsroot.ksh      0555
+changes.prl         bin/$TARGET_OS/changes.ksh         0555
+tagBuild.prl        bin/$TARGET_OS/tagBuild.ksh        0555
+
+TARGET_OS=cmn, ntcmn
+fixcvsroot.pl         lib/$TARGET_OS/fixcvsroot.pl          0444
+changes.pl            lib/$TARGET_OS/changes.pl             0444
+tagBuild.pl           lib/$TARGET_OS/tagBuild.pl            0444

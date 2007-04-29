@@ -1,0 +1,609 @@
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)file.mmf - ver 1.1 - 01/04/2006
+#
+# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+#GENERAL USAGES:
+#	to eliminate transaction logging for FILES<n>, 
+#		TRANSACT<n>	=
+#	to eliminate install mapping:
+#		MAPOPTS	=
+#	to remove files from the install area and keep the transact.log
+#	in tact, do a "make uninstall BASE=<my_distribution_area>" before
+#	editing install.map and make.mmf to remove the files.
+#
+#	to collect install maps, do a "make printmap"
+#
+#	Help:
+#	  One of the directives of this file is 'help' (run `make help`).
+#	  It provides a basic help message on the popular directives in
+#	  this makefile.  It's not intended to cover every little detail.
+#
+#	Uninstalling things:
+#	  Running `make uninstall` will uninstall all files in the current
+#	  directory, this is probably not what the user wants.  You
+#	  can limit how much gets uninstalled by playing with the FILES
+#	  lists; that is, if you know "oldfile.sh" is in the FILES2 list
+#	  and you want to uninstall it, you could run
+#	  `make FILES= FILES2=oldfile.sh uninstall`.  This is assuming
+#	  that there isn't a FILES3 or FILESn (n > 3)  (See the make.mmf
+#	  file for the exact FILESn lists).  If you only want
+#	  to uninstall a single file, this gets to be a hassel.
+#	  Thus, onlyuninstall was born.  It figures out which FILESn list
+#	  your file is in and runs uninstall with the proper settings.  It
+#	  has to know which files you want to uninstall, so it gets them
+#	  from the RMFILES variable.
+#	  `make RMFILES=oldfile.sh onlyuninstall`  will uninstall only oldfile.sh
+
+# Disable the default rules for installing .sh files and pulling files
+# out of RCS.
+%: %.sh
+%:: %,v
+%:: RCS/%,v
+
+#NOTE:  use "=' for recursivly expanded vars, ':=' for simple vars.  RT 10/25/00
+
+#if SHELL has a .exe suffix...
+ifeq ($(suffix ${SHELL}),.exe)
+	#...then assume windows env:
+SHELL_ENV := WINDOWS
+else
+SHELL_ENV := UNIX
+endif
+
+#NOTE:  MINSTALL does not get defined if I indent these assignment statements.  RT 10/25/00
+ifeq (${SHELL_ENV},WINDOWS)
+	#this is a work around - on nt, calling minstall directly truncates the
+	#argument list to 64 characters under mks toolkit. RT 10/25/00
+MINSTALL := sh minstall
+else
+MINSTALL := minstall
+endif
+PWD := $(shell pwd)
+
+#DISTROOT is the root of the distribution area. This should be set in your
+#environment or passed in at make time.
+BASE = ${DISTROOT}
+TARGET_OS	= cmn
+
+#BASE must be defined:
+ifeq ($(BASE),)
+	BASE=/dev/null
+endif
+
+ifeq ($(RWD),)
+	RWD=.
+endif
+
+ifeq ($(MAKEFILE),)
+	MAKEFILE= Makefile
+endif
+
+ifeq ($(MAKEMMF),)
+	MAKEMMF=make.mmf
+endif
+
+# DEVENVDIR is the T3 development environment directory.
+# If DEVENVDIR is not set, then we look at DEVENVDIR_PLAT, if it's
+# set, then we use it plus the TARGET_OS.
+ifeq ($(DEVENVDIR),)
+	ifeq ($(DEVENVDIR_PLAT),)
+		DEVENVDIR=$(PWD)/devenv
+	else
+		DEVENVDIR=$(DEVENVDIR_PLAT)/$(TARGET_OS)
+	endif
+endif
+# T3DIR is the directory in t3 where the <platform>.stz and other
+# files are kept.
+T3DIR=
+ifeq ($(T3DIR),)
+	T3DIR = $(PWD)
+endif
+
+#intermediate directories under DISTROOT - generally this should follow
+#the source tree structure.
+#
+#These can be redefined as needed.
+#HINT:  if you redefine PKG<n>, then always verify the following:
+#	DEST<n>
+#	TRANSLOG_DIR<n>
+#	POST_INSTALL<n>
+#
+PKG 	= bin
+PKG2	= lib
+PKG3	= man/man1
+PKG4	= man/man5
+
+#a convenient default:
+MANBASE	= ${BASE}/man
+
+# DESTRULE picks the default locations for DEST<n>
+DESTRULE = basic
+
+#default dest if not in map file:
+ifeq ($(DESTRULE),dist_except_cmn)
+	ifeq ($(TARGET_OS),cmn)
+		DEST	=  ${BASE}/${PKG}
+		DEST2   =  ${BASE}/${PKG2}
+		DEST3   =  ${BASE}/${PKG3}
+		DEST4   =  ${BASE}/${PKG4}
+	else
+		DEST	=  ${BASE}/${PKG}/dist/${TARGET_OS}
+		DEST2   =  ${BASE}/${PKG2}/dist/${TARGET_OS}
+		DEST3   =  ${BASE}/${PKG3}/dist/${TARGET_OS}
+		DEST4   =  ${BASE}/${PKG4}/dist/${TARGET_OS}
+	endif
+else
+	DEST	=  ${BASE}/${PKG}/${TARGET_OS}
+	DEST2   =  ${BASE}/${PKG2}/${TARGET_OS}
+	DEST3   =  ${BASE}/${PKG3}
+	DEST4   =  ${BASE}/${PKG4}
+endif
+
+#make t3 defaults:  bin, lib, and installer
+T3DEST = ${DEST}
+T3DEST2 = ${DEST2}
+T3DEST3 = ${BASE}/${PKG3}/${TARGET_OS}
+
+MAKEFILE =Makefile
+
+MAPFILE	=  install.map
+BASEOPT	= -base ${BASE}
+MAPOPTS	= -map ${MAPFILE} ${BASEOPT}
+#
+#override these if you need multiple install maps, e.g.,
+#	MAPOPTS2 = -map install2.map -base ${BASE}
+#
+MAPOPTS2	= ${MAPOPTS}
+MAPOPTS3	= ${MAPOPTS}
+MAPOPTS4	= ${MAPOPTS}
+
+TARGET	= TARGET_OS=${TARGET_OS}
+
+TRANSACT	= -cvsdest
+TRANSACT2	= -cvsdest
+TRANSACT3	= -cvsdest
+TRANSACT4	= -cvsdest
+CREATE_BTRANSACT=n
+# CREATE_BTRANSACT states whether or not to create the btransact.log
+# file right next to the transact.log file (used primarily by pullSource).
+ifeq ($(CREATE_BTRANSACT),y)
+	TRANSACT += -btransact
+	TRANSACT2 += -btransact
+	TRANSACT3 += -btransact
+	TRANSACT4 += -btransact
+endif
+
+# --------------------- Perl Synctax Checking ---------------------------------
+# Change the default action to only specifically check
+# If CHECK is on, minstall will try to do some basic syntax checking of the
+# source files.
+#
+# [alexb 1997.12.11]
+# Modify to no longer make this perl4 centric.
+# Instead default to syntax checking using whatever version is
+# called "perl" on the machine running minstall.  Allow this to be
+# overrides by specifying the name of the perl executable to use.
+# For backward compatibility, respect PERL4_CHECK if explicitly set.
+
+DO_PERL_CHECK=
+PERL_CHECKER= perl
+ifneq ($(PERL_CHECKER),none)
+	DO_PERL_CHECK = -perlCheck $(PERL_CHECKER)
+endif
+
+CHECK = -check $(DO_PERL_CHECK)
+
+### note - allow overriding of checks for some files.  RT 2/7/00
+CHECK2 = ${CHECK}
+CHECK3 = ${CHECK}
+CHECK4 = ${CHECK}
+# -----------------------------------------------------------------------------
+
+#VERBOSE	= -v
+VERBOSE	=
+#SHOWMMF	= -n
+SHOWMMF	=
+#undef update to force installs
+UPDATE	=InvalidUpdate
+UPDATE1 = -u
+UPDATE2 = -u
+UPDATE3 = -u
+UPDATE4 = -u
+ifneq (${UPDATE},InvalidUpdate)
+	UPDATE1 := ${UPDATE}
+	UPDATE2 := ${UPDATE}
+	UPDATE3 := ${UPDATE}
+	UPDATE4 := ${UPDATE}
+endif
+
+#text opts added 10/23/96 RT
+TEXTOPTS	=
+
+SUFFIXOPT =
+#SUFFIXOPT = -suffix_map ${SRCROOT}/bdb/suffix.dat
+
+INSTALLOPTS 	= ${SHOWMMF} ${VERBOSE} ${CHECK} ${SUFFIXOPT} ${TEXTOPTS} ${MAPOPTS} ${TRANSACT} ${TARGET}
+INSTALLOPTS2	= ${SHOWMMF} ${VERBOSE} ${CHECK2} ${SUFFIXOPT} ${TEXTOPTS} ${MAPOPTS2} ${TRANSACT2} ${TARGET}
+INSTALLOPTS3	= ${SHOWMMF} ${VERBOSE} ${CHECK3} ${SUFFIXOPT} ${TEXTOPTS} ${MAPOPTS3} ${TRANSACT3} ${TARGET}
+INSTALLOPTS4	= ${SHOWMMF} ${VERBOSE} ${CHECK4} ${SUFFIXOPT} ${TEXTOPTS} ${MAPOPTS4} ${TRANSACT4} ${TARGET}
+INSTALL 	= ${MINSTALL} -f ${DIRMODE} -m ${MODE} ${INSTALLOPTS}
+INSTALL2	= ${MINSTALL} -f ${DIRMODE2} -m ${MODE2} ${INSTALLOPTS2}
+INSTALL3	= ${MINSTALL} -f ${DIRMODE3} -m ${MODE3} ${INSTALLOPTS3}
+INSTALL4	= ${MINSTALL} -f ${DIRMODE4} -m ${MODE4} ${INSTALLOPTS4}
+
+#RCS rule is builtin to gnu make:
+COFLAGS	= -q
+
+FILES	=
+FILES2	=
+FILES3	=
+FILES4	=
+ALLSRC	= ${FILES} ${FILES2} ${FILES3} ${FILES4}
+
+CMDS    = 
+CMDS2   =
+CMDS3   =
+CMDHELPFLAG = 
+
+#assume executable - modify tool map if mixed.
+MODE	= 0555
+MODE2	= 0444
+MODE3	= 0444
+MODE4	= 0444
+DIRMODE	= 0775
+DIRMODE2	= 0775
+DIRMODE3	= 0775
+DIRMODE4	= 0775
+
+# DISTRIBFILE is the original t3 tgz file (from the 'net or whereever)
+DISTRIBFILE=
+# The file to be placed at the top of DEVENVDIR which is a copy of
+# this Makefile.  It's for convienence.
+COMPILEMAKEFILE=Makefile
+
+# SRCTGZ are the local source changes from DISTRIBFILE
+SRCTGZ       = $(TARGET_OS).stz
+# BINTGZ are the binary files to be installed under DISTROOT
+BINTGZ       = $(TARGET_OS).btz
+# LIBTGZ are the library files to be installed under DISTROOT
+LIBTGZ       = $(TARGET_OS).ltz
+# LIBTGZ are the installer packages files to be installed under DISTROOT
+INSTALLERTGZ       = $(TARGET_OS).itz
+
+# Specify these to use the t3 facility.
+# SRCFILES is the list of changed source files (see SRCTGZ)
+SRCFILES =
+# Define BINFILES to trigger unpacking of .btz files.
+BINFILES =
+# Define LIBFILES to trigger unpacking of .ltz files.
+LIBFILES =
+# Define INSTALLERFILES to trigger unpacking of .itz files.
+INSTALLERFILES =
+
+# Where to get them from.  You don't want any subdirectories in BINTGZ
+# or LIBTGZ, so that we can just untgz them right under DISTROOT.
+# BINDIR (or LIBDIR) is the directory to cd to before tgz'ing up the
+# BINFILES (or LIBFILES).
+SRCDIR = .
+BINDIR = .
+LIBDIR = .
+
+MINSTALLOPTS_UNTAR = -untar -f 0775 -inef
+MINSTALLOPTS_UNTGZ = -untgz -f 0775 -inef
+
+TGZUPDATE = ${MINSTALL} -tgz -u
+
+T3_INSTALLOPTS  = ${SHOWMMF} ${VERBOSE} ${CHECK} ${BASEOPT} ${TRANSACT} ${TARGET}
+T3_INSTALLOPTS2 = ${SHOWMMF} ${VERBOSE} ${CHECK} ${BASEOPT} ${TRANSACT2} ${TARGET}
+T3_INSTALLOPTS3 = ${SHOWMMF} ${VERBOSE} ${CHECK} ${BASEOPT} ${TRANSACT3} ${TARGET}
+
+T3_INSTALL  = ${MINSTALL} -untgz -f ${DIRMODE} -m ${MODE} ${T3_INSTALLOPTS}
+T3_INSTALL2 = ${MINSTALL} -untgz -f ${DIRMODE2} -m ${MODE2} ${T3_INSTALLOPTS2}
+T3_INSTALL3 = ${MINSTALL} -untgz -f ${DIRMODE3} -m ${MODE3} ${T3_INSTALLOPTS3}
+
+T3_UNINSTALLOPTS 	= ${SHOWMMF} ${VERBOSE} ${BASEOPT} ${TRANSACT} ${TARGET}
+T3_UNINSTALLOPTS2 	= ${SHOWMMF} ${VERBOSE} ${BASEOPT} ${TRANSACT2} ${TARGET}
+T3_UNINSTALLOPTS3 	= ${SHOWMMF} ${VERBOSE} ${BASEOPT} ${TRANSACT3} ${TARGET}
+
+T3_UNINSTALL  = ${MINSTALL} -rmtgz ${T3_UNINSTALLOPTS}
+T3_UNINSTALL2 = ${MINSTALL} -rmtgz ${T3_UNINSTALLOPTS2}
+T3_UNINSTALL3 = ${MINSTALL} -rmtgz ${T3_UNINSTALLOPTS3}
+
+#only define 2,3,4 targets if corresponding FILE<n> defined:
+ifneq ($(FILES),)
+	DOINSTALL1 = install1
+	UNINSTALL1 = un${DOINSTALL1}
+	PRINTMAP1 = printmap1
+endif
+ifneq ($(FILES2),)
+	DOINSTALL2 = install2
+	UNINSTALL2 = un${DOINSTALL2}
+	PRINTMAP2 = printmap2
+endif
+ifneq ($(FILES3),)
+	DOINSTALL3 = install3
+	UNINSTALL3 = un${DOINSTALL3}
+	PRINTMAP3 = printmap3
+endif
+ifneq ($(FILES4),)
+	DOINSTALL4 = install4
+	UNINSTALL4 = un${DOINSTALL4}
+	PRINTMAP4 = printmap4
+endif
+
+UPDATESRC=
+UPDATEBIN=
+UPDATELIB=
+PLACESRC=
+PLACEBIN=
+PLACELIB=
+ifneq ($(SRCFILES),)
+	UPDATESRC=updatesrc
+	PLACESRC=placesrc
+endif
+
+ifneq ($(BINFILES),)
+	UPDATEBIN=updatebin
+	PLACEBIN=placebin
+	T3BIN_INSTALL=t3bin_install
+	T3BIN_PRINTMAP=t3bin_printmap
+	T3BIN_UNINSTALL=t3bin_uninstall
+endif
+
+ifneq ($(LIBFILES),)
+	UPDATELIB=updatelib
+	PLACELIB=placelib
+	T3LIB_INSTALL=t3lib_install
+	T3LIB_PRINTMAP=t3lib_printmap
+	T3LIB_UNINSTALL=t3lib_uninstall
+endif
+
+ifneq ($(INSTALLERFILES),)
+	T3INSTALLER_INSTALL=t3installer_install
+	T3INSTALLER_PRINTMAP=t3installer_printmap
+	T3INSTALLER_UNINSTALL=t3installer_uninstall
+endif
+
+# You can optionally supply a BUILD_COMMAND; which might just consist
+# of "make" or "cd $(SRCDIR) ; make".
+BUILD_COMMAND=
+DOBUILD_COMMAND=
+ifneq ($(BUILD_COMMAND),)
+	DOBUILD_COMMAND=build
+endif
+
+
+#
+#in order to install manual pages that are readable on all platforms,
+#do a catman as a POST_INSTALL step, e.g.:
+#	POST_INSTALL3 = ${CATMAN}
+#
+#NOTE:  catman -w doesn't work except for /usr/man on solaris.
+#       With -M arg, it only indexes section 1. -n turns it off.
+#       Since windex prevents the man command from working, we
+#       make sure it is removed.
+#
+CATMAN	= rm -f ${MANBASE}/windex; catman -n -M ${MANBASE}
+
+POST_INSTALL1 =
+POST_INSTALL2 =
+POST_INSTALL3 =
+POST_INSTALL4 =
+
+#TARGETS:
+install:	$(MAKEFILE) ${DOINSTALL1} ${DOINSTALL2} ${DOINSTALL3} ${DOINSTALL4} ${T3BIN_INSTALL} ${T3LIB_INSTALL} ${T3INSTALLER_INSTALL}
+printmap:	$(MAKEFILE) ${PRINTMAP1} ${PRINTMAP2} ${PRINTMAP3} ${PRINTMAP4} ${T3BIN_PRINTMAP} ${T3LIB_PRINTMAP} ${T3INSTALLER_PRINTMAP}
+uninstall:  $(MAKEFILE) ${UNINSTALL1} ${UNINSTALL2} ${UNINSTALL3} ${UNINSTALL4} ${T3BIN_UNINSTALL} ${T3LIB_UNINSTALL} ${T3INSTALLER_UNINSTALL}
+
+$(MAKEFILE): $(MAKEMMF)
+	@echo $(MAKEMMF) is newer than $(MAKEFILE), recommand rerunning makemf.
+
+install1:	${FILES}
+	@${INSTALL} ${UPDATE1} ${FILES} ${DEST}
+	@${POST_INSTALL1}
+
+install2:	${FILES2}
+	@${INSTALL2} ${UPDATE2} ${FILES2} ${DEST2}
+	@${POST_INSTALL2}
+
+install3:	${FILES3}
+	@${INSTALL3} ${UPDATE3} ${FILES3} ${DEST3}
+	@${POST_INSTALL3}
+
+install4:	${FILES4}
+	@${INSTALL4} ${UPDATE4} ${FILES4} ${DEST4}
+	@${POST_INSTALL4}
+
+onlyinstall:
+ifeq ($(INFILES),)
+	@echo ERROR: INFILES needs to be a list of files to install
+	exit 1
+else
+	@${INSTALL} ${UPDATE1} $(filter $(INFILES),${FILES}) ${DEST}
+	@${INSTALL2} ${UPDATE2} $(filter $(INFILES),${FILES2}) ${DEST2}
+	@${INSTALL3} ${UPDATE3} $(filter $(INFILES),${FILES3}) ${DEST3}
+	@${INSTALL4} ${UPDATE4} $(filter $(INFILES),${FILES4}) ${DEST4}
+endif
+
+uninstall1:	${FILES}
+	@${INSTALL} -uninstall ${FILES} ${DEST}
+
+uninstall2:	${FILES2}
+	@${INSTALL2} -uninstall ${FILES2} ${DEST2}
+
+uninstall3:	${FILES3}
+	@${INSTALL3} -uninstall ${FILES3} ${DEST3}
+
+uninstall4:	${FILES4}
+	@${INSTALL4} -uninstall ${FILES4} ${DEST4}
+
+onlyuninstall:
+ifeq ($(RMFILES),)
+	@echo ERROR: RMFILES needs to be a list of files to uninstall
+	exit 1
+else
+	@${INSTALL} -uninstall $(filter $(RMFILES),${FILES}) ${DEST}
+	@${INSTALL2} -uninstall $(filter $(RMFILES),${FILES2}) ${DEST2}
+	@${INSTALL3} -uninstall $(filter $(RMFILES),${FILES3}) ${DEST3}
+	@${INSTALL4} -uninstall $(filter $(RMFILES),${FILES4}) ${DEST4}
+endif
+
+printmap1:	${FILES}
+	@${INSTALL} -p ${FILES} ${DEST}
+
+printmap2:	${FILES2}
+	@${INSTALL2} -p ${FILES2} ${DEST2}
+
+printmap3:	${FILES3}
+	@${INSTALL3} -p ${FILES3} ${DEST3}
+
+printmap4:	${FILES4}
+	@${INSTALL4} -p ${FILES4} ${DEST4}
+
+echoallsrc:;	@echo $(ALLSRC)
+
+t3bin_install:
+	@if [ -f $(BINTGZ) ]; then \
+		$(T3_INSTALL) $(UPDATE1) $(BINTGZ) ${T3DEST} ; \
+	fi
+
+t3lib_install:
+	@if [ -f $(LIBTGZ) ]; then \
+		$(T3_INSTALL2) $(UPDATE1) $(LIBTGZ) ${T3DEST2} ; \
+	fi
+
+t3installer_install:
+	@if [ -f $(INSTALLERTGZ) ]; then \
+		$(T3_INSTALL3) $(UPDATE1) $(INSTALLERTGZ) ${T3DEST3} ; \
+	fi
+
+t3bin_uninstall:
+	@if [ -f $(BINTGZ) ]; then \
+		$(T3_UNINSTALL) $(BINTGZ) ${T3DEST} ; \
+	fi
+
+t3lib_uninstall:
+	@if [ -f $(LIBTGZ) ]; then \
+		$(T3_UNINSTALL) $(LIBTGZ) ${T3DEST} ; \
+	fi
+
+t3installer_uninstall:
+	@if [ -f $(INSTALLERTGZ) ]; then \
+		$(T3_UNINSTALL) $(INSTALLERTGZ) ${T3DEST} ; \
+	fi
+
+t3bin_printmap:
+	@if [ -f $(BINTGZ) ]; then \
+		$(T3_INSTALL) -p $(BINTGZ) ${T3DEST} ; \
+	fi
+
+t3lib_printmap:
+	@if [ -f $(LIBTGZ) ]; then \
+		$(T3_INSTALL) -p $(LIBTGZ) ${T3DEST2} ; \
+	fi
+
+t3installer_printmap:
+	@if [ -f $(INSTALLERTGZ) ]; then \
+		$(T3_INSTALL) -p $(INSTALLERTGZ) ${T3DEST3} ; \
+	fi
+
+devenv: placedistrib $(PLACESRC) $(PLACEBIN) $(PLACELIB)
+	makemf T3DIR=$(T3DIR) DEVENVDIR=$(DEVENVDIR) -f $(MAKEMMF) -o $(DEVENVDIR)/$(COMPILEMAKEFILE)
+	@echo Now go compile it.
+	echo pushd $(DEVENVDIR)
+
+placedistrib:
+	${MINSTALL} $(MINSTALLOPTS_UNTGZ) $(DISTRIBFILE) $(DEVENVDIR)
+
+placesrc:
+	${MINSTALL} $(MINSTALLOPTS_UNTGZ) $(TARGET_OS).stz $(DEVENVDIR)/$(SRCDIR)
+	${MINSTALL} $(MINSTALLOPTS_UNTGZ) cmn.stz $(DEVENVDIR)/$(SRCDIR)
+
+placebin:
+	${MINSTALL} $(MINSTALLOPTS_UNTGZ) $(TARGET_OS).btz $(DEVENVDIR)/$(BINDIR)
+
+placelib:
+	${MINSTALL} $(MINSTALLOPTS_UNTGZ) $(TARGET_OS).ltz $(DEVENVDIR)/$(LIBDIR)
+
+clean:
+	rm -rf $(DEVENVDIR)
+
+build:
+	cd $(DEVENVDIR) ; $(BUILD_COMMAND)
+
+tot3: $(UPDATESRC) $(UPDATEBIN) $(UPDATELIB)
+	@echo Done.
+
+updatesrc:
+	cd $(DEVENVDIR)/$(SRCDIR) ; $(TGZUPDATE) $(SRCFILES) $(T3DIR)/$(SRCTGZ)
+
+updatebin:
+	cd $(DEVENVDIR)/$(BINDIR) ; $(TGZUPDATE) $(BINFILES) $(T3DIR)/$(BINTGZ)
+
+updatelib:
+	cd $(DEVENVDIR)/$(LIBDIR) ; $(TGZUPDATE) $(LIBFILES) $(T3DIR)/$(LIBTGZ)
+
+cmdhelp:
+	-@if [ x${CMDHELPFLAG} = x ]; then    \
+		help2html; \
+	else                            \
+		help2html ${CMDHELPFLAG} ${CMDS} ${CMDS2}; \
+	fi
+
+showcommands: ${CMDS}
+	${INSTALL} -p ${CMDS} ${DEST} | awk '{print $$3}'
+	${INSTALL2} -p ${CMDS2} ${DEST2} | awk '{print $$3}'
+	${INSTALL3} -p ${CMDS3} ${DEST3} | awk '{print $$3}'
+
+help:
+	@echo Basic file.mmf help
+	@echo ""
+	@echo Typical makefile directives:
+	@echo 'install         Install files under DISTROOT'
+	@echo 'onlyinstall     Install only those files in INFILES'
+	@echo 'uninstall       Remove files from DISTROOT'
+	@echo 'onlyuninstall   A more friendly version of uninstall'
+	@echo '                set RMFILES to list of files to uninstall'
+	@echo 'printmap        Print out where files would be installed'
+	@echo 'devenv          Create a development environment for 3rd'
+	@echo '                party tools.  You need DEVENVDIR set (base directory)'
+	@echo '                or DEVENVDIR_PLAT (base directory + platform name)'
+	@echo 'tot3            After building the executables & libraries in'
+	@echo '                the devenv, bring them into the source directory.'
+	@echo '                You will want to make sure they are checkOuted first'
+	@echo 'clean           Clean out DEVENVDIR'
+	@echo ""
+	@echo Examples:
+	@echo '  make'
+	@echo '  make uninstall'
+	@echo '  make printmap'
+	@echo '  make RMFILES=oldfile.sh onlyuninstall'
+	@echo '  make INFILES=newfile.pl onlyinstall'
+	@echo '  make DEVENVDIR_PLAT=/vanish/newprog TARGET_OS=solsparc devenv'
+	@echo '  make DEVENVDIR_PLAT=/vanish/newprog TARGET_OS=solsparc tot3'

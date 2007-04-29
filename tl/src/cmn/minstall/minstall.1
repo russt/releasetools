@@ -1,0 +1,167 @@
+.TH minstall 1 "15 August 1996" "Forte Software"
+.SH NAME
+minstall \- Install files somewhere, often through a map file.
+.SH SYNOPSIS
+.B minstall
+[-base base_dir]
+[-u]
+[-udiff]
+[-f dir_mode]
+[-m default_file_mode]
+[-map map_file]
+[-transact]
+[-trans transaction_log]
+[-check]
+[-inef]
+[-batroot dir]
+[-ime]
+[-p]
+[-help]
+[-d]
+[-q]
+[-v]
+[-n]
+[-uninstall|-diff|-tgz|-untgz]
+[-text {mac|dos|unix}] [-server {kshare}]
+[variable=value]*
+[source_files_to_install]+
+[default_destination_dir]
+
+.SH DESCRIPTION
+.B minstall
+is a powerful utility for installing from a source directory to an
+installation directory.  It can use a map file which will change the
+source name into a different destination name.  Through the map file,
+it can also selectivly install files based on environment variables
+(eg: TARGET_OS).
+It can maintain
+transact.log files (used by pullDist) with the -tranact flag.  By using
+-check, it will check the syntax of your perl programs.
+
+.SH OPTIONS
+.TP
+.BI \-map " map file"
+map file is the install map we install through.  A source file is
+looked up in the install map and we find the destination (installed)
+filename and directory.  See install.map (5) for a description.
+.TP
+.BI \-u
+Update only those files which are older than the source files.
+.BI \-udiff
+Update only those files which are different than the source files.
+.TP
+.BI \-f " dir mode"
+Force the creation of the installation directories.
+.TP
+.BI \-m " default file mode"
+Mode to chmod the installed files if not an install map is not used.
+.TP
+.BI \-trans " transaction log"
+Use this flag if you don't want to refer to your transaction logs as
+transact.log.  The name of this file needs to be coordinated with
+those programs that maintain the transaction logs (see pullDist).
+.TP
+.BI \-transact
+Add transactions to the transact.log file for the files we just installed.
+See pullDist.1 for a description of the transact.log file.
+.TP
+.BI \-base " base dir"
+is where every file from an install map gets installed under.  The
+base dir is added to the destination file name to make the actual file
+name.
+.TP
+.BI \-check
+Tells minstall to perform whatever static checking makes sense.  If
+the check fails, then we don't install the file.  For perl files
+(those ending in .prl or .pl), it runs perl -c.
+.TP
+.BI \-text " os"
+Translate each installed file to the local test of the destination os.
+Where os must be one of: {mac, dos, unix}.
+.TP
+.BI \-server " server_product"
+Configure destination file for a format compatible with <server_product>.
+If server_product is 'kshare', .hqx source files are translated to kshare
+format, and text file (type,creator) values are set to MPW defaults.
+.TP
+.BI \-uninstall
+Instead of installing, remove the files from the destination directory
+.TP
+.BI \-diff
+Instead of installing, run a diff between the source and destination files.
+.TP
+.BI \-tgz
+Instead of installing into a directory, put them into a tared and gziped
+archive file.  Note that GNU tar and gzip must be installed for this to work.
+.TP
+.BI \-untgz
+Explode a tared and gziped archive under a directory.
+.TP
+.BI \-ime
+Ignore map errors.  Currently, this is unimplemented.
+.TP
+.BI \-inef
+Ignore nonexistant files; ie, print no error messages about files
+which were requested to be installed, but we can't read.
+.TP
+.BI \-batroot " dir"
+Files with the bat munge can have the root directory changed with
+this option.  The batroot is the eventual directory from where the
+bat file will be run.  bat files here meaning DOS batch files.
+.TP
+.BI \-p
+Print out a map of where we would have installed things.  The map has
+no variables and is exclusively the map which is relavant to the input
+arguments (meaning that -u has an effect on the output, so do
+environment variables which are used in the install map). -p implies -n and -q.
+.TP
+.BI \-help
+Print out a useful / helpful message about how to use this program.
+.TP
+.BI \-d
+Debug: Print out usually nonuseful / nonhelpful information about the
+internal state of the program.
+.TP
+.BI \-q
+Quiet: print out only important things.
+.TP
+.BI \-v
+Verbose: Print out potentially useful information about the internal state of
+the program (but it's usually just noise).
+.TP
+.BI \-n
+Do not actually do anything useful.  Only pretend that we are doing
+things.  This is similar to make's -n.
+.SH ENVIRONMENT VARIABLES
+All environment variables may be defined on the command line.
+.TP
+.BI TRANSLOG_DIR
+If the -transact flag is given, then TRANSLOG_DIR should be
+defined to be the location of where to put the transact.log.  Note
+that it may be defined to be "", if you want to install it in the same
+directory that the file gets installed into.
+.TP
+.BI PATH
+If the skel procedure is used, then the PATH variable is used to
+determine which prlskel to copy (See Install Map File).
+.SH EXAMPLES
+minstall -f 0775 -m 0555   -check -u -map install.map -base /forte1/d/tools/new -transact TRANSLOG_DIR="" TARGET_OS=cmn instgram.pl minstall.prl minstall.pl minstall.1 /tmp
+
+minstall -u -map install.map -base /forte1/d/tools/new -transact TRANSLOG_DIR="" TARGET_OS=nt foo.prl foo.pl /tmp
+
+minstall bar.prl /usr/local/bin
+.SH SEE ALSO
+.B devnode
+For setting up a pullDist config (pull.map) file.
+
+.B updateDistDir
+for updating a transact.log without running minstall.
+
+.B pullDist
+Reads the transact.log and copies files from the file server to the client.
+
+.B prlskel
+The perl startup script.
+
+.SH BUGS
+None.
