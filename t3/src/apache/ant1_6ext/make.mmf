@@ -4,4 +4,5 @@ PKG3    = java/ant/lib
 
 POST_INSTALL3 =
 
-FILES3  = checkstyle-all-3.3.jar junit.jar ojdbc14.jar ant-testutil.jar ant-contrib.jar
+FILES3  = checkstyle-all-3.3.jar junit.jar ojdbc14.jar ant-testutil.jar ant-contrib.jar\
+            mysql-connector-java-5.0.4-bin.jar

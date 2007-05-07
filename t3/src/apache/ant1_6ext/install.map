@@ -5,4 +5,5 @@ checkstyle-all-3.3.jar  java/ant/lib/checkstyle-all-3.3.jar   0444
 ant-contrib.jar         java/ant/lib/ant-contrib.jar          0444
 
 #jdbc for build access to database
-ojdbc14.jar           java/ant/lib/ojdbc14.jar            0444
+ojdbc14.jar                        java/ant/lib/ojdbc14.jar       0444
+mysql-connector-java-5.0.4-bin.jar java/ant/lib/mysqljdbc.jar     0444
