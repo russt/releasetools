@@ -1,0 +1,355 @@
+*** cvs.h	2007/06/22 19:00:01	1.1
+--- cvs.h	2007/06/22 19:21:34
+***************
+*** 838,843 ****
+--- 838,844 ----
+  				   NULL for add or import */
+    char *rev_new;		/* rev number after a commit/modify,
+  				   add, or import, NULL for remove */
++   char *rev_del;		/* rev number of DELETED revision after a remove */
+  };
+  
+  /* Wrappers.  */
+***************
+*** 933,935 ****
+--- 934,973 ----
+  extern void cvs_flusherr PROTO ((void));
+  extern void cvs_flushout PROTO ((void));
+  extern void cvs_output_tagged PROTO ((const char *, const char *));
++ 
++ #define RUSSDEBUG 0
++ #if RUSSDEBUG
++ #	ifdef	__STDC__
++ #		define RUSSQ(S)	#S
++ #	else
++ #		define RUSSQ(S)	"S"
++ #	endif
++ 
++ #	define RUSSOPEN(FP)	FILE *fp; fp = fopen("/tmp/russ.log", "a")
++ #	define RUSS0(FMT)	{ RUSSOPEN(fp); fprintf(fp, RUSSQ(FMT\n)); fclose(fp);}
++ #	define RUSS1(FMT,VAR)	{ RUSSOPEN(fp); fprintf(fp, RUSSQ(FMT\n), VAR); fclose(fp);}
++ #	define RUSS2(FMT,V1,V2)	{ RUSSOPEN(fp); fprintf(fp, RUSSQ(FMT\n), V1,V2); fclose(fp);}
++ #	define RUSS3(FMT,V1,V2,V3)	{ RUSSOPEN(fp); fprintf(fp, RUSSQ(FMT\n), V1,V2,V3); fclose(fp);}
++ #else
++ #	define RUSS0(FMT)
++ #	define RUSS1(FMT,VAR)
++ #	define RUSS2(FMT,V1,V2)
++ #	define RUSS3(FMT,V1,V2,V3)
++ #endif RUSSDEBUG
++ 
++ #if RUSSDEBUG
++ #	define CLASSIFY_TYPE_STR(T) \
++ 	( \
++ 	    (T) == T_UNKNOWN ? "T_UNKNOWN" : \
++ 	    (T) == T_CONFLICT ? "T_CONFLICT" : \
++ 	    (T) == T_NEEDS_MERGE ? "T_NEEDS_MERGE" : \
++ 	    (T) == T_MODIFIED ? "T_MODIFIED" : \
++ 	    (T) == T_CHECKOUT ? "T_CHECKOUT" : \
++ 	    (T) == T_ADDED ? "T_ADDED" : \
++ 	    (T) == T_REMOVED ? "T_REMOVED" : \
++ 	    (T) == T_REMOVE_ENTRY ? "T_REMOVE_ENTRY" : \
++ 	    (T) == T_UPTODATE ? "T_UPTODATE" : \
++ 	    (T) == T_PATCH ? "T_PATCH" : \
++ 	    (T) == T_TITLE ? "T_TITLE" : "T_BADARG" \
++ 	)
++ #endif RUSSDEBUG
+*** add.c	2007/06/22 18:56:45	1.1
+--- add.c	2007/06/22 19:12:53
+***************
+*** 862,868 ****
+  	li = (struct logfile_info *) xmalloc (sizeof (struct logfile_info));
+  	li->type = T_TITLE;
+  	li->tag = xstrdup (tag);
+! 	li->rev_old = li->rev_new = NULL;
+  	p->data = li;
+  	(void) addnode (ulist, p);
+  	Update_Logfile (rcsdir, message, (FILE *) NULL, ulist);
+--- 862,868 ----
+  	li = (struct logfile_info *) xmalloc (sizeof (struct logfile_info));
+  	li->type = T_TITLE;
+  	li->tag = xstrdup (tag);
+! 	li->rev_old = li->rev_new = li->rev_del = NULL;
+  	p->data = li;
+  	(void) addnode (ulist, p);
+  	Update_Logfile (rcsdir, message, (FILE *) NULL, ulist);
+*** commit.c	2007/06/22 18:45:35	1.1
+--- commit.c	2007/06/22 19:37:07
+***************
+*** 335,341 ****
+      data = (struct logfile_info *) xmalloc (sizeof (struct logfile_info));
+      data->type = status;
+      data->tag = xstrdup (vers->tag);
+!     data->rev_old = data->rev_new = NULL;
+  
+      node->type = UPDATE;
+      node->delproc = update_delproc;
+--- 335,341 ----
+      data = (struct logfile_info *) xmalloc (sizeof (struct logfile_info));
+      data->type = status;
+      data->tag = xstrdup (vers->tag);
+!     data->rev_old = data->rev_new = data->rev_del = NULL;
+  
+      node->type = UPDATE;
+      node->delproc = update_delproc;
+***************
+*** 1027,1033 ****
+  	    li->type = status;
+  	    li->tag = xstrdup (vers->tag);
+  	    li->rev_old = xstrdup (vers->vn_rcs);
+! 	    li->rev_new = NULL;
+  	    p->data = li;
+  	    (void) addnode (ulist, p);
+  
+--- 1027,1033 ----
+  	    li->type = status;
+  	    li->tag = xstrdup (vers->tag);
+  	    li->rev_old = xstrdup (vers->vn_rcs);
+! 	    li->rev_new = li->rev_del = NULL;
+  	    p->data = li;
+  	    (void) addnode (ulist, p);
+  
+***************
+*** 1238,1243 ****
+--- 1238,1245 ----
+      List *ulist, *cilist;
+      struct commit_info *ci;
+  
++ RUSS0(commit_fileproc T0);
++ 
+      /* Keep track of whether write_dirtag is a branch tag.
+         Note that if it is a branch tag in some files and a nonbranch tag
+         in others, treat it as a nonbranch tag.  It is possible that case
+***************
+*** 1423,1441 ****
+             want for our commitlog messages; we want the old version
+             number and then "NONE." */
+  
+! 	if (ci->status != T_REMOVED)
+  	{
+! 	    p = findnode (ulist, finfo->file);
+! 	    if (p)
+! 	    {
+! 		Vers_TS *vers;
+! 		struct logfile_info *li;
+  
+! 		(void) classify_file_internal (finfo, &vers);
+! 		li = p->data;
+  		li->rev_new = xstrdup (vers->vn_rcs);
+- 		freevers_ts (&vers);
+  	    }
+  	}
+      }
+      if (SIG_inCrSect ())
+--- 1425,1447 ----
+             want for our commitlog messages; we want the old version
+             number and then "NONE." */
+  
+! RUSS1(commit_fileproc T1 ci->status=%s,CLASSIFY_TYPE_STR(ci->status));
+! 
+! 	p = findnode (ulist, finfo->file);
+! 	if (p)
+  	{
+! 	    Vers_TS *vers;
+! 	    struct logfile_info *li;
+  
+! 	    (void) classify_file_internal (finfo, &vers);
+! 	    li = p->data;
+! 	    if (ci->status == T_REMOVED) {
+! 		li->rev_del = xstrdup (vers->vn_rcs);
+! 	    } else {
+  		li->rev_new = xstrdup (vers->vn_rcs);
+  	    }
++ RUSS2(commit_fileproc T2 rev_new=%s rev_del=%s, li->rev_new != NULL ? li->rev_new : "NULL", li->rev_del != NULL ? li->rev_del : "NULL");
++ 	    freevers_ts (&vers);
+  	}
+      }
+      if (SIG_inCrSect ())
+***************
+*** 2396,2401 ****
+--- 2402,2409 ----
+  	free (li->rev_old);
+      if (li->rev_new)
+  	free (li->rev_new);
++     if (li->rev_del)
++ 	free (li->rev_del);
+      free (li);
+  }
+  
+*** import.c	2007/06/22 18:56:45	1.1
+--- import.c	2007/06/22 19:22:32
+***************
+*** 397,403 ****
+      li = (struct logfile_info *) xmalloc (sizeof (struct logfile_info));
+      li->type = T_TITLE;
+      li->tag = xstrdup (vbranch);
+!     li->rev_old = li->rev_new = NULL;
+      p->data = li;
+      (void) addnode (ulist, p);
+      Update_Logfile (repository, message, logfp, ulist);
+--- 397,403 ----
+      li = (struct logfile_info *) xmalloc (sizeof (struct logfile_info));
+      li->type = T_TITLE;
+      li->tag = xstrdup (vbranch);
+!     li->rev_old = li->rev_new = li->rev_del = NULL;
+      p->data = li;
+      (void) addnode (ulist, p);
+      Update_Logfile (repository, message, logfp, ulist);
+*** logmsg.c	2007/06/22 18:56:45	1.1
+--- logmsg.c	2007/06/22 19:10:32
+***************
+*** 610,615 ****
+--- 610,616 ----
+      FILE *xlogfp;
+      List *xchanges;
+  {
++ RUSS0(Update_Logfile T1);
+      /* nothing to do if the list is empty */
+      if (xchanges == NULL || xchanges->list->next == xchanges->list)
+  	return;
+***************
+*** 697,704 ****
+  				   + (li->rev_new ? strlen (li->rev_new) : 0)
+  				   + 10)
+  				  );
+! 		    (void) strcat (str_list, (li->rev_new
+! 					      ? li->rev_new : "NONE"));
+  		    break;
+  		/* All other characters, we insert an empty field (but
+  		   we do put in the comma separating it from other
+--- 698,714 ----
+  				   + (li->rev_new ? strlen (li->rev_new) : 0)
+  				   + 10)
+  				  );
+! 		    (void) strcat (str_list, (li->rev_new ? li->rev_new : "NONE"));
+! 		    break;
+! 		case 'd':
+! 		    /* save deleted revision number.  RT 5/3/01 */
+! 		    str_list =
+! 			xrealloc (str_list,
+! 				  (strlen (str_list)
+! 				   + (li->rev_del ? strlen (li->rev_del) : 0)
+! 				   + 10)
+! 				  );
+! 		    (void) strcat (str_list, (li->rev_del ? li->rev_del : "NONE"));
+  		    break;
+  		/* All other characters, we insert an empty field (but
+  		   we do put in the comma separating it from other
+***************
+*** 795,800 ****
+--- 805,812 ----
+         Why this duplicates the old behavior when the format string is
+         `%s' is left as an exercise for the reader. */
+  
++ RUSS0(logfile_write T0);
++ 
+      fmt_percent = strchr (filter, '%');
+      if (fmt_percent)
+      {
+***************
+*** 803,809 ****
+  	char *fmt_begin, *fmt_end;	/* beginning and end of the
+  					   format string specified in
+  					   filter. */
+! 	char *fmt_continue;		/* where the string continues
+  					   after the format string (we
+  					   might skip a '}') somewhere
+  					   in there... */
+--- 815,821 ----
+  	char *fmt_begin, *fmt_end;	/* beginning and end of the
+  					   format string specified in
+  					   filter. */
+! 	char *fmt_continue;		/* {where the string continues
+  					   after the format string (we
+  					   might skip a '}') somewhere
+  					   in there... */
+***************
+*** 823,837 ****
+  	    fmt_end = fmt_begin;
+  	    fmt_continue = fmt_begin;
+  	}
+! 	else if (*(fmt_percent + 1) == '{')
+  	{
+  	    /* The percent has a set of characters following it. */
+  
+  	    fmt_begin = fmt_percent + 2;
+  	    fmt_end = strchr (fmt_begin, '}');
+  	    if (fmt_end)
+  	    {
+! 		/* Skip over the '}' character. */
+  
+  		fmt_continue = fmt_end + 1;
+  	    }
+--- 835,850 ----
+  	    fmt_end = fmt_begin;
+  	    fmt_continue = fmt_begin;
+  	}
+! 	else if (*(fmt_percent + 1) == '{') /*}*/
+  	{
+  	    /* The percent has a set of characters following it. */
+  
+  	    fmt_begin = fmt_percent + 2;
++ 	    /*{*/
+  	    fmt_end = strchr (fmt_begin, '}');
+  	    if (fmt_end)
+  	    {
+! 		/* {Skip over the '}' character. */
+  
+  		fmt_continue = fmt_end + 1;
+  	    }
+***************
+*** 841,846 ****
+--- 854,860 ----
+                     string continues to the end of the line. */
+  
+  		/* Would be nice to also be giving the line number.  */
++ 		/*{*/
+  		error (0, 0, "loginfo: '}' missing");
+  		fmt_end = fmt_begin + strlen (fmt_begin);
+  		fmt_continue = fmt_end;
+***************
+*** 910,915 ****
+--- 924,931 ----
+  	prog = xstrdup (filter);
+      }
+  
++ RUSS1(logfile_write T5 prog=%s, prog);
++ 
+      if ((pipefp = run_popen (prog, "w")) == NULL)
+      {
+  	if (!noexec)
+*** server.c	2007/06/22 18:56:45	1.1
+--- server.c	2007/06/22 19:10:32
+***************
+*** 3355,3360 ****
+--- 3355,3362 ----
+  		 * variety).  But cvs doesn't currently use libiberty...we
+  		 * could roll our own....  FIXME.
+  		 */
++ RUSS3(do_cvs_command bad termination=%d cmd_name=%s program_name=%s, sig, cmd_name, program_name);
++ 
+  		buf_output0 (buf_to_net, "E Terminated with fatal signal ");
+  		sprintf (buf, "%d\n", sig);
+  		buf_output0 (buf_to_net, buf);
+*** version.c	2007/06/22 18:56:45	1.1
+--- version.c	2007/06/22 19:10:32
+***************
+*** 32,37 ****
+--- 32,39 ----
+  
+  
+  
++ char *extensions_string = "    With '{d}' (track deleted revisions) loginfo extension (russt).\n";
++ 
+  static const char *const version_usage[] =
+  {
+      "Usage: %s %s\n",
+***************
+*** 65,70 ****
+--- 67,73 ----
+         released.  */
+      (void) fputs (PACKAGE_STRING, stdout);
+      (void) fputs (config_string, stdout);
++     (void) fputs (extensions_string, stdout);
+  
+  #ifdef CLIENT_SUPPORT
+      if (current_parsed_root && current_parsed_root->isremote)

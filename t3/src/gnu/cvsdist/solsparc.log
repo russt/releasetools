@@ -1,0 +1,376 @@
+Script started on Wed Jun 27 16:52:15 2001
+miles% pwd
+/bld/russt
+miles% tar xzf /tooldist/byvendor/gnu/cvs/cvs1.11/cvs-1.11.tar.gz
+1.0u 1.0s 0:06 32% 0+0k 0+0io 0pf+0w
+miles% chpj
+/bld/russt/cvs-1.11 
+miles% subpj src
+/bld/russt/cvs-1.11/src 
+miles% patch < /tooldist/byvendor/gnu/cvs/cvs1.11/russt.patch
+patching file `add.c'
+patching file `commit.c'
+patching file `cvs.h'
+patching file `import.c'
+patching file `logmsg.c'
+patching file `server.c'
+patching file `version.c'
+miles% cd ..
+miles% configure
+creating cache ./config.cache
+checking for prefix by checking for cvs... /usr/forte/russt/ftools/bin/solsparc/cvs
+checking for mawk... no
+checking for gawk... no
+checking for nawk... nawk
+checking for gcc... gcc
+checking whether the C compiler (gcc  ) works... yes
+checking whether the C compiler (gcc  ) is a cross-compiler... no
+checking whether we are using GNU C... yes
+checking whether gcc accepts -g... yes
+checking for a BSD compatible install... ./install-sh -c
+checking whether make sets ${MAKE}... yes
+checking for ranlib... ranlib
+checking for bison... no
+checking for byacc... no
+checking for perl... /usr/forte/russt/ftools/bin/solsparc/perl
+checking for csh... /bin/csh
+checking whether #! works in shell scripts... yes
+checking how to run the C preprocessor... gcc -E
+checking for AIX... no
+checking for minix/config.h... no
+checking for POSIXized ISC... no
+checking for dirent.h that defines DIR... yes
+checking for opendir in -ldir... no
+checking for ANSI C header files... yes
+checking for sys/wait.h that is POSIX.1 compatible... yes
+checking for errno.h... yes
+checking for unistd.h... yes
+checking for string.h... yes
+checking for memory.h... yes
+checking for utime.h... yes
+checking for fcntl.h... yes
+checking for ndbm.h... yes
+checking for limits.h... yes
+checking for sys/file.h... yes
+checking for sys/param.h... yes
+checking for sys/select.h... yes
+checking for sys/time.h... yes
+checking for sys/timeb.h... yes
+checking for io.h... no
+checking for direct.h... no
+checking for sys/bsdtypes.h... no
+checking for sys/resource.h... yes
+checking whether stat file-mode macros are broken... no
+checking whether time.h and sys/time.h may both be included... yes
+checking for working const... yes
+checking for uid_t in sys/types.h... yes
+checking for mode_t... yes
+checking for pid_t... yes
+checking for size_t... yes
+checking return type of signal handlers... void
+checking for st_blksize in struct stat... yes
+checking for st_rdev in struct stat... yes
+checking for mkdir... yes
+checking for rename... yes
+checking for strstr... yes
+checking for dup2... yes
+checking for strerror... yes
+checking for valloc... yes
+checking for waitpid... yes
+checking for memmove... yes
+checking for strtoul... yes
+checking for fchmod... yes
+checking for fsync... yes
+checking for ftime... yes
+checking for mktemp... yes
+checking for putenv... yes
+checking for vprintf... yes
+checking for ftruncate... yes
+checking for timezone... yes
+checking for getpagesize... yes
+checking for initgroups... yes
+checking for fchdir... yes
+checking for sigaction... yes
+checking for sigprocmask... yes
+checking for sigvec... no
+checking for sigsetmask... no
+checking for sigblock... no
+checking for tempnam... yes
+checking for tzset... yes
+checking for readlink... yes
+checking for wait3... yes
+checking for mknod... yes
+checking for getpassphrase... no
+checking for vfork.h... no
+checking for working vfork... yes
+checking whether closedir returns void... no
+checking for library containing getspnam... none required
+checking whether utime accepts a null argument... yes
+checking for long file names... yes
+checking for working fnmatch... yes
+checking for main in -lnsl... yes
+checking for library containing connect... -lsocket
+checking for library containing gethostbyname... -lnsl
+default place for krb4 is /usr/kerberos
+checking for krb.h... 
+checking for krb_get_err_text... no
+default place for GSSAPI is /usr/cygnus/kerbnet
+checking for krb5.h... no
+checking for gssapi.h... no
+checking for gssapi/gssapi.h... no
+checking for gssapi/gssapi_generic.h... no
+checking for gethostname... yes
+checking for library containing crypt... none required
+checking for cygwin32... no
+updating cache ./config.cache
+creating ./config.status
+creating Makefile
+creating lib/Makefile
+creating src/Makefile
+creating zlib/Makefile
+creating diff/Makefile
+creating doc/Makefile
+creating man/Makefile
+creating tools/Makefile
+creating contrib/Makefile
+creating windows-NT/Makefile
+creating windows-NT/SCC/Makefile
+creating os2/Makefile
+creating emx/Makefile
+creating vms/Makefile
+creating stamp-h
+creating config.h
+creating src/options.h
+24.0u 52.0s 1:27 87% 0+0k 0+0io 0pf+0w
+miles% make
+making all in lib
+make[1]: Entering directory `/bld/russt/cvs-1.11/lib'
+gcc  -I.. -I. -I../src \
+              -DHAVE_CONFIG_H -g -O2 -c argmatch.c
+gcc  -I.. -I. -I../src \
+              -DHAVE_CONFIG_H -g -O2 -c getline.c
+gcc  -I.. -I. -I../src \
+              -DHAVE_CONFIG_H -g -O2 -c getopt.c
+gcc  -I.. -I. -I../src \
+              -DHAVE_CONFIG_H -g -O2 -c getopt1.c
+gcc  -I.. -I. -I../src \
+              -DHAVE_CONFIG_H -g -O2 -c md5.c
+gcc  -I.. -I. -I../src \
+              -DHAVE_CONFIG_H -g -O2 -c regex.c
+gcc  -I.. -I. -I../src \
+              -DHAVE_CONFIG_H -g -O2 -c savecwd.c
+gcc  -I.. -I. -I../src \
+              -DHAVE_CONFIG_H -g -O2 -c sighandle.c
+gcc  -I.. -I. -I../src \
+              -DHAVE_CONFIG_H -g -O2 -c stripslash.c
+gcc  -I.. -I. -I../src \
+              -DHAVE_CONFIG_H -g -O2 -c xgetwd.c
+gcc  -I.. -I. -I../src \
+              -DHAVE_CONFIG_H -g -O2 -c yesno.c
+gcc  -I.. -I. -I../src \
+              -DHAVE_CONFIG_H -g -O2 -c getdate.c
+ar cr libcvs.a argmatch.o getline.o getopt.o getopt1.o md5.o regex.o savecwd.o sighandle.o stripslash.o xgetwd.o yesno.o getdate.o
+ranlib libcvs.a
+make[1]: Leaving directory `/bld/russt/cvs-1.11/lib'
+making all in zlib
+make[1]: Entering directory `/bld/russt/cvs-1.11/zlib'
+gcc -g -O2   -c adler32.c -o adler32.o
+gcc -g -O2   -c compress.c -o compress.o
+gcc -g -O2   -c crc32.c -o crc32.o
+gcc -g -O2   -c gzio.c -o gzio.o
+gcc -g -O2   -c uncompr.c -o uncompr.o
+gcc -g -O2   -c deflate.c -o deflate.o
+gcc -g -O2   -c trees.c -o trees.o
+gcc -g -O2   -c zutil.c -o zutil.o
+gcc -g -O2   -c inflate.c -o inflate.o
+gcc -g -O2   -c infblock.c -o infblock.o
+gcc -g -O2   -c inftrees.c -o inftrees.o
+gcc -g -O2   -c infcodes.c -o infcodes.o
+gcc -g -O2   -c infutil.c -o infutil.o
+gcc -g -O2   -c inffast.c -o inffast.o
+ar rc libz.a adler32.o compress.o crc32.o gzio.o uncompr.o deflate.o trees.o zutil.o inflate.o infblock.o inftrees.o infcodes.o infutil.o inffast.o
+make[1]: Leaving directory `/bld/russt/cvs-1.11/zlib'
+making all in diff
+make[1]: Entering directory `/bld/russt/cvs-1.11/diff'
+gcc -c  -DHAVE_CONFIG_H -I. -I.. -I. -I../lib -g -O2 diff.c
+gcc -c  -DHAVE_CONFIG_H -I. -I.. -I. -I../lib -g -O2 diff3.c
+gcc -c  -DHAVE_CONFIG_H -I. -I.. -I. -I../lib -g -O2 analyze.c
+gcc -c  -DHAVE_CONFIG_H -I. -I.. -I. -I../lib -g -O2 cmpbuf.c
+gcc -c  -DHAVE_CONFIG_H -I. -I.. -I. -I../lib -g -O2 dir.c
+gcc -c  -DHAVE_CONFIG_H -I. -I.. -I. -I../lib -g -O2 io.c
+gcc -c  -DHAVE_CONFIG_H -I. -I.. -I. -I../lib -g -O2 -DPR_PROGRAM=\"/bin/pr\" util.c
+gcc -c  -DHAVE_CONFIG_H -I. -I.. -I. -I../lib -g -O2 context.c
+gcc -c  -DHAVE_CONFIG_H -I. -I.. -I. -I../lib -g -O2 ed.c
+gcc -c  -DHAVE_CONFIG_H -I. -I.. -I. -I../lib -g -O2 ifdef.c
+gcc -c  -DHAVE_CONFIG_H -I. -I.. -I. -I../lib -g -O2 normal.c
+gcc -c  -DHAVE_CONFIG_H -I. -I.. -I. -I../lib -g -O2 side.c
+gcc -c  -DHAVE_CONFIG_H -I. -I.. -I. -I../lib -g -O2 version.c
+ar cr libdiff.a diff.o diff3.o analyze.o cmpbuf.o dir.o io.o util.o context.o ed.o ifdef.o normal.o side.o version.o
+ranlib libdiff.a
+make[1]: Leaving directory `/bld/russt/cvs-1.11/diff'
+making all in src
+make[1]: Entering directory `/bld/russt/cvs-1.11/src'
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c add.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c admin.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c buffer.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c checkin.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c checkout.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c classify.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c client.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c commit.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c create_adm.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c cvsrc.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c diff.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c edit.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c entries.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c expand_path.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c fileattr.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c find_names.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c hardlink.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c hash.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c history.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c ignore.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c import.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c lock.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c log.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c login.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c logmsg.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c main.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c mkmodules.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c modules.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c myndbm.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c no_diff.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c parseinfo.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c patch.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c rcs.c
+gcc  -I. -I.. -I. -I../lib -I../diff -DHAVE_CONFIG_H  -g -O2 -c ./rcscmds.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c recurse.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c release.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c remove.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c repos.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c root.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c rtag.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c scramble.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c server.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c status.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c tag.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c update.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c watch.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c wrapper.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c vers_ts.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c subr.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c filesubr.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c run.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c version.c
+gcc  -I. -I.. -I. -I../lib -DHAVE_CONFIG_H  -g -O2 -c error.c
+gcc  -I. -I.. -I. -I../lib -I../zlib -DHAVE_CONFIG_H  -g -O2 -c ./zlib.c
+gcc add.o admin.o buffer.o checkin.o checkout.o classify.o client.o commit.o create_adm.o cvsrc.o diff.o edit.o entries.o expand_path.o fileattr.o find_names.o hardlink.o hash.o history.o ignore.o import.o lock.o log.o login.o logmsg.o main.o mkmodules.o modules.o myndbm.o no_diff.o parseinfo.o patch.o rcs.o rcscmds.o recurse.o release.o remove.o repos.o root.o rtag.o scramble.o server.o status.o tag.o update.o watch.o wrapper.o vers_ts.o subr.o filesubr.o run.o version.o error.o zlib.o ../lib/libcvs.a ../zlib/libz.a ../diff/libdiff.a -lnsl -lsocket   -o cvs 
+echo > .fname \
+  cvs-`sed < ./version.c \
+	    -e '/version_string/!d' \
+	    -e 's/[^0-9.]*\([0-9.]*\).*/\1/' \
+	    -e q`
+sed -e 's,xLIBDIRx,/usr/forte/russt/ftools/bin/lib/cvs,g' \
+    -e "s,xVERSIONx,`cat .fname`,g" ./cvsbug.sh > cvsbug-t
+rm -f .fname
+mv cvsbug-t cvsbug
+chmod a+x cvsbug
+make[1]: Leaving directory `/bld/russt/cvs-1.11/src'
+making all in man
+make[1]: Entering directory `/bld/russt/cvs-1.11/man'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/bld/russt/cvs-1.11/man'
+making all in doc
+make[1]: Entering directory `/bld/russt/cvs-1.11/doc'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/bld/russt/cvs-1.11/doc'
+making all in contrib
+make[1]: Entering directory `/bld/russt/cvs-1.11/contrib'
+rm -f rcs2log
+cp rcs2log.sh rcs2log
+chmod +x rcs2log
+rm -f clmerge
+sed -e 's,xPERL_PATHx,/usr/forte/russt/ftools/bin/solsparc/perl,' clmerge.pl > clmerge-t
+mv clmerge-t clmerge
+chmod +x clmerge
+rm -f cln_hist
+sed -e 's,xPERL_PATHx,/usr/forte/russt/ftools/bin/solsparc/perl,' cln_hist.pl > cln_hist-t
+mv cln_hist-t cln_hist
+chmod +x cln_hist
+rm -f commit_prep
+sed -e 's,xPERL_PATHx,/usr/forte/russt/ftools/bin/solsparc/perl,' commit_prep.pl > commit_prep-t
+mv commit_prep-t commit_prep
+chmod +x commit_prep
+rm -f cvs2vendor
+cp cvs2vendor.sh cvs2vendor
+chmod +x cvs2vendor
+rm -f cvs_acls
+sed -e 's,xPERL_PATHx,/usr/forte/russt/ftools/bin/solsparc/perl,' cvs_acls.pl > cvs_acls-t
+mv cvs_acls-t cvs_acls
+chmod +x cvs_acls
+rm -f cvscheck
+cp cvscheck.sh cvscheck
+chmod +x cvscheck
+rm -f log
+sed -e 's,xPERL_PATHx,/usr/forte/russt/ftools/bin/solsparc/perl,' log.pl > log-t
+mv log-t log
+chmod +x log
+rm -f log_accum
+sed -e 's,xPERL_PATHx,/usr/forte/russt/ftools/bin/solsparc/perl,' log_accum.pl > log_accum-t
+mv log_accum-t log_accum
+chmod +x log_accum
+rm -f mfpipe
+sed -e 's,xPERL_PATHx,/usr/forte/russt/ftools/bin/solsparc/perl,' mfpipe.pl > mfpipe-t
+mv mfpipe-t mfpipe
+chmod +x mfpipe
+rm -f rcs-to-cvs
+cp rcs-to-cvs.sh rcs-to-cvs
+chmod +x rcs-to-cvs
+rm -f rcslock
+sed -e 's,xPERL_PATHx,/usr/forte/russt/ftools/bin/solsparc/perl,' rcslock.pl > rcslock-t
+mv rcslock-t rcslock
+chmod +x rcslock
+rm -f sccs2rcs
+sed -e 's,xCSH_PATHx,/bin/csh,' sccs2rcs.csh > sccs2rcs-t
+mv sccs2rcs-t sccs2rcs
+chmod +x sccs2rcs
+make[1]: Leaving directory `/bld/russt/cvs-1.11/contrib'
+making all in tools
+make[1]: Entering directory `/bld/russt/cvs-1.11/tools'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/bld/russt/cvs-1.11/tools'
+making all in windows-NT
+make[1]: Entering directory `/bld/russt/cvs-1.11/windows-NT'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/bld/russt/cvs-1.11/windows-NT'
+making all in os2
+make[1]: Entering directory `/bld/russt/cvs-1.11/os2'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/bld/russt/cvs-1.11/os2'
+making all in emx
+make[1]: Entering directory `/bld/russt/cvs-1.11/emx'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/bld/russt/cvs-1.11/emx'
+making all in vms
+make[1]: Entering directory `/bld/russt/cvs-1.11/vms'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/bld/russt/cvs-1.11/vms'
+367.0u 34.0s 6:55 96% 0+0k 0+0io 0pf+0w
+miles% subpj src
+/bld/russt/cvs-1.11/src 
+miles% ./cvs --version
+
+Concurrent Versions System (CVS) 1.11 (client/server)
+    With '{d}' (track deleted revisions) loginfo extension (russt).
+
+Copyright (c) 1989-2000 Brian Berliner, david d `zoo' zuhn, 
+                        Jeff Polk, and other authors
+
+CVS may be copied only under the terms of the GNU General Public License,
+a copy of which can be found with the CVS distribution kit.
+
+Specify the --help option for further information about CVS
+miles% gcc --version
+2.95.2
+miles% ^D
+script done on Wed Jun 27 17:12:09 2001

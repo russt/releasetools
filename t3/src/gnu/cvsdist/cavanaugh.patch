@@ -1,0 +1,63 @@
+RCS file: /home2/cvsroot/ccvs/src/commit.c,v
+retrieving revision 1.167
+diff -c -r1.167 commit.c
+*** src/commit.c	2001/01/09 13:59:59	1.167
+--- src/commit.c	2001/01/22 21:44:04
+***************
+*** 56,61 ****
+--- 56,65 ----
+  static void masterlist_delproc PROTO((Node *p));
+  static char *locate_rcs PROTO((char *file, char *repository));
+
++ /* Should we alter the parameters passed to taginfo/comminfo.  Can be changed
++    by CVSROOT/config.  */
++ int alternate_info = 0;
++
+  struct commit_info
+  {
+      Ctype status;			/* as returned from Classify_File() */
+***************
+*** 1109,1116 ****
+      if (li->type == T_ADDED
+  	|| li->type == T_MODIFIED
+  	|| li->type == T_REMOVED)
+      {
+! 	run_arg (p->key);
+      }
+      return (0);
+  }
+--- 1113,1146 ----
+      if (li->type == T_ADDED
+  	|| li->type == T_MODIFIED
+  	|| li->type == T_REMOVED)
++     {
++     if (!alternate_info)
++ 	{ run_arg (p->key); }
++     else
++     {
++     char argBuf[PATH_MAX];
++     char *type_stat;
++     char *tag_stat;
++
++     switch (li->type)
+      {
+!     case T_ADDED:
+!        type_stat="C_ADD";
+!        break;
+!     case T_MODIFIED:
+!        type_stat="C_MOD";
+!        break;
+!     case T_REMOVED:
+!        type_stat="C_DEL";
+!        break;
+!     }
+!     if ( li->tag==NULL || strlen(li->tag)==0 )
+!     { tag_stat="main"; }
+!     else
+!     { tag_stat=li->tag; }
+!     sprintf(argBuf,"%s:%s:%s:%s",p->key,type_stat,tag_stat,li->rev_old);
+! 	run_arg (argBuf);
+!     }
+      }
+      return (0);
+  }

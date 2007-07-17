@@ -1,0 +1,6 @@
+TEMPLATE = file.mmf
+
+PKG  = bin
+
+BINFILES = cvs
+
