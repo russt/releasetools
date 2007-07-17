@@ -247,7 +247,7 @@ echo INFO: cvsopts=$cvsopts
 set cvs_srcroot_prefix=""
 if ( $?CVS_SRCROOT_PREFIX) then
     if ( "$CVS_SRCROOT_PREFIX" != "" ) then
-	set cvs_srcroot_prefix="$CVS_SRCROOT_PREFIX/"
+        set cvs_srcroot_prefix="$CVS_SRCROOT_PREFIX/"
     endif
 endif
 echo INFO: cvs_srcroot_prefix="'$cvs_srcroot_prefix'"
@@ -397,9 +397,9 @@ if (! $NONLOCALONLY) then
             if ( $DOCVSUPDATE ) then
                 if ( $DOLOCALCVSUPDATE == 1 ) then
                     bldmsg -mark -p $p bootstrap local bdb from branch $CVS_BRANCH_NAME
-		    echo cvs $cvsopts checkout $checkoutopts -d bb ${cvs_srcroot_prefix}bb
-		    cvs $cvsopts checkout $checkoutopts -d bb ${cvs_srcroot_prefix}bb
-		    if ( $status ) set CVSSTATUS = 1
+                    echo cvs $cvsopts checkout $checkoutopts -d bb ${cvs_srcroot_prefix}bb
+                    cvs $cvsopts checkout $checkoutopts -d bb ${cvs_srcroot_prefix}bb
+                    if ( $status ) set CVSSTATUS = 1
                 endif
 
                 #now install bdb's:
@@ -479,9 +479,9 @@ foreach pj ($toolspj_list)
 
     set cvs_srcroot_prefix=""
     if ( $?CVS_SRCROOT_PREFIX) then
-	if ( "$CVS_SRCROOT_PREFIX" != "" ) then
-	    set cvs_srcroot_prefix="$CVS_SRCROOT_PREFIX/"
-	endif
+        if ( "$CVS_SRCROOT_PREFIX" != "" ) then
+            set cvs_srcroot_prefix="$CVS_SRCROOT_PREFIX/"
+        endif
     endif
     echo "INFO: cvs_srcroot_prefix for project '$pj' is '$cvs_srcroot_prefix'"
 
@@ -489,7 +489,7 @@ foreach pj ($toolspj_list)
         #always check out bb service
         bldmsg -mark -p $p bootstrap bdb in $pdir from branch $CVS_BRANCH_NAME
         echo cvs $cvsopts checkout $checkoutopts -d bb ${cvs_srcroot_prefix}bb
-	cvs $cvsopts checkout $checkoutopts -d bb ${cvs_srcroot_prefix}bb
+        cvs $cvsopts checkout $checkoutopts -d bb ${cvs_srcroot_prefix}bb
         if ( $status ) then
             bldmsg -error -p $p BDB CVS UPDATE FAILED in $SRCROOT
             set CVSSTATUS = 1
@@ -530,8 +530,8 @@ EOF
         else
             if ( $DOCVSUPDATE ) then
                 bldmsg -mark -p $p update bdb in $pdir from branch $CVS_BRANCH_NAME
-		echo cvs $cvsopts checkout $checkoutopts -d bb ${cvs_srcroot_prefix}bb
-		cvs $cvsopts checkout $checkoutopts -d bb ${cvs_srcroot_prefix}bb
+                echo cvs $cvsopts checkout $checkoutopts -d bb ${cvs_srcroot_prefix}bb
+                cvs $cvsopts checkout $checkoutopts -d bb ${cvs_srcroot_prefix}bb
                 if ( $status ) then
                     bldmsg -error -p $p BDB cvsupdate FAILED in $SRCROOT
                     set CVSSTATUS = 1
