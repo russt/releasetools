@@ -187,6 +187,14 @@ Environment:
        The CVS branch name you want to use to update the tools
        source code in all projects.
 
+ CVS_CO_ROOT
+       If sources are checked into a sub-dir of CVSROOT, then this is the
+       root cvs directory relative to SRCROOT.
+
+ CVS_SRCROOT_PREFIX -
+       If sources are checked into a sub-dir of CVSROOT, then this is the prefix
+       to use.
+
  DISTROOT -  the distribution area for tools. (removed if -clean).
 
  SRCROOT  -  the root directory of the working source repository.
@@ -235,6 +243,14 @@ else
     set cvsopts="-f -q -z6"
 endif
 echo INFO: cvsopts=$cvsopts
+
+set cvs_srcroot_prefix=""
+if ( $?CVS_SRCROOT_PREFIX) then
+    if ( "$CVS_SRCROOT_PREFIX" != "" ) then
+	set cvs_srcroot_prefix="$CVS_SRCROOT_PREFIX/"
+    endif
+endif
+echo INFO: cvs_srcroot_prefix="'$cvs_srcroot_prefix'"
 
 set checkoutopts="-A"
 if ($CVS_BRANCH_NAME != trunk && $CVS_BRANCH_NAME != main ) then
@@ -381,13 +397,9 @@ if (! $NONLOCALONLY) then
             if ( $DOCVSUPDATE ) then
                 if ( $DOLOCALCVSUPDATE == 1 ) then
                     bldmsg -mark -p $p bootstrap local bdb from branch $CVS_BRANCH_NAME
-                     if ( $?CVS_SRCROOT_PREFIX ) then
-                        cvs $cvsopts checkout $checkoutopts -d bb ${CVS_SRCROOT_PREFIX}/bb
-                        if ( $status ) set CVSSTATUS = 1
-                     else
-                        cvs $cvsopts checkout $checkoutopts bb
-                        if ( $status ) set CVSSTATUS = 1
-                     endif
+		    echo cvs $cvsopts checkout $checkoutopts -d bb ${cvs_srcroot_prefix}bb
+		    cvs $cvsopts checkout $checkoutopts -d bb ${cvs_srcroot_prefix}bb
+		    if ( $status ) set CVSSTATUS = 1
                 endif
 
                 #now install bdb's:
@@ -465,11 +477,19 @@ foreach pj ($toolspj_list)
         set checkoutopts="-A -r $CVS_BRANCH_NAME"
     endif
 
+    set cvs_srcroot_prefix=""
+    if ( $?CVS_SRCROOT_PREFIX) then
+	if ( "$CVS_SRCROOT_PREFIX" != "" ) then
+	    set cvs_srcroot_prefix="$CVS_SRCROOT_PREFIX/"
+	endif
+    endif
+    echo "INFO: cvs_srcroot_prefix for project '$pj' is '$cvs_srcroot_prefix'"
+
     if ( $DOCVSUPDATE ) then
         #always check out bb service
         bldmsg -mark -p $p bootstrap bdb in $pdir from branch $CVS_BRANCH_NAME
-        echo cvs $cvsopts checkout $checkoutopts bb
-        cvs $cvsopts checkout $checkoutopts bb
+        echo cvs $cvsopts checkout $checkoutopts -d bb ${cvs_srcroot_prefix}bb
+	cvs $cvsopts checkout $checkoutopts -d bb ${cvs_srcroot_prefix}bb
         if ( $status ) then
             bldmsg -error -p $p BDB CVS UPDATE FAILED in $SRCROOT
             set CVSSTATUS = 1
@@ -510,7 +530,8 @@ EOF
         else
             if ( $DOCVSUPDATE ) then
                 bldmsg -mark -p $p update bdb in $pdir from branch $CVS_BRANCH_NAME
-                cvs $cvsopts checkout $checkoutopts bb
+		echo cvs $cvsopts checkout $checkoutopts -d bb ${cvs_srcroot_prefix}bb
+		cvs $cvsopts checkout $checkoutopts -d bb ${cvs_srcroot_prefix}bb
                 if ( $status ) then
                     bldmsg -error -p $p BDB cvsupdate FAILED in $SRCROOT
                     set CVSSTATUS = 1
