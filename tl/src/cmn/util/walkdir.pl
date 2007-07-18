@@ -119,7 +119,8 @@ sub main
                 $crcstr,
                 $modestr,
                 $linecnt,
-                $dir);
+                &quoteit($dir),
+                );
             $showunits = 0 if ($showunits);     #display units on first line only
         } 
         
@@ -135,7 +136,7 @@ sub main
                 $crcstr,
                 $modestr,
                 $linecnt,
-                &path'mkpathname($dir, $fn)
+                &quoteit(&path'mkpathname($dir, $fn)),
                 );
             $showunits = 0 if ($showunits);     #display units on first line only
         }
@@ -148,7 +149,7 @@ sub main
                 $textmode,
                 $crcstr,
                 $modestr,
-                &path'mkpathname($dir, $fn),
+                &quoteit(&path'mkpathname($dir, $fn)),
                 $linkto
                 );
             $showunits = 0 if ($showunits);     #display units on first line only
@@ -158,6 +159,25 @@ sub main
 
     return(0);
     &squawk_off;
+}
+
+sub quoteit
+#add quotes if user specified -quote or -dquote
+{
+    my ($str) = @_;
+
+    return $str unless ($SQUOTE || $DQUOTE);
+
+
+    if ($DQUOTE_FIRST) {
+        $str =  '"' . $str . '"'  if ($DQUOTE);
+        $str =  "'" . $str . "'"  if ($SQUOTE);
+    } else {
+        $str =  "'" . $str . "'"  if ($SQUOTE);
+        $str =  '"' . $str . '"'  if ($DQUOTE);
+    }
+
+    return $str;
 }
 
 sub du_str
@@ -201,7 +221,7 @@ sub wdrec2str
 ########################### OPTION SETTING ROUTINES ############################
 
 sub save_file_info
-#returns true if okay, false if error
+#if arg specified, then set option, else return option.
 {
     local ($bool) = @_;
     if (defined($bool) && $bool >= 0) {
@@ -364,6 +384,34 @@ sub option_slice
         $SHOWSLICE = $bool;
     } else {
         printf STDERR "%s:  ERROR: option_slice requires boolean value (0=false, 1=true).\n", $p;
+        return(0);
+    }
+    return(1);
+}
+
+sub option_squote
+#returns true if okay, false if error
+{
+    local ($bool) = @_;
+    if (defined($bool) && $bool >= 0) {
+        $SQUOTE = $bool;
+        $DQUOTE_FIRST = ($DQUOTE ? 1 : 0);
+    } else {
+        printf STDERR "%s:  ERROR: option_squote requires boolean value (0=false, 1=true).\n", $p;
+        return(0);
+    }
+    return(1);
+}
+
+sub option_dquote
+#returns true if okay, false if error
+{
+    local ($bool) = @_;
+    if (defined($bool) && $bool >= 0) {
+        $DQUOTE = $bool;
+        $DQUOTE_FIRST = ($SQUOTE ? 0 : 1);
+    } else {
+        printf STDERR "%s:  ERROR: option_dquote requires boolean value (0=false, 1=true).\n", $p;
         return(0);
     }
     return(1);
@@ -940,6 +988,10 @@ sub init
     $SYMLINKFLAG = 0;
     $RIDICULOUSDEPTH = 500; #default to ridiculously high value
     $MAXDEPTH = $RIDICULOUSDEPTH;
+    $SQUOTE = 0;            #wrap file/dir names in single-quotes
+    $DQUOTE = 0;            #wrap file/dir names in double-quotes
+    $DQUOTE_FIRST = 0;      #if -squote & -dquote, then do in order flags appear
+
     $TREEDEPTH = 0;     #keep track of actual max tree depth
 
     #output format options for -du option:
@@ -1011,8 +1063,11 @@ sub usage
     local($status) = @_;
 
     print STDERR <<"!";
-Usage:  $p [-help] [-f] [-ftxt] [-d] [-e] [-ne] [-s] [-l depth] [-slice] [-crc]
-                [-nocvs ] [-text] [-lc] [-du] [-kbytes] [-mbytes] [-gbytes] [dirs...]
+Usage:  $p [-help] [-f] [-ftxt] [-d] [-v] [-q] [-qq] [-dq] [-sq]
+                [-e] [-ne] [-s] [-l depth] [-slice] [-leaf] [-crc] [-modes]
+                [-cvsonly] [-nocvs] [-norcs] [-nosccs] [-nosvn] [-ci] [-text]
+                [-lc] [-du] [-bytes] [-kbytes] [-mbytes] [-gbytes] [-unjar]
+                [dirs...]
 
 Options:
  -help     display this usage message
@@ -1023,6 +1078,9 @@ Options:
  -v        display warnings or informational output.
  -q        don't display warnings or informational output.
  -qq       don't display dirtree (useful with -unjar option).
+
+ -dq[uote] wrap file/dir names in double-quotes
+ -sq[uote] wrap file/dir names in single-quotes
 
  -e        show only empty directories.
  -ne       only display directories that have plain files or symlinks.
@@ -1141,6 +1199,10 @@ sub parse_args
             return &usage(1) if (!&option_maxdepth(shift(@ARGV)));
         } elsif ($flag eq "-slice") {
             &option_slice(1);
+        } elsif ($flag =~ /^-sq(uote)?/ ) {
+            &option_squote(1);
+        } elsif ($flag =~ /^-dq(uote)?/ ) {
+            &option_dquote(1);
         } elsif ($flag =~ '^-h') {
             $HELPFLAG = 1;
             return &usage(0);
