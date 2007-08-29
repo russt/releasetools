@@ -24,7 +24,7 @@
 #
 # @(#)whatport.sh - ver 1.1 - 01/04/2006
 #
-# Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright 2004-2007 Sun Microsystems, Inc. All Rights Reserved.
 # 
 # END_HEADER - DO NOT EDIT
 #
@@ -44,7 +44,7 @@ if [ $status -ne 0 ]; then
     exit 1
 fi
 
-case $MACH in
+case "$MACH" in
     sun4*)
         MACH2=`uname -v`
         if [ $MACH2 -eq "Generic" ]
@@ -57,24 +57,32 @@ case $MACH in
     00????????00) 
         echo rs6000
         ;;
-    i?86|Linux)
-        MACH2=`uname`
-        if [ $MACH2 = "Linux" ]
-        then
+    i?86|Linux|x86_64)
+        case `uname` in
+        Linux)
             echo linux
-        elif [ $MACH2 = "CYGWIN_NT-5.1" ]; then
+            ;;
+        CYGWIN*)
             echo cygwin
-        else
-            MACH3=`uname -s`
-            if [ $MACH3 = "DYNIX/ptx" ]
-            then
+            ;;
+        Darwin)
+            echo macosx
+            ;;
+        *)
+            case `uname -s` in
+            DYNIX/ptx)
                 echo ptxi86
-            elif [ $MACH2 = "Darwin" ]; then
-                echo macosx
-            else
-                echo cygwin
-            fi
-        fi
+                ;;
+            DYNIX*)
+                echo sequent
+                ;;
+            *)
+                echo unknown
+                exit 1
+                ;;
+            esac
+            ;;
+        esac
         ;;
     9000*) 
         echo hp9000
@@ -103,6 +111,7 @@ case $MACH in
             echo nt
         else
             echo unknown
+            exit 1
         fi
         ;;
     i86pc)
@@ -111,6 +120,7 @@ case $MACH in
             echo solx86
         else
             echo unknown
+            exit 1
         fi
         ;;
     Power*)
@@ -120,6 +130,7 @@ case $MACH in
             echo macosx
         else
             echo unknown
+            exit 1
         fi
         ;;
     *)

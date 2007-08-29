@@ -165,20 +165,18 @@ sub usage
     local($status) = @_;
 
     print STDERR <<"!";
-Usage:  $p [-help] [-v] [-mime] [-text] -to addr[,addr...] [-from addr]
-            [-attach file[,file...]]
-            [-s string] [-i message_file] [-smtp mailhost]
+Usage:  $p [options...]
 
 Synopsis:
-  Portable email sender.
+  Portable email sender.  Message headers can be
+  specified on the command line, or via the contents
+  of the message file.  If input file is not specified,
+  then reads message from stdin.
 
 Options:
   -help  display this usage message and exit.
   -v     verbose output
-  -mime  send MIME encoded message (default).
-  -text  send a plain-text message (turn off MIME).
   -test  display message, but don't send it.
-
   -to addr[,addr...]
          Send to comma-separated list of recipients.
   -from email_address
@@ -190,14 +188,20 @@ Options:
   -i message_file
          Read this file as the body of the message.
          If an input file is not specified, then read stdin.
-  -attach file[,file...]
-         Attach one or more files to the message.  If an html message
-         has references to gifs, this is the place to attach them.
 
 Environment:
- \$SMTP_HOST  Use this STMP host if not specified on command line.
+ \$SMTP_HOST        Use this STMP host if not specified on command line.
+ \$BMAIL_FROM_ADDR  Use this address as the -from address if otherwise specified.
 
 !
+
+#NOT IMPLEMENTED:
+#  -mime  send MIME encoded message (default).
+#  -text  send a plain-text message (turn off MIME).
+#  -attach file[,file...]
+#         Attach one or more files to the message.  If an html message
+#         has references to gifs, this is the place to attach them.
+
     return($status);
 }
 
@@ -230,8 +234,10 @@ sub parse_args
         } elsif ($flag =~ '^-v') {
             $VERBOSE = 1;
         } elsif ($flag eq '-mime') {
+            #not implemented
             $DOMIME = 1;
         } elsif ($flag eq '-text') {
+            #not implemented
             $DOMIME = 0;
         } elsif ($flag eq '-test') {
             $DOSEND = 0;
@@ -256,6 +262,7 @@ sub parse_args
             return(&usage(1)) if (!@ARGV);
             $INPUT_FILE = shift(@ARGV);
         } elsif ($flag eq '-attach') {
+            #not implemented
             printf STDERR "%s: -attach requires file[,file...].\n", $p if (!@ARGV);
             return(&usage(1)) if (!@ARGV);
             @ATTACH_LIST = split(',', shift(@ARGV));
@@ -270,6 +277,7 @@ sub parse_args
         $INPUT_FILE = "<STDIN>";
     }
 
+    $FROM_ADDR = "";
     if ($SMTP_HOST eq "") {
         if ( defined($ENV{'SMTP_HOST'}) ) {
             $SMTP_HOST = $ENV{'SMTP_HOST'};
@@ -277,6 +285,13 @@ sub parse_args
         } else {
             $SMTP_HOST = "mail";
             printf STDERR "%s: defaulting SMTP_HOST to '%s'\n", $p, $SMTP_HOST if ($VERBOSE);
+        }
+    }
+
+    if ($FROM_ADDR eq "") {
+        if ( defined($ENV{'BMAIL_FROM_ADDR'}) ) {
+            $FROM_ADDR = $ENV{'BMAIL_FROM_ADDR'};
+            printf STDERR ("%s: set FROM_ADDR to '%s' from environment\n", $p, $BMAIL_FROM_ADDR) if ($VERBOSE);
         }
     }
 

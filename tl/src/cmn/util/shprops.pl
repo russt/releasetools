@@ -174,6 +174,9 @@ sub gendef
 {
     my ($var, $val) = @_;
 
+    #generate quoted values if requested:
+    $val = &quoteit($val);
+
     if ($DO_CSH) {
         if ($DO_EXPORT) {
             return sprintf("setenv %s %s;", $var, $val);

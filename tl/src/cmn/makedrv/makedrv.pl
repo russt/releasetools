@@ -409,7 +409,7 @@ sub cmd_cvsupdate
     my($CVS_BRANCH_NAME) = $ENV{'CVS_BRANCH_NAME'};
     my($CVS_SRCROOT_PREFIX) = $ENV{'CVS_SRCROOT_PREFIX'};
     my($CVS_CO_ROOT) = $ENV{'CVS_CO_ROOT'};
-
+    my($CVS_OPTS) = (defined($ENV{'CVS_OPTS'})? $ENV{'CVS_OPTS'} : "-q -z6");
 
     if ($#BDB_FILELIST < 0) {
         printf STDERR "%s:  BUILD_ERROR: %s requires an explicit -b <bdblist> argument\n", $p, $command_name;
@@ -457,7 +457,7 @@ sub cmd_cvsupdate
     #NOTE:  we use -A to remove sticky tags for tools.  this is not strictly correct
     #       for release builds, but the alternative is tools might not get updated,
     #       which can break the build.  RT 5/19/04
-    $cmd = sprintf("cd %s; cvs -q -f -r checkout -A %s %s", $CVS_CO_ROOT, $revarg, join(" ", sort keys %uniqsrv));
+    $cmd = sprintf("cd %s; cvs %s -f -r checkout -A %s %s", $CVS_CO_ROOT, $CVS_OPTS, $revarg, join(" ", sort keys %uniqsrv));
 
     #NOTE:  cvs returns non-zero when it finds CONFLICTS during a merge.
     my($ret) = &os::run_cmd($cmd, 1);   #show the command
