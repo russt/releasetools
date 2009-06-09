@@ -25,6 +25,7 @@ package walkdir;
 # @(#)walkdir.pl - ver 1.1 - 01/04/2006
 #
 # Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright 2009 Russ Tremain. All Rights Reserved.
 # 
 # END_HEADER - DO NOT EDIT
 #
@@ -363,6 +364,19 @@ sub option_unjar
     return(1);
 }
 
+sub option_untar
+#returns true if okay, false if error
+{
+    local ($bool) = @_;
+    if (defined($bool) && $bool >= 0) {
+        $DO_UNTAR = $bool;
+    } else {
+        printf STDERR "%s:  ERROR: option_untar requires boolean value (0=false, 1=true).\n", $p;
+        return(0);
+    }
+    return(1);
+}
+
 sub option_ci
 #returns true if okay, false if error
 {
@@ -554,6 +568,10 @@ sub dowalk
                     join($WD_FS, $linkto, "$crc", "$level", @rec, "$istextfile", "$linecnt");
             }
 
+            if ($DO_UNTAR && $ff =~ /\.(tar|tgz|tar\.gz)$/) {
+                &untar($ff, $cwd);
+            }
+
             if ($DO_UNJAR && $ff =~ /\.(jar|zip|war)$/) {
                 &unjar($ff, $cwd);
             }
@@ -573,6 +591,42 @@ sub dowalk
     $DIRDB{$cwd,"",'D'} = join($WD_FS, "", "0", "$level", "$nfiles", "$dirtotal", "$nsubdirs") if ($saverec);
 
     return($nerrs);
+}
+
+sub untar
+#untar the file in the current working dir as root name of tar file
+#also handles gzipped tars with .tar.gz or .tgz suffixes
+{
+    my ($fn, $cwd) = @_;
+    #get root name of jar:
+
+    my ($tardir, $tarsuffix) = ("", "");
+    if ( $fn =~ /^(.+)\.(tar|tgz|tar\.gz)$/i ) {
+        $tardir = $1;
+        $tarsuffix = $2;
+    }
+
+    if (-d $tardir) {
+        printf STDERR "%s: untar: dir '%s' already exists in %s - cannot untar '%s'.\n", $p, $tardir, $cwd, $ff
+            unless($QUIET);
+        return 0;
+    }
+
+
+    printf STDERR "%s:  untar %s -> %s in %s\n", $p, $ff, $tardir, $cwd
+            unless($QUIET);
+
+    my $taropts = "xf";
+    $taropts .= "z" if ($tarsuffix =~ /gz/i);
+
+    $taropts .= "v" if ($VERBOSE);
+
+    my $cmd = sprintf("sh -c \"mkdir '%s'; cd %s; tar %s ../'%s'\"", $tardir, $tardir, $taropts, $ff);
+
+#printf "untar(%s), cwd=%s tardir='%s' tarsuffix='%s' cmd=%s\n", $ff, $cwd, $tardir, $tarsuffix, $cmd;
+
+    system($cmd);
+    return $!;
 }
 
 sub unjar
@@ -978,6 +1032,7 @@ sub init
     $SKIPCVS = 0;
     $CREATE_RCSFILE = 0;    #create RCS files in tree
     $DO_UNJAR = 0;
+    $DO_UNTAR = 0;
     $SAVE_TEXTMODE = 0;
     $COUNT_LINES = 0;
     $SHOWTEXT = 0;
@@ -1066,7 +1121,7 @@ sub usage
 Usage:  $p [-help] [-f] [-ftxt] [-d] [-v] [-q] [-qq] [-dq] [-sq]
                 [-e] [-ne] [-s] [-l depth] [-slice] [-leaf] [-crc] [-modes]
                 [-cvsonly] [-nocvs] [-norcs] [-nosccs] [-nosvn] [-ci] [-text]
-                [-lc] [-du] [-bytes] [-kbytes] [-mbytes] [-gbytes] [-unjar]
+                [-lc] [-du] [-bytes] [-kbytes] [-mbytes] [-gbytes] [-unjar] [-untar]
                 [dirs...]
 
 Options:
@@ -1077,7 +1132,7 @@ Options:
 
  -v        display warnings or informational output.
  -q        don't display warnings or informational output.
- -qq       don't display dirtree (useful with -unjar option).
+ -qq       don't display dirtree (useful with -unjar/-untar options).
 
  -dq[uote] wrap file/dir names in double-quotes
  -sq[uote] wrap file/dir names in single-quotes
@@ -1105,6 +1160,8 @@ Options:
  -gbytes   display disk usage totals in gigabytes.
  -unjar    unjar file with a .zip, .jar, or .war suffix, in subdir with root archive name,
            e.g., ./foo.jar -> ./foo/ (skip if ./foo/ exists).  Implies -f.
+ -untar    untar file with a .tar, .tgz, or .tar.gz suffix, in subdir with root archive name,
+           e.g., ./foo.tar -> ./foo/ (skip if ./foo/ exists).  Implies -f.
 
 Example:
  $p /tmp
@@ -1184,6 +1241,9 @@ sub parse_args
             &option_skip_cvs(1);
         } elsif ($flag eq "-unjar") {
             &option_unjar(1);
+            $FILEFLAG = 1;
+        } elsif ($flag eq "-untar") {
+            &option_untar(1);
             $FILEFLAG = 1;
         } elsif ($flag eq "-text") {
             $SHOWTEXT = 1;
