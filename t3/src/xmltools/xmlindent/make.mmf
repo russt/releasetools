@@ -1,0 +1,13 @@
+TEMPLATE = file.mmf
+PKG	=  bin
+
+MODE	=  0555
+
+BINDIR =
+
+# Source files that got changed locally.
+SRCFILES =
+
+# Binary files to pick up.
+BINFILES = xmlindent
+
