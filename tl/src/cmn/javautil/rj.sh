@@ -48,6 +48,9 @@ Options:
  -update      recompile if <javacmd>.class is out of date (default).
  -f           force recompile
  -noupdate    do not recompile.
+ -jdk4        force source and class files to jdk 1.4
+ -jdk5        force source and class files to jdk 1.5
+ -jdk6        force source and class files to jdk 1.6
 
 Environment:
  JAVACOMMANDPATH    semi-colon separated list of places to look for java classes
@@ -73,6 +76,8 @@ p=`basename $0`
     VERBOSE=0
     COMPILE=1
     FORCECOMPILE=0
+
+    JAVAC_ARGS=
 
     # Set the default command path if none specified
     if [ -z "$JAVACOMMANDPATH" ] ; then
@@ -104,6 +109,18 @@ p=`basename $0`
             ;;
         -v* )
             VERBOSE=1
+            shift
+            ;;
+        -jdk4 )
+            JAVAC_ARGS="-source 1.4 -target 1.4"
+            shift
+            ;;
+        -jdk5 )
+            JAVAC_ARGS="-source 1.5 -target 1.5"
+            shift
+            ;;
+        -jdk6 )
+            JAVAC_ARGS="-source 1.6 -target 1.6"
             shift
             ;;
         -* )
@@ -171,7 +188,7 @@ do
 
         if [ $uptodate -eq 0 ]; then
             echo "Compiling $src" 1>&2
-            (cd $dd; rm -f ${javacmd}.class; javac ${javacmd}.java)
+            (cd $dd; rm -f ${javacmd}.class; javac $JAVAC_ARGS ${javacmd}.java)
         else
             [ $VERBOSE -eq 1 ] && echo $ff is up to date 1>&2
         fi
