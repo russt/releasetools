@@ -24,6 +24,7 @@
 # @(#)minstall.pl - ver 1.1 - 01/04/2006
 #
 # Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright 2010 Russ Tremain.  All Rights Reserved.
 #
 # END_HEADER - DO NOT EDIT
 #
@@ -39,6 +40,10 @@ $QUIET = 0;
 $TRANSACTION_LOGNAME = "transact.log";
 $bTRANSACTION_LOGNAME = "btransact.log";
 $PRLSKEL = "prlskel";
+
+$OPTION_NOPERLIO = 0;   #add workaround for PERLIO bug for scope of current "skel" op
+#this string must prepend the sh call:
+$OPTION_NOPERLIO_FIX = 'export PERLIO && PERLIO=stdio && ';
 
 #################################### MAIN #####################################
 
@@ -452,6 +457,7 @@ sub doInstall
 		@preProcedures = ();
 		@duringProcedures = ();
 		@postProcedures = ();
+		$OPTION_NOPERLIO = 0;
 		
 		# break up the procedure into appropriate lists
 		foreach $wproc (split('&', $procedures)) {
@@ -1676,7 +1682,24 @@ sub option_sh
 	# On some machines (alphaosf, hp9000) "$@" will get translated
 	# to "" (1 argument) for no arguments, while on other machines (solsparc),
 	# it will be no arguments.
-	$buf = 'if [ $# -eq 0 ]; then exec perl -x -S $0; exit $? ; else exec perl -x -S $0 "$@"; exit $? ; fi' . "\n" . $buf;
+
+	local ($execprefix) = "";
+	if ($OPTION_NOPERLIO) {
+		$execprefix .= $OPTION_NOPERLIO_FIX;
+	}
+
+	$buf = $execprefix
+			. 'if [ $# -eq 0 ]; then exec perl -x -S $0; exit $? ; else exec perl -x -S $0 "$@"; exit $? ; fi'
+			. "\n"
+			. $buf;
+
+	return 0;
+}
+
+sub option_noperlio
+{
+#printf STDERR "PROCESSING option noperlio...\n";
+	$OPTION_NOPERLIO = 1;
 	return 0;
 }
 

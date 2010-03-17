@@ -1,7 +1,9 @@
-TARGET_OS = cmn & skel
-makebom.prl bin/$TARGET_OS/makebom 555
-ppbom.prl bin/$TARGET_OS/ppbom 555
+TARGET_OS = cmn & noperlio & skel & sh
 release.prl bin/$TARGET_OS/release 555
+
+TARGET_OS = cmn & skel & sh
+ppbom.prl bin/$TARGET_OS/ppbom 555
+makebom.prl bin/$TARGET_OS/makebom 555
 
 TARGET_OS = ntcmn & skel & ksh
 makebom.prl bin/$TARGET_OS/makebom.ksh 555
