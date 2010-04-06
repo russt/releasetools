@@ -159,9 +159,17 @@ if $cygwin; then
     HOME=`cygpath --path --windows "$HOME"`
 fi
 
+####### LOCAL MOD adjust for location of classworlds jars:
+
+if [ -d "${M2_HOME}"/core/boot ]; then
+    CLASSWORLDS_DIR=core/boot
+else
+    CLASSWORLDS_DIR=boot
+fi
+
 exec "$JAVACMD" \
   $MAVEN_OPTS \
-  -classpath "${M2_HOME}"/core/boot/classworlds-*.jar \
+  -classpath "${M2_HOME}"/${CLASSWORLDS_DIR}/classworlds-*.jar \
   "-Dclassworlds.conf=${M2_HOME}/bin/m2.conf" \
   "-Dmaven.home=${M2_HOME}"  \
   ${CLASSWORLDS_LAUNCHER} $QUOTED_ARGS
