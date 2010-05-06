@@ -53,10 +53,19 @@ sub main
 		return $status;
 	}
 
-	local($dir);
+	local($nn) = 0;
 	while ($xx = shift(@dirList)) {
+		++$nn;
 		if ($FILES_OPT == 1) {
-			$topErrorCount += &BomifyFile($xx);
+			if ($nn == 1) {
+				printf("mkdir 0%o $prefixDst\n", 0775);
+				print "\nset SRC_DIR $prefixSrc\n";
+				if ($BIN_OPT ==1) {
+					print "set BIN_SRC $bprefixSrc\n";
+				}
+				print "set DST_DIR $prefixDst\n";
+			}
+			$topErrorCount += &BomifyFile($xx, &path'tail($xx));
 		} else {
 			$topErrorCount += &Bomify($xx);
 		}
@@ -107,16 +116,13 @@ sub parse_args
 			}
 		} elsif ($arg eq "-prefixSrc") {
 			$prefixSrc = shift @ARGV;
-			$prefixSrc .= "/" if ($prefixSrc !~ '/$');
 		} elsif ($arg eq "-bprefixSrc") {
 			$bprefixSrc = shift @ARGV;
-			$bprefixSrc .= "/" if ($bprefixSrc !~ '/$');
 			$BIN_OPT = 1;
 		} elsif ($arg eq "-prefixDst") {
 			$prefixDst = shift @ARGV;
-			$prefixDst .= "/" if ($prefixDst !~ '/$');
 		} elsif ($arg eq "-files") {
-			$FILES_OPT = 0;
+			$FILES_OPT = 1;
 		} elsif ($arg =~ /^-/) {
 			&bom_error("Unknown argument '$arg'");
 			&usage;
@@ -187,13 +193,13 @@ sub Bomify
 		} else {
 			if ($firstFile) {
 				$firstFile = 0;
-				print "\nset SRC_DIR $prefixSrc$dir\n";
+				print "\nset SRC_DIR $prefixSrc/$dir\n";
 				if ($BIN_OPT ==1) {
-					print "set BIN_SRC $bprefixSrc$dir\n";
+					print "set BIN_SRC $bprefixSrc/$dir\n";
 				}
-				print "set DST_DIR $prefixDst$dir\n";
+				print "set DST_DIR $prefixDst/$dir\n";
 			}
-			&BomifyFile($fullFileName);
+			&BomifyFile($fullFileName, $file);
 		}
 	}
 	if (! $firstFile) {
@@ -204,9 +210,9 @@ sub Bomify
 
 sub BomifyFile
 {
-	local($fullFileName) = @_;
+	local($fullFileName, $file) = @_;
 	local($suffix, $srcstr);
-	
+
 	$fileMode = &os'mode($fullFileName);
 	if (!defined($fileMode)) {
 		&bom_error("Unexpected error: $fullFileName doesn't seem to exist.");
