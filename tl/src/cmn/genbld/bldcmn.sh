@@ -586,7 +586,7 @@ bld_check_usepath()
     fi
 
     if [ x$FORTE_LINKROOT = x ]; then
-        echo BUILD_WARNING: FORTE_LINKROOT not set, build & log output will go in SRCROOT
+        echo BUILD_WARNING: FORTE_LINKROOT not set, build and log output will go in SRCROOT
     fi
 
     if [ $usepatherrs -ne 0 ]; then
