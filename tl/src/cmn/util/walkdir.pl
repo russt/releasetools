@@ -25,7 +25,7 @@ package walkdir;
 # @(#)walkdir.pl - ver 1.1 - 01/04/2006
 #
 # Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
-# Copyright 2009 Russ Tremain. All Rights Reserved.
+# Copyright 2009-2010 Russ Tremain. All Rights Reserved.
 # 
 # END_HEADER - DO NOT EDIT
 #
@@ -499,7 +499,7 @@ sub dowalk
 #printf "dir=%s E=%d incvs=%d iamcvs=%d\n", &path'mkpathname($cwd, $ff), ($CVSONLY && !($iamcvs || $incvs || (-d "$ff/CVS"))), $incvs, $iamcvs, $ff;
 
             next if ( $CVSONLY && !( $iamcvs || $incvs || (-d "$ff/CVS") ) );
-            next if ($SKIPCVS && ($iamcvs || $ff eq "RCS" || $ff eq "SCCS" || $ff eq ".svn") );
+            next if ($SKIPCVS && ($iamcvs || $ff eq "RCS" || $ff eq "SCCS" || $ff eq ".svn" || $ff eq ".git") );
 
             $nfiles = 0;    # count number of files just in this dir.
             ++$nsubdirs;    # count number of subdirs.
@@ -1146,10 +1146,12 @@ Options:
  -crc      compute & display crc for each file and/or symlink.
  -modes    display permission bits for each file and/or symlink.
  -cvsonly  only enter directories that have CVS subdirectories
- -nocvs    skip RCS, CVS, SCCS, and svn sub-directories
- -norcs    alias for -nocvs
- -nosccs   alias for -nocvs
- -nosvn    alias for -nocvs
+ -noscm    skip RCS, CVS, SCCS, SUBVERSION, and GIT meta-directories.
+ -nocvs    alias for -noscm
+ -norcs    alias for -noscm
+ -nosccs   alias for -noscm
+ -nosvn    alias for -noscm
+ -nogit    alias for -noscm
  -ci       create RCS file for each file in path - useful for seeding a CVS repository
  -text     mark each file as "TXT" or "BIN"
  -lc       display line counts for each text file
@@ -1227,7 +1229,11 @@ sub parse_args
             &option_modes(1);
         } elsif ($flag eq "-cvsonly") {
             &option_cvs_only(1);
+        } elsif ($flag eq "-noscm") {
+            &option_skip_cvs(1);
         } elsif ($flag eq "-nocvs") {
+            &option_skip_cvs(1);
+        } elsif ($flag eq "-nogit") {
             &option_skip_cvs(1);
         } elsif ($flag eq "-norcs") {
             &option_skip_cvs(1);
