@@ -140,20 +140,21 @@ EOF
 
 ################################ HEADER TEMPLATE ###############################
 
+{
 HEADER_TEMPLATE := << EOF
-{=$COMMENT_BEG:newline=}
+{=$COMMENT_BEG=}
 {=$COMMENT_MID=} BEGIN_HEADER - DO NOT EDIT
-{=$COMMENT_MID:newline=}
+{=$COMMENT_MID=}
 {=$COMMENT_MID=} The contents of this file are subject to the terms
 {=$COMMENT_MID=} of the Common Development and Distribution License
 {=$COMMENT_MID=} (the "License").  You may not use this file except
 {=$COMMENT_MID=} in compliance with the License.
-{=$COMMENT_MID:newline=}
+{=$COMMENT_MID=}
 {=$COMMENT_MID=} You can obtain a copy of the license at
 {=$COMMENT_MID=} {=LICENCE_URL=}.
 {=$COMMENT_MID=} See the License for the specific language governing
 {=$COMMENT_MID=} permissions and limitations under the License.
-{=$COMMENT_MID:newline=}
+{=$COMMENT_MID=}
 {=$COMMENT_MID=} When distributing Covered Code, include this CDDL
 {=$COMMENT_MID=} HEADER in each file and include the License file at
 {=$COMMENT_MID=} {=LICENCE_URL=}.
@@ -161,15 +162,16 @@ HEADER_TEMPLATE := << EOF
 {=$COMMENT_MID=} with the fields enclosed by brackets "[]" replaced with
 {=$COMMENT_MID=} your own identifying information: Portions Copyright
 {=$COMMENT_MID=} [year] [name of copyright owner]
-{=$COMMENT_END:newline=}
+{=$COMMENT_END=}
 
-{=$COMMENT_BEG:newline=}
+{=$COMMENT_BEG=}
 {=$COMMENT_MID=} @(#){=SOURCE_FILENAME=}
 {=$COMMENT_MID=} Copyright {=COPYRIGHT_YEARS=} {=COPYRIGHT_HOLDER=}. All Rights Reserved.
-{=$COMMENT_MID:newline=}
+{=$COMMENT_MID=}
 {=$COMMENT_MID=} END_HEADER - DO NOT EDIT
-{=$COMMENT_END:newline=}
+{=$COMMENT_END=}
 EOF
+}
 
 ################################ PRODUCT TOOLS SIGNAGE LIST ###############################
 
@@ -180,16 +182,21 @@ set_template_vars := << EOF
 
     CG_SHELL_COMMAND_ARGS = '+%Y'
     CURRENT_YEAR=
-    CURRENT_YEAR=$CURRENT_YEAR:date
+    CURRENT_YEAR=$CURRENT_YEAR:date:trim
 
     CG_SHELL_COMMAND_ARGS = '+%m/%d/%Y'
     TODAY=
-    TODAY=$TODAY:date
+    TODAY=$TODAY:date:trim
+
+    #read in env. vars.  note:  set to empty-string if not defined.
+    %void $LICENCE_URL:nameof:env:a
+    %void $COPYRIGHT_YEARS:nameof:env:a
+    %void $COPYRIGHT_HOLDER:nameof:env:a
 
     #set template variables:
-    %ifndef LICENCE_URL           LICENCE_URL =         https://open-esb.dev.java.net/public/CDDLv1.0.html
-    %ifndef COPYRIGHT_YEARS       COPYRIGHT_YEARS =     $INCEPTION_YEAR-$CURRENT_YEAR
-    %ifndef COPYRIGHT_HOLDER      COPYRIGHT_HOLDER =    Sun Microsystems, Inc
+    %ifnot $LICENCE_URL           LICENCE_URL =         https://open-esb.dev.java.net/public/CDDLv1.0.html
+    %ifnot $COPYRIGHT_YEARS       COPYRIGHT_YEARS =     $INCEPTION_YEAR-$CURRENT_YEAR
+    %ifnot $COPYRIGHT_HOLDER      COPYRIGHT_HOLDER =    Sun Microsystems, Inc
 
     #%undef CG_SHELL_COMMAND_ARGS
 }
@@ -327,6 +334,8 @@ process_source_file := << EOF
     CG_COMPARE_SPEC = ksh
     %if $SOURCE_TYPE:eq processor=emit_text
     CG_COMPARE_SPEC = csh
+    %if $SOURCE_TYPE:eq processor=emit_text
+    CG_COMPARE_SPEC = cg
     %if $SOURCE_TYPE:eq processor=emit_text
     CG_COMPARE_SPEC = properties
     %if $SOURCE_TYPE:eq processor=
