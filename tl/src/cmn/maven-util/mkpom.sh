@@ -1,5 +1,36 @@
 #!/bin/sh
-#mkpom - create an maven 1.x or 2.x  pom using codegen templates
+#
+# BEGIN_HEADER - DO NOT EDIT
+# 
+# The contents of this file are subject to the terms
+# of the Common Development and Distribution License
+# (the "License").  You may not use this file except
+# in compliance with the License.
+#
+# You can obtain a copy of the license at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# See the License for the specific language governing
+# permissions and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL
+# HEADER in each file and include the License file at
+# https://open-esb.dev.java.net/public/CDDLv1.0.html.
+# If applicable add the following below this CDDL HEADER,
+# with the fields enclosed by brackets "[]" replaced with
+# your own identifying information: Portions Copyright
+# [year] [name of copyright owner]
+#
+
+#
+# @(#)mkpom.sh - ver 1.1 - 01/04/2006
+#
+# Copyright 2006-2009 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2010 Russ Tremain.  All Rights Reserved.
+# 
+# END_HEADER - DO NOT EDIT
+#
+
+#mkpom - create an maven 1.x or 2.x  pom using cado templates
 
 ############################### USAGE ROUTINES ################################
 
@@ -18,17 +49,17 @@ Usage:  $p [options...] [pom.defs ...]
 
 Options:
  -help           Display this message.
- -verbose        Run codegen in verbose mode.
- -debug          Run codegen in debug mode.
+ -verbose        Run cado in verbose mode.
+ -debug          Run cado in debug mode.
  -doc            Show documentation for pom.defs declarations.
- -e              Pass environment to codegen.
+ -e              Pass environment to cado.
  -m1             Generate maven 1.x project.xml file
  -m2             Generate maven 2.x pom.xml file (default)
- arg=value       Add an environment definition to pass to codegen (can be repeated).
+ arg=value       Add an environment definition to pass to cado (can be repeated).
                  Implies -e option.
 
 Environment:
- CG_TEMPLATE_PATH    location of maven templates - see: codegen -help
+ CG_TEMPLATE_PATH    location of maven templates - see: cado -help
 
 Example:
  $p mypom.defs > pom.xml
@@ -85,7 +116,7 @@ parse_args()
             #echo B tmp is .$tmp.
             eval $tmp
 
-            #force codegen to run with -e, to avoid re-quoting problems.  RT 10/24/06
+            #force cado to run with -e, to avoid re-quoting problems.  RT 10/24/06
             PASS_ENV=1
             ;;
         * )
@@ -126,7 +157,7 @@ cgargs=
 
 if [ $SHOWDOC -eq 1 ]; then
     #then show variable documentation:
-codegen $cgargs -u -cgroot . << EOF
+cado $cgargs -u -cgroot . << EOF
 %readtemplate ECHO_TXT $MAVEN_TEMPLATE_DIR/maven_lib_doc.txt
 %echo \$ECHO_TXT
 EOF
@@ -144,9 +175,9 @@ else
 fi
 
 ####
-#run codegen to generate maven files:
+#run cado to generate maven files:
 ####
-codegen $cgargs -u -cgroot . << EOF
+cado $cgargs -u -cgroot . << EOF
 #use standard template to generate maven project.xml (pom) files:
 %include $MAVEN_TEMPLATE_DIR/maven_lib.cg
 %include $POM_DEFS

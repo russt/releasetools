@@ -6,6 +6,6 @@ CHECK=
 PKG    = bin
 
 MODE   = 0555
-FILES  = check_maven.sh mkpom.sh
+FILES  = mkpom.sh
 
 CMDS   = ${FILES}
