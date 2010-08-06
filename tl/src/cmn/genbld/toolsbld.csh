@@ -271,7 +271,8 @@ EOF
 #######
 newpjenv $TMP_BDBDIR/projects
 echo this_project $SRCROOT > $MYPROJECTS
-cat $SRCROOT/bdb/projects >> $MYPROJECTS
+
+bldmsg -p $p "MYPROJECTS is set to '$MYPROJECTS'"
 
 #is our home project already init'd?
 if ( -r "$PJHOME_ENV" ) then
@@ -303,7 +304,7 @@ chpj this_project
 ########
 #WE have tools, and VSPMS is installed.
 # TO HALT:
-# set exit $status
+# set exit = $status
 # goto HALT
 ########
 
@@ -437,6 +438,15 @@ if (! $NONLOCALONLY) then
         endif
         bldmsg -p $p -markend local tools build
     endif
+endif
+
+if ( -r $SRCROOT/bdb/projects ) then
+    #append new projects to our project list:
+    cat $SRCROOT/bdb/projects >> $MYPROJECTS
+else
+    bldmsg -p $p -error "$SRCROOT/bdb/projects not found - did you build local tools yet?"
+    set exit = 1
+    goto HALT
 endif
 
 if ($DOPRINTMAP) then
@@ -658,8 +668,9 @@ if ($DOPULL) then
     endif
 endif
 
-
+####
 HALT:
+####
 
 bldmsg -markend $p
 \rm -rf $TMP_BDBDIR
