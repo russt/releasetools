@@ -1,0 +1,33 @@
+#generate the test ksh wrappers
+#Usage:  codegen -cgroot . create_wrappers.cg
+#        do not pass -u unless you want to re-write the wrapper(s).
+
+%ifndef CG_ROOT  CG_ROOT=bld
+
+{
+KSH_WRAPPER := << EOF
+#!/bin/sh
+#{=TEST_PREFIX=}000{=TNUM=} - comment
+
+TESTNAME={=TEST_PREFIX=}000{=TNUM=}
+echo TESTNAME is $TESTNAME
+. ./regress_defs.ksh
+
+#test code goes here
+EOF
+}
+
+emit_wrapper := << EOF
+{
+    #%echo Emitting wrapper $TNUM
+    %evalmacro ECHO_TXT KSH_WRAPPER
+    echo	/${TEST_PREFIX}000${TNUM}.ksh
+}
+EOF
+
+TEST_PREFIX = crc
+#this is the number of tests:
+TNUM = 05
+
+TNUM = $TNUM:incr
+%while $TNUM:decr:assign %call emit_wrapper

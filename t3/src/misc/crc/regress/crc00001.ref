@@ -1,0 +1,8 @@
+TESTNAME is crc00001
+compiling crc.c:
+IGNORE /Users/russt/proj/rttl/devtools/t3/src/misc/crc/bld/crctests/bin/crc
+Calculate the CRC of a file.
+It's better than a checksum, it's a crc!
+ASCII translation on by default, use -binary to turn off.
+IGNORE usage: /Users/russt/proj/rttl/devtools/t3/src/misc/crc/bld/crctests/bin/crc [-help] [-unixascii] [-binary] [-f <file_to_go_thru>] [-cont] <filenames...>
+crc -help returned status=1
