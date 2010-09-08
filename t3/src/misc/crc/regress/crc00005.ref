@@ -1,1 +1,9 @@
 TESTNAME is crc00005
+crc bigfile WITH ascii translation:
+bigfile 72d360da
+#####
+TIMES FOR crc bigfile WITH ascii translation
+
+IGNORE real	0m7.350s
+IGNORE user	0m5.704s
+IGNORE sys	0m1.614s

@@ -9,11 +9,9 @@ echo TESTNAME is $TESTNAME
 rm -rf "$TSTROOT"
 mkdir -p "$TSTROOT/bin"
 
-PATH="$TSTROOT/bin${PS}$PATH"
-
 #compile the source and install in TSTROOT:
 echo compiling crc.c:
-$CC -o $TSTROOT/bin/crc ../crc.c
+2>&1 $CC $CCFLAGS -o $TSTROOT/bin/crc ../crc.c
 
 #verify that we have the correct binary in our path:
 which crc
@@ -23,4 +21,3 @@ which crc
 status=$?
 
 echo crc -help returned status=$status
-

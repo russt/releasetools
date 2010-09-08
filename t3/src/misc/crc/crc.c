@@ -44,46 +44,12 @@ typedef enum {
     CRC_MAX,         /*< Not part of public API! Do not use outside libavutil. */
 }uint32_tId;
 
-#define AV_BSWAP16C(x) (((x) << 8 & 0xff00)  | ((x) >> 8 & 0x00ff))
-#define AV_BSWAP32C(x) (AV_BSWAP16C(x) << 16 | AV_BSWAP16C((x) >> 16))
-#define AV_BSWAP64C(x) (AV_BSWAP32C(x) << 32 | AV_BSWAP32C((x) >> 32))
-
-#define AV_BSWAPC(s, x) AV_BSWAP##s##C(x)
-
-#ifndef av_bswap16
-static av_always_inline av_const uint16_t av_bswap16(uint16_t x)
-{
-    x= (x>>8) | (x<<8);
-    return x;
-}
-#endif
-
 #ifndef av_bswap32
 static av_always_inline av_const uint32_t av_bswap32(uint32_t x)
 {
     x= ((x<<8)&0xFF00FF00) | ((x>>8)&0x00FF00FF);
     x= (x>>16) | (x<<16);
     return x;
-}
-#endif
-
-#ifndef av_bswap64
-static inline uint64_t av_const av_bswap64(uint64_t x)
-{
-#if 0
-    x= ((x<< 8)&0xFF00FF00FF00FF00ULL) | ((x>> 8)&0x00FF00FF00FF00FFULL);
-    x= ((x<<16)&0xFFFF0000FFFF0000ULL) | ((x>>16)&0x0000FFFF0000FFFFULL);
-    return (x>>32) | (x<<32);
-#else
-    union {
-        uint64_t ll;
-        uint32_t l[2];
-    } w, r;
-    w.ll = x;
-    r.l[0] = av_bswap32 (w.l[1]);
-    r.l[1] = av_bswap32 (w.l[0]);
-    return r.ll;
-#endif
 }
 #endif
 
@@ -109,21 +75,23 @@ static struct {
     [CRC_32_IEEE]    = { 0, 32, 0x04C11DB7 },
     [CRC_32_IEEE_LE] = { 1, 32, 0xEDB88320 },
 };
-static AVCRC av_crc_table[CRC_MAX][CRC_TABLE_SIZE];
 
 /* the global table used by this program: */
-uint32_t *ctx = NULL;
+uint32_t CRCTable[CRC_TABLE_SIZE];
+uint32_t *ctx = CRCTable;
+
+//force the input buffer to be aligned on a 32-bit boundry:
+#define BUFSIZE 64*1024
+uint32_t bufstor[(BUFSIZE)/4];  //warning:  BUFSIZE must be divisible by 4 with 0 remainder.
+uint8_t *buffer = (uint8_t *) bufstor;
 
 #ifdef TEST
 #define LOOPCOUNTS 1
 #endif
 
 #ifdef LOOPCOUNTS
-long CASEA1 =0;
-long CASEA2 =0;
-long CASEB =0;
-long CASEC1 =0;
-long CASEC2 =0;
+long CASEA = 0;
+long CASEB = 0;
 #endif
 
 /**
@@ -172,54 +140,28 @@ int av_crc_init(uint32_t *ctx, int le, int bits, uint32_t poly, int ctx_size){
 }
 
 /**
- * Get an initialized standard CRC table.
- * @param crc_id ID of a standard CRC
- * @return a pointer to the CRC table or NULL on failure
- */
-uint32_t *av_crc_get_table(uint32_tId crc_id){
-    if (!av_crc_table[crc_id][FF_ARRAY_ELEMS(av_crc_table[crc_id])-1])
-        if (av_crc_init(av_crc_table[crc_id],
-                        av_crc_table_params[crc_id].le,
-                        av_crc_table_params[crc_id].bits,
-                        av_crc_table_params[crc_id].poly,
-                        sizeof(av_crc_table[crc_id])) < 0)
-            return NULL;
-    return av_crc_table[crc_id];
-}
-
-/**
- * Calculate the CRC of a block.
+ * Calculate the CRC of a block, in 4-byte blocks.
+ * WARNING:  we assume that you have declared input buffer to be aligned on 32-bit boundry.
+ * WARNING:  we assume that crc table has 1024 entries.
  * @param crc CRC of previous blocks if any or initial value for CRC
  * @return CRC updated with the data from the given block
  *
  * @see av_crc_init() "le" parameter
  */
-uint32_t av_crc(uint32_t *ctx, uint32_t crc, const uint8_t *buffer, size_t length)
+uint32_t av_crc(const uint32_t *ctx, uint32_t crc, const uint8_t *buffer, size_t length)
 {
     const uint8_t *end= buffer+length;
 
-    if (!ctx)
-        ctx = av_crc_get_table(CRC_32_IEEE_LE);
-
-    if(!ctx[256]) {
-        while(((intptr_t) buffer & 3) && buffer < end) {
+    while(buffer<end-3){
 #ifdef LOOPCOUNTS
-++CASEA1;
+++CASEA;
 #endif
-            crc = ctx[((uint8_t)crc) ^ *buffer++] ^ (crc >> 8);
-        }
-
-        while(buffer<end-3){
-#ifdef LOOPCOUNTS
-++CASEA2;
-#endif
-            crc ^= av_le2ne32(*(const uint32_t*)buffer);
-            crc =  ctx[3*256 + ( crc     &0xFF)]
-                  ^ctx[2*256 + ((crc>>8 )&0xFF)]
-                  ^ctx[1*256 + ((crc>>16)&0xFF)]
-                  ^ctx[0*256 + ((crc>>24)     )];
-            buffer+=4;
-        }
+        crc ^= av_le2ne32(*(const uint32_t*)buffer);
+        crc =  ctx[3*256 + ( crc     &0xFF)]
+              ^ctx[2*256 + ((crc>>8 )&0xFF)]
+              ^ctx[1*256 + ((crc>>16)&0xFF)]
+              ^ctx[0*256 + ((crc>>24)     )];
+        buffer+=4;
     }
 
     while(buffer<end) {
@@ -258,6 +200,7 @@ uint32_t av_crc(uint32_t *ctx, uint32_t crc, const uint8_t *buffer, size_t lengt
 * @(#)crc.c - ver 1.1 - 01/04/2006
 *
 * Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+* Copyright 2010 Russ Tremain. All Rights Reserved.
 *
 * END_HEADER - DO NOT EDIT
 *
@@ -277,19 +220,17 @@ uint32_t av_crc(uint32_t *ctx, uint32_t crc, const uint8_t *buffer, size_t lengt
  *    gcc -O crc.c -o crc
  * Compiling on NT:
  *    cl -O -D__WIN32__ crc.c -o crc
+ *
+ *  08-Sep-2010 (russt)
+ *    Re-written to incorporate faster 4-byte crc calculation, condensed from
+ *    ffmpeg libavutil version.
  */
-
-#define BUFFER_SIZE 64*1024
 
 static int globalErrorCount = 0;
 /* If unixAscii is true, then generate a crc first converting to a
    standard (unix) ascii format; this let's us do cross platform crc's
    better. */
 static int unixAscii = 1;
-
-unsigned long CRCTable[256];
-
-#define CRC32_POLYNOMIAL 0xEDB88320L
 
 unsigned char ebsidic2ascii[] = {
           0,  1,  2,  3,156,  9,134,127,151,141,142, 11, 12, 13, 14,
@@ -312,36 +253,12 @@ unsigned char ebsidic2ascii[] = {
         159
 };
 
-void BuildCRCTable()
-/* deprecated */
-{
-    int i, j;
-    unsigned long crc;
-
-    for (i = 0; i <= 255; ++i) {
-        crc = i;
-        for (j = 8; j > 0; --j) {
-            if (crc & 1)
-                crc = (crc >> 1) ^ CRC32_POLYNOMIAL;
-            else
-                crc >>= 1;
-            /* printf("i=%d j=%d crc=%lx\n", i, j, crc); */
-        }
-        CRCTable[i] = crc;
-        /* printf("CRCTable[%d] = %lx\n", i, crc); */
-    }
-
-    ctx = (uint32_t *) CRCTable;
-}
-
-unsigned long CalculateBufferCRC(unsigned int count, unsigned long crc, void *buffer)
+uint32_t
+CalculateBufferCRC(const uint32_t *ctx, uint32_t crc, const uint8_t *buffer, int count)
 {
     int index;
     unsigned char *p;
     unsigned long temp1, temp2;
-
-    if (!ctx)
-        BuildCRCTable();
 
     p = (unsigned char *) buffer;
     while (count-- > 0) {
@@ -353,7 +270,7 @@ unsigned long CalculateBufferCRC(unsigned int count, unsigned long crc, void *bu
         /* printf("crc = %x p = '%x'\n", crc, *p); */
         temp1 = (crc >> 8) & 0x00FFFFFFL;
         index = ((int) crc ^ *p++) & 0xff;
-        temp2 = CRCTable[index];
+        temp2 = ctx[index];
         crc = temp1 ^ temp2;
     }
     return(crc);
@@ -362,20 +279,20 @@ unsigned long CalculateBufferCRC(unsigned int count, unsigned long crc, void *bu
 unsigned long CalculateFileCRC(FILE *fp)
 {
     unsigned long crc;
+
     int count;
-    unsigned char buffer[BUFFER_SIZE+1];
     int i;
 
     crc = 0xFFFFFFFFL;
     //crc = 0L;
     i = 0;
     while (1) {
-        count = fread(buffer, 1, BUFFER_SIZE, fp);
+        count = fread(buffer, 1, BUFSIZE, fp);
         if (count == 0)
             break;
         if (unixAscii) {
-          if (count == BUFFER_SIZE && buffer[BUFFER_SIZE-1] == 0x0d) {
-            count += fread(&buffer[BUFFER_SIZE], 1, 1, fp);
+          if (count == BUFSIZE && buffer[BUFSIZE-1] == 0x0d) {
+            count += fread(&buffer[BUFSIZE], 1, 1, fp);
           }
 #ifdef __MVS__
           /* printf("doing ascii translation\n"); */
@@ -383,7 +300,7 @@ unsigned long CalculateFileCRC(FILE *fp)
             buffer[i] = ebsidic2ascii[buffer[i]];
           }
 #endif
-            crc = CalculateBufferCRC(count, crc, buffer);
+            crc = CalculateBufferCRC(ctx, crc, buffer, count);
         } else {
             crc = av_crc(ctx, crc, buffer, count);
         }
@@ -440,27 +357,51 @@ void CRCFromFile(FILE *fin)
   }
 }
 
+char *
+crcIdStr(uint32_tId id)
+//return string for type
+{
+    switch (id) {
+    case CRC_8_ATM:         return "CRC_8_ATM";
+    case CRC_16_ANSI:       return "CRC_16_ANSI";
+    case CRC_16_CCITT:      return "CRC_16_CCITT";
+    case CRC_32_IEEE:       return "CRC_32_IEEE";
+    case CRC_32_IEEE_LE:    return "CRC_32_IEEE_LE";
+    default:                return "NULL";
+    }
+}
+
 #ifdef TEST
 #undef printf
-int main(void){
-    uint8_t buf[1999];
+int
+main(void)
+{
+    //force the buffer to be aligned on a long boundry:
+    int bufsize = 1999;
+    uint32_t dummy[(bufsize+1)/4];
+    uint8_t *buf = (uint8_t *) dummy;
     int i;
-    int p[4][3]={{CRC_32_IEEE_LE, 0xEDB88320, 0x3D5CDD04},
-                 {CRC_32_IEEE   , 0x04C11DB7, 0xC0F5BAE0},
-                 {CRC_16_ANSI   , 0x8005,     0x1FBB    },
-                 {CRC_8_ATM     , 0x07,       0xE3      },};
-    const AVCRC *ctx;
 
-    for(i=0; i<sizeof(buf); i++)
+    dummy[0] = 0;
+
+    //initialize buffer:
+    for(i=0; i<bufsize; i++)
         buf[i]= i+i*i;
 
-    for(i=0; i<4; i++){
-        ctx = av_crc_get_table(p[i][0]);
-        printf("crc %08X =%X\n", p[i][1], av_crc(ctx, 0, buf, sizeof(buf)));
-    }
+    for(i=0; i<CRC_MAX; i++)
+    {
+        av_crc_init(ctx, av_crc_table_params[i].le,  av_crc_table_params[i].bits, av_crc_table_params[i].poly, sizeof(CRCTable));
+        printf("crc for %-15s (le,bits,poly): (%d, %2d, %9X) is %9X",
+            crcIdStr(i),
+            av_crc_table_params[i].le,
+            av_crc_table_params[i].bits,
+            av_crc_table_params[i].poly,
+            av_crc(ctx, 0, (uint8_t *) buf, bufsize));
 #ifdef LOOPCOUNTS
-    fprintf(stderr, "CASEA1=%ld CASEA2=%ld CASEB=%ld CASEC1=%ld CASEC2=%ld\n", CASEA1, CASEA2, CASEB, CASEC1, CASEC2);
+            printf("\tCASEA=%ld CASEB=%ld\n", CASEA, CASEB);
+            CASEA = CASEB = 0;
 #endif
+    }
     return 0;
 }
 #else
@@ -479,12 +420,11 @@ main(int argc, char *argv[])
     }
     globalErrorCount = 0;
 
-#if 0
-    //another way to initialize:
-    uint32_t mycrctab[1024];
-    ctx = mycrctab;
-    av_crc_init(ctx, 1,  32, 0xEDB88320, sizeof(mycrctab));
-#endif
+    av_crc_init(ctx,
+        av_crc_table_params[CRC_32_IEEE_LE].le,
+        av_crc_table_params[CRC_32_IEEE_LE].bits,
+        av_crc_table_params[CRC_32_IEEE_LE].poly,
+        sizeof(CRCTable));
 
     for (i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "-ascii") == 0) {
@@ -511,7 +451,7 @@ main(int argc, char *argv[])
         }
     }
 #ifdef LOOPCOUNTS
-    fprintf(stderr, "CASEA1=%ld CASEA2=%ld CASEB=%ld CASEC1=%ld CASEC2=%ld\n", CASEA1, CASEA2, CASEB, CASEC1, CASEC2);
+    fprintf(stderr, "CASEA=%ld CASEB=%ld\n", CASEA, CASEB);
 #endif
     exit(globalErrorCount);
 }

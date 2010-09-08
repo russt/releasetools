@@ -1,18 +1,9 @@
 TESTNAME is crc00004
-crc bigfile with ascii translation:
-bigfile 29bfdb76
-#####
-TIMES FOR crc bigfile with ascii translation
-
-IGNORE real	0m7.575s
-IGNORE user	0m5.629s
-IGNORE sys	0m1.930s
- 
 crc bigfile without ascii translation:
-bigfile b03ada59
+bigfile 4e13cc79
 #####
 TIMES FOR crc -binary bigfile without ascii translation
 
-IGNORE real	0m7.610s
-IGNORE user	0m5.644s
-IGNORE sys	0m1.924s
+IGNORE real	0m7.980s
+IGNORE user	0m2.562s
+IGNORE sys	0m1.883s

@@ -1,7 +1,7 @@
 TESTNAME is crc00002
-CREATE /Users/russt/proj/rttl/devtools/t3/src/misc/crc/bld/crctests/dirA
-CREATE file list FOR /Users/russt/proj/rttl/devtools/t3/src/misc/crc/bld/crctests/dirA
+IGNORE CREATE /Users/russt/proj/rttl/devtools/t3/src/misc/crc/bld/crctests/dirA
+IGNORE CREATE file list FOR /Users/russt/proj/rttl/devtools/t3/src/misc/crc/bld/crctests/dirA
     2151 toc.dirA
-CREATE /Users/russt/proj/rttl/devtools/t3/src/misc/crc/bld/crctests/dirB
-CREATE file list FOR /Users/russt/proj/rttl/devtools/t3/src/misc/crc/bld/crctests/dirB
+IGNORE CREATE /Users/russt/proj/rttl/devtools/t3/src/misc/crc/bld/crctests/dirB
+IGNORE CREATE file list FOR /Users/russt/proj/rttl/devtools/t3/src/misc/crc/bld/crctests/dirB
     2151 toc.dirB

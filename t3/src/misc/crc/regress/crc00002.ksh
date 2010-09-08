@@ -7,9 +7,11 @@ echo TESTNAME is $TESTNAME
 
 #get some data:
 cp $SRCROOT/t3/src/apache/ant1_6/ant16.btz $TSTROOT/data.btz
-cp data/bigfile.mp4 $TSTROOT/bigfile
 
 cd $TSTROOT
+#1.5GB file from compressed test data:
+gzip -dc $BIGFILEGZ > 100M
+cat 100M 100M 100M 100M 100M 100M 100M 100M 100M 100M 100M 100M 100M 100M 100M > bigfile
 
 echo CREATE $TSTROOT/dirA
 mkdir dirA

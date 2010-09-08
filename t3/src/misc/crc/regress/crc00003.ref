@@ -1,3 +1,115 @@
 TESTNAME is crc00003
+TIMES FOR crc dirA WITH ascii translation
+
+IGNORE real	0m0.986s
+IGNORE user	0m0.076s
+IGNORE sys	0m0.228s
     2151 crcs.dirA
+dirA/INSTALL 3d6d50d0
+dirA/KEYS 2cf010ac
+dirA/LICENSE aad0f1f
+dirA/LICENSE.dom 4ae7a260
+dirA/LICENSE.sax 578e85ce
+dirA/etc/ant-bootstrap/META-INF/LICENSE.txt aad0f1f
+dirA/etc/ant-bootstrap/META-INF/MANIFEST.MF 7f78169c
+dirA/etc/ant-bootstrap/META-INF/NOTICE.txt 9845798d
+dirA/lib/ant-antlr/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-apache-bcel/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-apache-bsf/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-apache-log4j/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-apache-oro/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-apache-regexp/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-apache-resolver/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-commons-logging/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-commons-net/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-icontract/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-jai/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-javamail/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-jdepend/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-jmf/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-jsch/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-junit/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-launcher/META-INF/MANIFEST.MF 23a9cd3
+dirA/lib/ant-netrexx/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-nodeps/META-INF/LICENSE.txt aad0f1f
+dirA/lib/ant-nodeps/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-nodeps/META-INF/NOTICE.txt 9845798d
+dirA/lib/ant-starteam/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-stylebook/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-swing/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-trax/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-vaj/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-weblogic/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-xalan1/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant-xslp/META-INF/MANIFEST.MF f283f109
+dirA/lib/ant/META-INF/LICENSE.txt aad0f1f
+dirA/lib/ant/META-INF/MANIFEST.MF b6ff6e7d
+dirA/lib/ant/META-INF/NOTICE.txt 9845798d
+dirA/lib/xercesImpl/META-INF/MANIFEST.MF 4ef2eb8f
+dirA/lib/xercesImpl/META-INF/services/javax.xml.parsers.DocumentBuilderFactory 4c3147a6
+dirA/lib/xercesImpl/META-INF/services/javax.xml.parsers.SAXParserFactory 3ce70756
+dirA/lib/xercesImpl/META-INF/services/org.apache.xerces.xni.parser.XMLParserConfiguration dfd7a228
+dirA/lib/xercesImpl/META-INF/services/org.xml.sax.driver 1513f199
+dirA/lib/xml-apis/META-INF/MANIFEST.MF 8d13a918
+dirA/lib/xml-apis/org/xml/sax/helpers/SecuritySupport12.class 43f1a787
+dirA/lib/xml-apis/org/xml/sax/helpers/XMLFilterImpl.class b54d0832
+dirA/lib/xml-apis/org/xml/sax/helpers/XMLReaderAdapter$AttributesAdapter.class b74a5497
+dirA/lib/xml-apis/org/xml/sax/helpers/XMLReaderAdapter.class 46dd31df
+dirA/lib/xml-apis/org/xml/sax/helpers/XMLReaderFactory.class 150ea241
+TIMES FOR crc -binary dirB without ascii translation
+
+IGNORE real	0m0.162s
+IGNORE user	0m0.033s
+IGNORE sys	0m0.076s
     2151 crcs.dirB
+dirB/INSTALL 3d6d50d0
+dirB/KEYS 2cf010ac
+dirB/LICENSE aad0f1f
+dirB/LICENSE.dom 4ae7a260
+dirB/LICENSE.sax 578e85ce
+dirB/etc/ant-bootstrap/META-INF/LICENSE.txt aad0f1f
+dirB/etc/ant-bootstrap/META-INF/MANIFEST.MF c0e84758
+dirB/etc/ant-bootstrap/META-INF/NOTICE.txt 9845798d
+dirB/lib/ant-antlr/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-apache-bcel/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-apache-bsf/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-apache-log4j/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-apache-oro/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-apache-regexp/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-apache-resolver/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-commons-logging/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-commons-net/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-icontract/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-jai/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-javamail/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-jdepend/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-jmf/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-jsch/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-junit/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-launcher/META-INF/MANIFEST.MF d9ac5dd7
+dirB/lib/ant-netrexx/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-nodeps/META-INF/LICENSE.txt aad0f1f
+dirB/lib/ant-nodeps/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-nodeps/META-INF/NOTICE.txt 9845798d
+dirB/lib/ant-starteam/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-stylebook/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-swing/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-trax/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-vaj/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-weblogic/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-xalan1/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant-xslp/META-INF/MANIFEST.MF a4de4c00
+dirB/lib/ant/META-INF/LICENSE.txt aad0f1f
+dirB/lib/ant/META-INF/MANIFEST.MF bc4db110
+dirB/lib/ant/META-INF/NOTICE.txt 9845798d
+dirB/lib/xercesImpl/META-INF/MANIFEST.MF daa9f868
+dirB/lib/xercesImpl/META-INF/services/javax.xml.parsers.DocumentBuilderFactory 4c3147a6
+dirB/lib/xercesImpl/META-INF/services/javax.xml.parsers.SAXParserFactory 3ce70756
+dirB/lib/xercesImpl/META-INF/services/org.apache.xerces.xni.parser.XMLParserConfiguration dfd7a228
+dirB/lib/xercesImpl/META-INF/services/org.xml.sax.driver 1513f199
+dirB/lib/xml-apis/META-INF/MANIFEST.MF 25f43a09
+dirB/lib/xml-apis/org/xml/sax/helpers/SecuritySupport12.class 43f1a787
+dirB/lib/xml-apis/org/xml/sax/helpers/XMLFilterImpl.class b54d0832
+dirB/lib/xml-apis/org/xml/sax/helpers/XMLReaderAdapter$AttributesAdapter.class b74a5497
+dirB/lib/xml-apis/org/xml/sax/helpers/XMLReaderAdapter.class 46dd31df
+dirB/lib/xml-apis/org/xml/sax/helpers/XMLReaderFactory.class 150ea241
