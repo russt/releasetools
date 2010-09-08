@@ -27,38 +27,11 @@
 #include <inttypes.h>
 
 #ifndef CRC_TABLE_SIZE
-#    define CRC_TABLE_SIZE 257
+#    define CRC_TABLE_SIZE 1024
 #endif
 
-#ifdef __GNUC__
-#    define AV_GCC_VERSION_AT_LEAST(x,y) (__GNUC__ > x || __GNUC__ == x && __GNUC_MINOR__ >= y)
-#else
-#    define AV_GCC_VERSION_AT_LEAST(x,y) 0
-#endif
-
-#ifndef av_always_inline
-#if AV_GCC_VERSION_AT_LEAST(3,1)
-#    define av_always_inline __attribute__((always_inline)) inline
-#else
-#    define av_always_inline inline
-#endif
-#endif
-
-#ifndef av_pure
-#if AV_GCC_VERSION_AT_LEAST(3,1)
-#    define av_pure __attribute__((pure))
-#else
-#    define av_pure
-#endif
-#endif
-
-#ifndef av_const
-#if AV_GCC_VERSION_AT_LEAST(2,6)
-#    define av_const __attribute__((const))
-#else
-#    define av_const
-#endif
-#endif
+#define av_always_inline inline
+#define av_const
 
 typedef uint32_t AVCRC;
 
@@ -118,23 +91,9 @@ static inline uint64_t av_const av_bswap64(uint64_t x)
 // le2ne ... little-endian to native-endian
 
 #if AV_HAVE_BIGENDIAN
-#define av_be2ne16(x) (x)
-#define av_be2ne32(x) (x)
-#define av_be2ne64(x) (x)
-#define av_le2ne16(x) av_bswap16(x)
 #define av_le2ne32(x) av_bswap32(x)
-#define av_le2ne64(x) av_bswap64(x)
-#define AV_BE2NEC(s, x) (x)
-#define AV_LE2NEC(s, x) AV_BSWAPC(s, x)
 #else
-#define av_be2ne16(x) av_bswap16(x)
-#define av_be2ne32(x) av_bswap32(x)
-#define av_be2ne64(x) av_bswap64(x)
-#define av_le2ne16(x) (x)
 #define av_le2ne32(x) (x)
-#define av_le2ne64(x) (x)
-#define AV_BE2NEC(s, x) AV_BSWAPC(s, x)
-#define AV_LE2NEC(s, x) (x)
 #endif
 
 #define FF_ARRAY_ELEMS(a) (sizeof(a) / sizeof((a)[0]))
@@ -153,10 +112,19 @@ static struct {
 static AVCRC av_crc_table[CRC_MAX][CRC_TABLE_SIZE];
 
 /* the global table used by this program: */
-uint32_t *ctx;
-int CASEA1 =0;
-int CASEA2 =0;
-int CASEB =0;
+uint32_t *ctx = NULL;
+
+#ifdef TEST
+#define LOOPCOUNTS 1
+#endif
+
+#ifdef LOOPCOUNTS
+long CASEA1 =0;
+long CASEA2 =0;
+long CASEB =0;
+long CASEC1 =0;
+long CASEC2 =0;
+#endif
 
 /**
  * Initialize a CRC table.
@@ -208,7 +176,7 @@ int av_crc_init(uint32_t *ctx, int le, int bits, uint32_t poly, int ctx_size){
  * @param crc_id ID of a standard CRC
  * @return a pointer to the CRC table or NULL on failure
  */
-const uint32_t *av_crc_get_table(uint32_tId crc_id){
+uint32_t *av_crc_get_table(uint32_tId crc_id){
     if (!av_crc_table[crc_id][FF_ARRAY_ELEMS(av_crc_table[crc_id])-1])
         if (av_crc_init(av_crc_table[crc_id],
                         av_crc_table_params[crc_id].le,
@@ -226,18 +194,25 @@ const uint32_t *av_crc_get_table(uint32_tId crc_id){
  *
  * @see av_crc_init() "le" parameter
  */
-uint32_t av_crc(const uint32_t *ctx, uint32_t crc, const uint8_t *buffer, size_t length)
+uint32_t av_crc(uint32_t *ctx, uint32_t crc, const uint8_t *buffer, size_t length)
 {
     const uint8_t *end= buffer+length;
 
+    if (!ctx)
+        ctx = av_crc_get_table(CRC_32_IEEE_LE);
+
     if(!ctx[256]) {
         while(((intptr_t) buffer & 3) && buffer < end) {
+#ifdef LOOPCOUNTS
 ++CASEA1;
+#endif
             crc = ctx[((uint8_t)crc) ^ *buffer++] ^ (crc >> 8);
         }
 
         while(buffer<end-3){
+#ifdef LOOPCOUNTS
 ++CASEA2;
+#endif
             crc ^= av_le2ne32(*(const uint32_t*)buffer);
             crc =  ctx[3*256 + ( crc     &0xFF)]
                   ^ctx[2*256 + ((crc>>8 )&0xFF)]
@@ -248,7 +223,9 @@ uint32_t av_crc(const uint32_t *ctx, uint32_t crc, const uint8_t *buffer, size_t
     }
 
     while(buffer<end) {
+#ifdef LOOPCOUNTS
 ++CASEB;
+#endif
         crc = ctx[((uint8_t)crc) ^ *buffer++] ^ (crc >> 8);
     }
 
@@ -302,7 +279,7 @@ uint32_t av_crc(const uint32_t *ctx, uint32_t crc, const uint8_t *buffer, size_t
  *    cl -O -D__WIN32__ crc.c -o crc
  */
 
-#define BUFFER_SIZE 1024*64
+#define BUFFER_SIZE 64*1024
 
 static int globalErrorCount = 0;
 /* If unixAscii is true, then generate a crc first converting to a
@@ -336,6 +313,7 @@ unsigned char ebsidic2ascii[] = {
 };
 
 void BuildCRCTable()
+/* deprecated */
 {
     int i, j;
     unsigned long crc;
@@ -352,14 +330,18 @@ void BuildCRCTable()
         CRCTable[i] = crc;
         /* printf("CRCTable[%d] = %lx\n", i, crc); */
     }
+
+    ctx = (uint32_t *) CRCTable;
 }
 
-#ifdef OLD
 unsigned long CalculateBufferCRC(unsigned int count, unsigned long crc, void *buffer)
 {
     int index;
     unsigned char *p;
     unsigned long temp1, temp2;
+
+    if (!ctx)
+        BuildCRCTable();
 
     p = (unsigned char *) buffer;
     while (count-- > 0) {
@@ -376,13 +358,6 @@ unsigned long CalculateBufferCRC(unsigned int count, unsigned long crc, void *bu
     }
     return(crc);
 }
-#else
-unsigned long CalculateBufferCRC(unsigned int count, unsigned long crc, void *buf)
-{
-    crc = av_crc(ctx, crc, buf, count);
-    return(crc);
-}
-#endif OLD
 
 unsigned long CalculateFileCRC(FILE *fp)
 {
@@ -408,8 +383,10 @@ unsigned long CalculateFileCRC(FILE *fp)
             buffer[i] = ebsidic2ascii[buffer[i]];
           }
 #endif
+            crc = CalculateBufferCRC(count, crc, buffer);
+        } else {
+            crc = av_crc(ctx, crc, buffer, count);
         }
-        crc = CalculateBufferCRC(count, crc, buffer);
     }
     return (crc ^= 0xFFFFFFFFL);
 }
@@ -481,7 +458,9 @@ int main(void){
         ctx = av_crc_get_table(p[i][0]);
         printf("crc %08X =%X\n", p[i][1], av_crc(ctx, 0, buf, sizeof(buf)));
     }
-printf("CASEA1=%d CASEA2=%d CASEB=%d\n", CASEA1, CASEA2, CASEB);
+#ifdef LOOPCOUNTS
+    fprintf(stderr, "CASEA1=%ld CASEA2=%ld CASEB=%ld CASEC1=%ld CASEC2=%ld\n", CASEA1, CASEA2, CASEB, CASEC1, CASEC2);
+#endif
     return 0;
 }
 #else
@@ -499,14 +478,13 @@ main(int argc, char *argv[])
         exit(1);
     }
     globalErrorCount = 0;
-    //BuildCRCTable();
-    //ctx = av_crc_get_table(CRC_32_IEEE_LE);
+
+#if 0
+    //another way to initialize:
     uint32_t mycrctab[1024];
-    //uint32_t mycrctab[257];
-    //ctx = &mycrctab[0];
     ctx = mycrctab;
-    //[CRC_32_IEEE_LE] = { 1, 32, 0xEDB88320 },
     av_crc_init(ctx, 1,  32, 0xEDB88320, sizeof(mycrctab));
+#endif
 
     for (i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "-ascii") == 0) {
@@ -532,7 +510,9 @@ main(int argc, char *argv[])
             printf("%s %lx\n", argv[i], crc);
         }
     }
-printf("CASEA1=%d CASEA2=%d CASEB=%d\n", CASEA1, CASEA2, CASEB);
+#ifdef LOOPCOUNTS
+    fprintf(stderr, "CASEA1=%ld CASEA2=%ld CASEB=%ld CASEC1=%ld CASEC2=%ld\n", CASEA1, CASEA2, CASEB, CASEC1, CASEC2);
+#endif
     exit(globalErrorCount);
 }
 #endif
