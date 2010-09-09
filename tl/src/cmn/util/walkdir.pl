@@ -903,6 +903,12 @@ sub insert_crcs
         &pcrc'SetForText();
     }
 
+    #becasuse of file-system caching, it pays to have the list in directory order:
+    #tests are macbook indicate we process about 110 files/sec with random list
+    #(no crc calc) vs. 12,200 files/sec with sorted.
+
+    @filelist = sort @filelist;
+
     @crclist= &pcrc'CalculateFileListCRC(@filelist);
 
     if ( $#filelist == $#crclist) {
