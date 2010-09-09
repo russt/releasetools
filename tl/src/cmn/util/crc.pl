@@ -1,6 +1,6 @@
 #
 # BEGIN_HEADER - DO NOT EDIT
-# 
+#
 # The contents of this file are subject to the terms
 # of the Common Development and Distribution License
 # (the "License").  You may not use this file except
@@ -24,7 +24,7 @@
 # @(#)crc.pl - ver 1.1 - 01/04/2006
 #
 # Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
-# 
+#
 # END_HEADER - DO NOT EDIT
 #
 
@@ -73,9 +73,9 @@ sub init
     $p = $'p;
     $OS = $'OS;
     $NT = $'NT;
-    
+
     $SystemCrcOptions = "";
-    
+
     # Default to using the system crc if it exists, since it's
     # compiled and so will run much faster.
     if (!defined($whichCrc)) {
@@ -190,13 +190,13 @@ sub CalculateFileCRC
             return $crc;
         }
     }
-    
+
     if (!open(FROM, $filename)) {
         return 0;
     }
     binmode FROM;
     $buf = "";
-    
+
     $crc = 0xFFFFFFFF;
     $i = 0;
     while (1) {
@@ -211,56 +211,51 @@ sub CalculateFileCRC
 }
 
 sub CalculateFileListCRC
-    # Attempt to optimize running crc on a list of files by using the
-    # special -f argument to crc which will calculate the crc of every
-    # file listed.
+# Attempt to optimize running crc on a list of files by using the
+# special -f argument to crc which will calculate the crc of every
+# file listed.
 {
-    local(@fileList) = @_;
-    local(@crcOutList) = ();
-    local($filename);
+    local(@filelist) = @_;
+    my(@crcOutList) = ();
 
     if ($whichCrc eq "system") {
         require "os.pl";
-        
+
         # Do them en masse.
-        local($inFileList) = &os::TempFile;
+        my($inFileList) = &os::TempFile;
         if (!open(OUT, ">$inFileList")) {
-            print STDERR "BUILD_ERROR: $p; failed to open $inFileList for write: $!\n";
-        } else {
-            # We use a table just in case crc returns them out of
-            # order or with some missing.
-            local(%crcTable) = ();
-            foreach $filename (@fileList) {
-                print OUT "$filename\n";
-                $crcTable{$filename} = 0;
-            }
-            close(OUT);
-            local($sizeIn)= 0;
-            local($outCrcList) = &os'TempFile;
-            &os'run_cmd("crc $SystemCrcOptions -f $inFileList > $outCrcList"); 
-                local($output);
-                if (! &os::read_file2str(*output, $outCrcList)) {
-                    local(@crcs, @record, $entry, $crcValue);
-                    @crcs= split(/\n/, $output);
-                    if($#fileList == $#crcs) {
-                        grep((@record= split(/\x20{1}/, $_))
-                             && ($crcValue= pop(@record))
-                             && ($crcTable{join(" ", @record)} = $crcValue)
-                             ,  @crcs);
-                        #for every file did we get crc back?
-                        foreach $filename (@fileList) {
-                            print "$filename $crcTable{$filename}\n" if ($DEBUG);
-                            push(@crcOutList, $crcTable{$filename});
-                        }
-                            return @crcOutList;
-                    }
-                }
+            printf STDERR "BUILD_ERROR: %s:CalculateFileListCRC: failed to open '%s' for write: '%s'\n", $p, $inFileList, "$!";
+            return @crcOutList; #return empty list
         }
-    }
-    local($Hexval)= "";
-    foreach $filename (@fileList) {
-        $HexVal= sprintf "%x", &CalculateFileCRC($filename);
-        push(@crcOutList, $HexVal );
+
+        #write the file list to a tmp file:
+        print OUT join("\n", @filelist) . "\n";
+        close(OUT);
+
+        my($outCrcList) = &os'TempFile;
+        &os'run_cmd("crc $SystemCrcOptions -f $inFileList > $outCrcList");
+
+        local($output);
+        if (&os::read_file2str(*output, $outCrcList) == 0) {
+            my(@crcs) = ();
+            @crcs= split("\n", $output);
+
+            if ($#filelist == $#crcs) {
+                grep($_ =~ s/^[^ ]* ([^ ]+)$/$1/,  @crcs);
+                @crcOutList = @crcs;
+            }
+        } else {
+            printf STDERR "BUILD_ERROR: %s:CalculateFileListCRC: failed to read '%s' for write: '%s'\n", $p, $outCrcList, "$!";
+            return @crcOutList; #return empty list
+        }
+    } else {
+        #do calculation in perl - very slow!!
+        my($Hexval)= "";
+        my($filename);
+        foreach $filename (@filelist) {
+            $HexVal= sprintf "%x", &CalculateFileCRC($filename);
+            push(@crcOutList, $HexVal );
+        }
     }
     return @crcOutList;
 }
@@ -283,7 +278,7 @@ sub SystemCrc
         select(STDOUT); $outFlush = $|; $| = 1;
         # print something to stdout to actually get a fflush
         print "";
-        
+
         # CRCSPIN  crc server pipe input
         # CRCCPIN  crc client pipe input
         # CRCSPOUT crc server pipe output
@@ -325,14 +320,14 @@ sub SystemCrc
         select(STDOUT); $| = $outFlush;
         $crcStarted = 1;
     }
-    
+
     local($fullFile);
     $fullFile = &path::GetFullFileName($filename);
     if (! -r $fullFile) {
         print STDERR "$p (pcrc.pl): Unable to read '$fullFile'\n";
         return 0;
     }
-    
+
     if ($OS != $NT) {
         # print "Client about to send a '$fullFile'\n";
         print CRCCPOUT "$fullFile\n";
@@ -343,7 +338,7 @@ sub SystemCrc
     } else {
         $Crc = `crc $SystemCrcOptions "$fullFile"`;
     }
-    
+
     print "crc command returned: $Crc" if ($DEBUG);
     if (!defined($Crc)) {
         print STDERR "crc failed: $! ($@)\n";

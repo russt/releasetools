@@ -169,6 +169,9 @@ sub main
             @keysinA = grep(defined($DIRDBA{$_}), @tmp);
             @keysinB = grep(defined($DIRDBB{$_}), @tmp);
 
+            #if both arguments are directories, and we are not ignoring EOL diffs, then we can use binary crc calc:
+            my ($isBinary) = (!$IGNORE_EOL_DIFFS && $A_TYPE eq "DIRECTORY" && $B_TYPE eq "DIRECTORY")? 1 : 0;
+
             if ($FDIFF_FLAG || $CRCLOG_DIFF) {
                 #
                 # add crc's for all common files if we are comparing content.
@@ -178,12 +181,12 @@ sub main
 
                 if ($A_TYPE eq "DIRECTORY") {
                     $dir = $ARG_A; chdir($cwd); chdir($dir);
-                    &walkdir'insert_crcs(*DIRDBA,*keysinA);
+                    &walkdir'insert_crcs(*DIRDBA,*keysinA, $isBinary);
                 }
 
                 if ($B_TYPE eq "DIRECTORY") {
                     $dir = $ARG_B; chdir($cwd); chdir($dir);
-                    &walkdir'insert_crcs(*DIRDBB,*keysinB);
+                    &walkdir'insert_crcs(*DIRDBB,*keysinB, $isBinary);
                 }
             }
 
@@ -194,27 +197,20 @@ sub main
             @tmp = &list'AND(*setA, *setB);
 
             if ($FDIFF_FLAG || $CRCLOG_DIFF) {
+                #if both arguments are directories, and we are not ignoring EOL diffs, then we can use binary crc calc:
+                my ($isBinary) = (!$IGNORE_EOL_DIFFS && $A_TYPE eq "DIRECTORY" && $B_TYPE eq "DIRECTORY")? 1 : 0;
+
                 #compute relevant crc's:
                 printf STDERR "%s: Computing crc's for common files...\n", $p if ($VERBOSE);
 
                 if ($A_TYPE eq "DIRECTORY") {
                     $dir = $ARG_A; chdir($cwd); chdir($dir);
-                    #if both arguments are directories, then we can optimize crc calc:
-                    if (!$IGNORE_EOL_DIFFS && $B_TYPE eq "DIRECTORY") {
-                        &walkdir'insert_crcs_optimized(*DIRDBA, *tmp, *DIRDBB, $DUMMYCRC1);
-                    } else {
-                        &walkdir'insert(*DIRDBA, *tmp, *DIRDBB, $DUMMYCRC1);
-                    }
+                    &walkdir'insert_crcs(*DIRDBA, *tmp, $isBinary);
                 }
 
                 if ($B_TYPE eq "DIRECTORY") {
                     $dir = $ARG_B; chdir($cwd); chdir($dir);
-                    #if both arguments are directories, then we can optimize crc calc:
-                    if (!$IGNORE_EOL_DIFFS && $A_TYPE eq "DIRECTORY") {
-                        &walkdir'insert_crcs_optimized(*DIRDBB, *tmp, *DIRDBA, $DUMMYCRC2);
-                    } else {
-                        &walkdir'insert(*DIRDBA, *tmp, *DIRDBB, $DUMMYCRC1);
-                    }
+                    &walkdir'insert_crcs(*DIRDBB, *tmp, $isBinary);
                 }
 
                 if ($TABLE_FORMAT) {

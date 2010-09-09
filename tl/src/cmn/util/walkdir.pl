@@ -1,4 +1,5 @@
 package walkdir;
+
 #
 # BEGIN_HEADER - DO NOT EDIT
 # 
@@ -879,34 +880,40 @@ sub dir_list
 sub insert_crcs
 # add crcs for files in <keylist>
 {
-    local(*DIRDB, *keylist) = @_;
-    local(@crclist,@filelist,$filecrc,$fullfn,$kk,$dir,$fn,$type);
+    local(*DIRDB, *keylist, $isBinary) = @_;
+    local(@filelist);  #arg to CalculateFileListCRC()
+
+    my(@crclist, $filecrc, $fullfn, $kk, $dir, $fn, $type);
 
     for $kk (@keylist) {
         next if (!defined($DIRDB{$kk}));
-        ($dir,$fn,$type) = &unpack_wdkrec($kk);
-#       next if ($type ne 'F' && $type ne 'L');
+        ($dir, $fn, $type) = &unpack_wdkrec($kk);
+
         next unless ($type eq 'F' );
 
-        #we have a non-dir entry:
-
-        #add the crc to the record:
-        push(@filelist, &path'mkpathname($dir,$fn));
-
-#printf "insert_crcs (%s,%s,%s) crc=%lx\n", $dir,$fn,$type,$rec[$WD_CRC];
-        #update the record:
-#printf "insert_crcs AFTER crc=%lx\n",$rec[$WD_CRC];
+        #we have a non-dir entry - push on list we will pass to crc calculator:
+        push(@filelist, &path'mkpathname($dir, $fn));
     }
+
+
+    #check to see if we need to do ascii eol line translation:
+    if ($isBinary) {
+        &pcrc'SetForBinary();
+    } else {
+        &pcrc'SetForText();
+    }
+
     @crclist= &pcrc'CalculateFileListCRC(@filelist);
-    if( $#filelist == $#crclist) {
-        while( $fullfn= shift @filelist ) {
-            $filecrc= shift @crclist;
+
+    if ( $#filelist == $#crclist) {
+        while( $fullfn = shift @filelist ) {
+            $filecrc = shift @crclist;
             $dir= &path'head($fullfn);
             $fn= &path'tail($fullfn);
-            if(defined( $DIRDB{$dir,$fn,'F'})) {
-                @rec = &unpack_wdrec($DIRDB{$dir,$fn,'F'});
+            if (defined($DIRDB{$dir, $fn, 'F'})) {
+                @rec = &unpack_wdrec($DIRDB{$dir, $fn, 'F'});
                 $rec[$WD_CRC] = hex($filecrc);
-                $DIRDB{$dir,$fn,'F'} = &pack_wdrec(@rec);
+                $DIRDB{$dir, $fn, 'F'} = &pack_wdrec(@rec);
             }
             else {
                 printf STDERR "%s:insert_crcs ERROR: undefined database entry %s \n", $p, join(',',($dir,$fn,'F'));
