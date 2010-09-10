@@ -241,7 +241,8 @@ sub CalculateFileListCRC
             @crcs= split("\n", $output);
 
             if ($#filelist == $#crcs) {
-                grep($_ =~ s/^[^ ]* ([^ ]+)$/$1/,  @crcs);
+                #greedy match:
+                grep($_ =~ s/.* ([^ ]+)$/$1/, @crcs);
                 @crcOutList = @crcs;
             }
         } else {
