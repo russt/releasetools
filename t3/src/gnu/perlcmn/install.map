@@ -1,0 +1,2 @@
+TARGET_OS = cmn,ntcmn
+SCCS.pm          lib/$TARGET_OS/perl5/VCS/SCCS.pm          0444
