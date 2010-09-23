@@ -339,6 +339,19 @@ sub option_cvs_only
     return(1);
 }
 
+sub option_sccs_only
+#returns true if okay, false if error
+{
+    local ($bool) = @_;
+    if (defined($bool) && $bool >= 0) {
+        $SCCSONLY = $bool;
+    } else {
+        printf STDERR "%s:  ERROR: option_sccs_only requires boolean value (0=false, 1=true).\n", $p;
+        return(0);
+    }
+    return(1);
+}
+
 sub option_skip_cvs
 #returns true if okay, false if error
 {
@@ -442,7 +455,7 @@ sub dirTree
     my ($DirTotal) = 0;
 
     if (chdir $dir) {
-        $error = &dowalk($dir, 0, \$DirTotal, $dir eq "CVS");
+        $error = &dowalk($dir, 0, \$DirTotal, $dir eq "CVS", $dir eq "sccs" || $dir eq "SCCS");
     } else {
         printf STDERR "%s:  WARNING: cannot enter %s\n", $p, $dir;
     }
@@ -456,7 +469,7 @@ sub dowalk
 #we assume we are in $cwd.
 #stop descent if errors
 {
-    local ($cwd, $level, *dirtotal, $incvs) = @_;
+    local ($cwd, $level, *dirtotal, $incvs, $insccs) = @_;
     local (@lsout);
     local($ff, $nerrs) = ("",0);
     local($type, $crc, $linkto, @rec, $tmp);
@@ -496,11 +509,13 @@ sub dowalk
             next if ($ff eq ".snapshot");   #don't go there - network appliance backup dirs.
 
             my ($iamcvs) = ($ff eq "CVS");
+            my ($iamsccs) = ($ff eq "sccs" || $ff eq "SCCS");
 
-#printf "dir=%s E=%d incvs=%d iamcvs=%d\n", &path'mkpathname($cwd, $ff), ($CVSONLY && !($iamcvs || $incvs || (-d "$ff/CVS"))), $incvs, $iamcvs, $ff;
+#printf "dir=%s E=%d incvs=%d iamcvs=%d insccs=%d iamsccs=%d\n", &path'mkpathname($cwd, $ff), ($CVSONLY && !($iamcvs || $incvs || (-d "$ff/CVS"))), $incvs, $iamcvs, $insccs, $iamsccs, $ff;
 
             next if ( $CVSONLY && !( $iamcvs || $incvs || (-d "$ff/CVS") ) );
-            next if ($SKIPCVS && ($iamcvs || $ff eq "RCS" || $ff eq "SCCS" || $ff eq ".svn" || $ff eq ".git") );
+            next if ( $SCCSONLY && !( $iamsccs || $insccs || (-d "$ff/sccs") || (-d "$ff/SCCS") ) );
+            next if ($SKIPCVS && ($iamcvs || $ff eq "RCS" || $iamsccs || $ff eq ".svn" || $ff eq ".git") );
 
             $nfiles = 0;    # count number of files just in this dir.
             ++$nsubdirs;    # count number of subdirs.
@@ -508,7 +523,7 @@ sub dowalk
                 #RECURSIVE CALL:
                 $tmp = &path'mkpathname($cwd, $ff);
                 $subtotal = 0;
-                $nerrs += &dowalk($tmp, $level+1, \$subtotal, ($incvs || $iamcvs));
+                $nerrs += &dowalk($tmp, $level+1, \$subtotal, ($incvs || $iamcvs), ($insccs || $iamsccs));
                 $dirtotal += $subtotal;
 #printf "subdir=%s subdirtotal=%d\n", $tmp, $subtotal;
                 chdir "$DOT$DOT";
@@ -534,7 +549,8 @@ sub dowalk
 #printf "stat=(%s)\n", join(',',@rec);
 
             $DIRDB{$cwd,$ff,'L'} = join($WD_FS, $linkto, "$crc", "0", @rec, "0");
-        } else {
+        } elsif ( (!$CVSONLY && !$SCCSONLY) || ($CVSONLY && $incvs) || ($SCCSONLY && $insccs) ) {
+#printf "ff='%s' CVSONLY=%d incvs=%d !E=%d\n", $ff, $CVSONLY, $incvs, !($CVSONLY && $incvs);
             $type = 'F';
             $crc = 0;
             $linkto = "";
@@ -581,6 +597,9 @@ sub dowalk
                 #checking $ff to $ff,v and do not leave $ff:
                 &cvs_checkin($ff, $ff . ",v", 0);
             }
+        } else {
+            # -cvsonly and not in a cvs dir
+            # -sccsonly and not in a sccs dir
         }
     }
 
@@ -1131,11 +1150,7 @@ sub usage
     local($status) = @_;
 
     print STDERR <<"!";
-Usage:  $p [-help] [-f] [-ftxt] [-d] [-v] [-q] [-qq] [-dq] [-sq]
-                [-e] [-ne] [-s] [-l depth] [-slice] [-leaf] [-crc] [-modes]
-                [-cvsonly] [-nocvs] [-norcs] [-nosccs] [-nosvn] [-ci] [-text]
-                [-lc] [-du] [-bytes] [-kbytes] [-mbytes] [-gbytes] [-unjar] [-untar]
-                [dirs...]
+Usage:  $p [options] [dirs...]
 
 Options:
  -help     display this usage message
@@ -1159,6 +1174,7 @@ Options:
  -crc      compute & display crc for each file and/or symlink.
  -modes    display permission bits for each file and/or symlink.
  -cvsonly  only enter directories that have CVS subdirectories
+ -sccsonly only enter directories that have SCCS (or sccs) subdirectories
  -noscm    skip RCS, CVS, SCCS, SUBVERSION, and GIT meta-directories.
  -nocvs    alias for -noscm
  -norcs    alias for -noscm
@@ -1242,6 +1258,8 @@ sub parse_args
             &option_modes(1);
         } elsif ($flag eq "-cvsonly") {
             &option_cvs_only(1);
+        } elsif ($flag eq "-sccsonly") {
+            &option_sccs_only(1);
         } elsif ($flag eq "-noscm") {
             &option_skip_cvs(1);
         } elsif ($flag eq "-nocvs") {
