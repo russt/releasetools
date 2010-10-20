@@ -1,0 +1,10 @@
+TEMPLATE= file.mmf
+
+BINTGZ       = ant.btz
+
+T3DEST = ${BASE}/java/ant
+
+BINFILES = .
+
+#note - took out ant.bat, since it doesn't work on mks/nt.
+FILES   =  ant.sh
