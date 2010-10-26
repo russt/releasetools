@@ -51,6 +51,7 @@ Options:
  -jdk4        force source and class files to jdk 1.4
  -jdk5        force source and class files to jdk 1.5
  -jdk6        force source and class files to jdk 1.6
+ -ea          enable assertions at runtime
 
 Environment:
  JAVACOMMANDPATH    semi-colon separated list of places to look for java classes
@@ -76,8 +77,8 @@ p=`basename $0`
     VERBOSE=0
     COMPILE=1
     FORCECOMPILE=0
-
     JAVAC_ARGS=
+    JAVA_ARGS=
 
     # Set the default command path if none specified
     if [ -z "$JAVACOMMANDPATH" ] ; then
@@ -101,6 +102,14 @@ p=`basename $0`
         -f* )
             FORCECOMPILE=1
             COMPILE=1
+            shift
+            ;;
+        -e* )
+            if [ -z "$JAVA_ARGS" ]; then
+                JAVA_ARGS="-enableassertions"
+            else
+                JAVA_ARGS="-enableassertions $JAVA_ARGS"
+            fi
             shift
             ;;
         -n* )
@@ -197,7 +206,7 @@ do
     if [ -f $ff ]; then
         [ $VERBOSE -eq 1 ] && echo "executing $ff with args '$@' CLASSPATH='$CLASSPATH'"  1>&2
         [ $VERBOSE -eq 1 ] && echo "java $javacmd $@"  1>&2
-        exec java $javacmd "$@"
+        exec java $JAVA_ARGS $javacmd "$@"
     fi
 done
 
