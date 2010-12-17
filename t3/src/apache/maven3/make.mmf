@@ -1,0 +1,7 @@
+TEMPLATE= file.mmf
+
+BINTGZ       = maven.btz
+
+T3DEST = ${BASE}/java/maven3
+
+BINFILES = .

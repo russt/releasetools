@@ -18,9 +18,6 @@
 # under the License.
 # ----------------------------------------------------------------------------
 
-#   Copyright (c) 2001-2002 The Apache Software Foundation.  All rights
-#   reserved.
-
 # ----------------------------------------------------------------------------
 # Maven2 Start Up Batch script
 #
@@ -35,15 +32,6 @@
 #     e.g. to debug Maven itself, use
 #       set MAVEN_OPTS=-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000
 # ----------------------------------------------------------------------------
-
-
-QUOTED_ARGS=""
-while [ "$1" != "" ] ; do
-
-  QUOTED_ARGS="$QUOTED_ARGS \"$1\""
-  shift
-
-done
 
 if [ -f /etc/mavenrc ] ; then
   . /etc/mavenrc
@@ -132,7 +120,7 @@ if [ -z "$JAVACMD" ] ; then
       JAVACMD="$JAVA_HOME/bin/java"
     fi
   else
-    JAVACMD=java
+    JAVACMD="`which java`"
   fi
 fi
 
@@ -147,8 +135,6 @@ if [ -z "$JAVA_HOME" ] ; then
   echo "Warning: JAVA_HOME environment variable is not set."
 fi
 
-CLASSWORLDS_LAUNCHER=org.codehaus.classworlds.Launcher
-
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
   [ -n "$M2_HOME" ] &&
@@ -159,18 +145,28 @@ if $cygwin; then
     HOME=`cygpath --path --windows "$HOME"`
 fi
 
-####### LOCAL MOD adjust for location of classworlds jars:
-
+####### LOCAL MOD adjust for differences in classworlds jar location and launcher:
 if [ -d "${M2_HOME}"/core/boot ]; then
     CLASSWORLDS_DIR=core/boot
 else
     CLASSWORLDS_DIR=boot
 fi
 
+CLASSWORLDS_JAR=`echo "$M2_HOME"/$CLASSWORLDS_DIR/*classworlds*.jar`
+
+case "$CLASSWORLDS_JAR" in
+"${M2_HOME}"/boot/plexus-classworlds-*.jar )
+    CLASSWORLDS_LAUNCHER=org.codehaus.plexus.classworlds.launcher.Launcher
+    ;;
+* )
+    CLASSWORLDS_LAUNCHER=org.codehaus.classworlds.Launcher
+    ;;
+esac
+####### END LOCAL MOD
+
 exec "$JAVACMD" \
   $MAVEN_OPTS \
-  -classpath "${M2_HOME}"/${CLASSWORLDS_DIR}/classworlds-*.jar \
+  -classpath "${CLASSWORLDS_JAR}" \
   "-Dclassworlds.conf=${M2_HOME}/bin/m2.conf" \
   "-Dmaven.home=${M2_HOME}"  \
-  ${CLASSWORLDS_LAUNCHER} $QUOTED_ARGS
-
+  ${CLASSWORLDS_LAUNCHER} "$@"
