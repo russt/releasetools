@@ -4,5 +4,3 @@ PKG  = bin
 
 BINFILES = cvs
 
-FILES   =  sccs2rcs.py sccs2rcs.csh git-sccsimport.py
-
