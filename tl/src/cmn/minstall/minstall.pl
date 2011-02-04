@@ -1606,7 +1606,7 @@ sub option_mpw
 }
 
 sub option_kshcg
-#add a startup line to run a codegen script on mks
+#add a startup line to run a cado script on mks
 {
 	local(*buf, $srcFile, $dstFile) = @_;
 	print "kshcg $srcFile\n" if ($DEBUG);
@@ -1617,7 +1617,7 @@ sub option_kshcg
 
 	&RemoveOtherCodegenStartups(*buf);
 
-	$buf = 'codegen -u -x `whence $0` "$@"; exit' . "\n" . $buf;
+	$buf = 'cado -u -x `whence $0` "$@"; exit' . "\n" . $buf;
 	return 0;
 }
 
@@ -1633,7 +1633,7 @@ sub option_shcg
 
 	&RemoveOtherCodegenStartups(*buf);
 
-	$buf = 'if [ $# -eq 0 ]; then exec codegen -u -x -S $0; exit $? ; else exec codegen -u -x -S $0 "$@"; exit $? ; fi' . "\n" . $buf;
+	$buf = 'if [ $# -eq 0 ]; then exec cado -u -x -S $0; exit $? ; else exec cado -u -x -S $0 "$@"; exit $? ; fi' . "\n" . $buf;
 	return 0;
 }
 
@@ -1882,7 +1882,7 @@ sub option_perlprof
 }
 
 sub RemoveOtherCodegenStartups
-	# This file may already have a codegen startup line in it.  Remove it
+	# This file may already have a cado startup line in it.  Remove it
 	# from the buffer.
 {
 	local(*buf) = @_;
@@ -1894,7 +1894,7 @@ sub RemoveOtherCodegenStartups
 		# Remove top line.
 		$buf =~ s/^.*\n//;
 		if ($buf eq "") {
-			print STDERR "ERROR: This was not a codegen program, no #!/bin/codegen or #!/bin/cado found.\n";
+			print STDERR "ERROR: This was not a cado program, no #!/bin/codegen or #!/bin/cado found.\n";
 			return;
 		}
 	}
