@@ -4,6 +4,6 @@ TEMPLATE= file.mmf
 
 PKG	= bin
 
-FILES	= fixeol.cg signsrc.cg
+FILES	= fixeol.cg signsrc.cg mkjregress.cg
 
 CMDS    = ${FILES}

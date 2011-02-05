@@ -1,0 +1,266 @@
+if [ $# -eq 0 ]; then exec cado -u -x -S $0; exit $? ; else exec cado -u -x -S $0 "$@"; exit $? ; fi
+#!/bin/cado
+
+#
+#mkjregress.cg -  generate one or more jregress test and reference file sets.
+#
+
+Usage := << //
+{
+    UsageStr = << EOFSTR
+Usage:  $p [-help] [-verbose] [-l start_num [-u end_num]] [-t test_suffix]  test_prefix
+
+Generate a set of test scripts and reference files to be run under the jregress harness.
+Test scripts consist of a test prefix, followed by a 5 digit integer, followed by a test
+suffix which determines the type of processor invoked by jregress.
+
+This command will not re-write existing tests.  If you wish to regenerate a sequence of tests,
+then remove the old scripts by hand, or run the command in an empty directory.
+
+The tests and reference files generated are empty of content.  You may run them immediately,
+to verify that the processor environment for the tests has been correctly established.
+
+Note that the standard directory structure for jregress tests is as follows:
+
+ regress/{*.ksh, *.ref}
+ bld/{*.err,*.out,*.dif}
+
+The bld directory will hold the tests outputs {*.err,*.out,*.dif} only if there is
+a test failure.  You may copy the *.out file to the *.ref file if you are satisfied
+that the output is correct.  You may also add an IGNORE marker to the beginning of
+lines that jregress is to ignore in the difference output.  See "jregress -H" for
+a more complete explaination.
+
+Options:
+ -help           Display this message.
+ -l <num>        First test number to generate
+ -u <num>        Last test number to generate
+ -t <suffix>     Set the test suffix to one of:  {ant, bsh, cgt, gvy, ksh}
+
+Recognized test types (see jregress -H) are:
+ .ant            Ant test script.
+ .bsh            Bean-shell test script
+ .cgt            Cado test script
+ .gvy            Groovy test script
+ .ksh            Posix shell test script.
+
+ Note that the test suffix must be 3 characters exactly.
+
+ Jregress will execute .ksh scripts in unix, cygwin, and mks/nt environemnts.
+
+Example:
+
+ Generate and run tests {db00001.ksh,db00001.ref} .. {db00009.ksh,db00009.ref}
+    $p -l 1 -u 9 db
+    jregress
+
+EOFSTR
+
+    %echo $UsageStr
+}
+//
+
+parse_args := << //
+{
+    #set defaults:
+    TEST_PREFIX_DEFAULT = test
+    TEST_SUFFIX_DEFAULT = ksh
+
+    LOWER_TESTNUM = 1
+    %undef UPPER_TESTNUM
+
+    DO_HELP = 0
+    VERBOSE = 0
+
+    %shift arg CG_ARGV
+    %whiledef arg %call process_one_arg
+
+    %if $badOptions %call Usage
+    %if $badOptions %halt 1
+
+    %if $DO_HELP %call Usage
+    %if $DO_HELP %halt 0
+
+    %ifndef TEST_PREFIX   %eecho ${p}:  WARNING - test prefix defaulted to $TEST_PREFIX_DEFAULT
+    %ifndef TEST_PREFIX   TEST_PREFIX = $TEST_PREFIX_DEFAULT
+
+    %ifndef TEST_SUFFIX   %eecho ${p}:  WARNING - test prefix defaulted to $TEST_SUFFIX_DEFAULT
+    %ifndef TEST_SUFFIX   TEST_SUFFIX = $TEST_SUFFIX_DEFAULT
+
+    %ifndef UPPER_TESTNUM    UPPER_TESTNUM = $LOWER_TESTNUM
+}
+//
+
+process_one_arg := << //
+#if simple file, then add to stack
+#if directory, then get list of files in dir and add to stack
+#skip non-existent files.
+{
+    theArg = $arg
+    %shift arg CG_ARGV
+
+#%eecho process_one_arg T0 arg='$arg' theArg='$theArg'
+
+    %call parse_options
+    %if $parsedOption %return
+
+    #otherwise, we expect a test prefix string:
+    TEST_PREFIX = $theArg
+}
+//
+
+parse_options := << //
+#parse options
+{
+    badOptions=0
+    parsedOption=0
+    CG_MATCH_SPEC = /^-/
+
+    %ifnot $theArg:match %return
+
+    #we have an option:
+
+    CG_MATCH_SPEC = /^-h/
+    parsedOption=1
+    %if $theArg:match    DO_HELP = 1
+    %if $theArg:match    %return
+
+    CG_MATCH_SPEC = /^-v/
+    parsedOption=1
+    %if $theArg:match    VERBOSE = 1
+    %if $theArg:match    %return
+
+    CG_MATCH_SPEC = /^-l/
+    parsedOption=0
+    %if $theArg:match    %call set_lower_bound
+    %if $parsedOption    %return
+
+    CG_MATCH_SPEC = /^-u/
+    parsedOption=0
+    %if $theArg:match    %call set_upper_bound
+    %if $parsedOption    %return
+
+    CG_MATCH_SPEC = /^-t/
+    parsedOption=0
+    %if $theArg:match    %call set_test_suffix
+    %if $parsedOption    %return
+
+    badOptions=1
+    %eecho ${p}: bad option, $theArg
+}
+//
+
+set_lower_bound := << //
+{
+    CG_COMPARE_SPEC = 0
+    %if $CG_ARGV:stacksize:lt    %eecho ${p}:  -l requires an numerical argument
+    %if $CG_ARGV:stacksize:lt    %halt 1
+
+    theArg = $arg
+    %shift arg CG_ARGV
+
+    %ifnot $theArg:isint    %eecho ${p}:  "-l $theArg": ERROR: "$theArg" is not a number.
+    %ifnot $theArg:isint    %halt 1
+
+    CG_PAD_SPEC = %05d
+    LOWER_TESTNUM = $theArg:pad
+    parsedOption = 1
+}
+//
+
+set_upper_bound := << //
+{
+    CG_COMPARE_SPEC = 1
+    %if $CG_ARGV:stacksize:lt    %eecho ${p}:  -u requires an numerical argument
+    %if $CG_ARGV:stacksize:lt    %halt 1
+
+    theArg = $arg
+    %shift arg CG_ARGV
+
+    %ifnot $theArg:isint    %eecho ${p}:  "-u $theArg": ERROR: "$theArg" is not a number.
+    %ifnot $theArg:isint    %halt 1
+
+    CG_PAD_SPEC = %05d
+    UPPER_TESTNUM = $theArg:pad
+    parsedOption = 1
+}
+//
+
+set_test_suffix := << //
+{
+    CG_COMPARE_SPEC = 1
+    %if $CG_ARGV:stacksize:lt    %eecho ${p}:  -t requires an 3-character suffix
+    %if $CG_ARGV:stacksize:lt    %halt 1
+
+    theArg = $arg
+    %shift arg CG_ARGV
+
+    TEST_SUFFIX = $theArg
+    parsedOption = 1
+}
+//
+
+emit_wrapper_ksh := << //
+#emit the test and reference wrappers
+{
+    #%echo Emitting wrapper $TNUM
+    %evalmacro ECHO_TXT KSH_WRAPPER
+    echo                                      /${TEST_PREFIX}${TNUM}.${TEST_SUFFIX}
+
+    %evalmacro ECHO_TXT KSH_REF_FILE
+    echo                                      /${TEST_PREFIX}${TNUM}.ref
+}
+//
+
+emit_tests := << //
+{
+    test_emitter = emit_wrapper_${TEST_SUFFIX}
+    %ifndef $test_emitter    %eecho ${p}:  no emitter for test suffix $TEST_SUFFIX - ABORT
+    %ifndef $test_emitter    %halt 1
+
+    arange = $LOWER_TESTNUM..$UPPER_TESTNUM
+    %foreach TNUM arange %call $test_emitter
+}
+//
+
+################################## TEMPLATES ###################################
+
+{
+KSH_WRAPPER := << EOF
+#!/bin/sh
+#{=TEST_PREFIX=}{=TNUM=} - comment
+
+TESTNAME={=TEST_PREFIX=}{=TNUM=}
+echo TESTNAME is $TESTNAME
+. ./regress_defs.ksh
+
+#test code goes here:
+
+#VERSION:  $Id$ $Rev$ $Date$
+EOF
+}
+
+{
+KSH_REF_FILE := << EOF
+TESTNAME is {=TEST_PREFIX=}{=TNUM=}
+EOF
+}
+
+##################################### MAIN #####################################
+
+p = $CG_INFILE:basename:root
+CG_ROOT = .
+EXIT_STATUS = 0
+
+#avoid updating existing test scripts:
+%pragma update  0
+
+#process arguments:
+%call parse_args
+
+%echo LOWER_TESTNUM=$LOWER_TESTNUM
+%echo UPPER_TESTNUM=$UPPER_TESTNUM
+%echo TEST_PREFIX=$TEST_PREFIX
+%echo TEST_SUFFIX=$TEST_SUFFIX
+
+%call emit_tests

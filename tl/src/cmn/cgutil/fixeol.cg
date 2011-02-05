@@ -1,5 +1,5 @@
-if [ $# -eq 0 ]; then exec codegen -u -x -S $0; exit $? ; else exec codegen -u -x -S $0 "$@"; exit $? ; fi
-#!/bin/codegen
+if [ $# -eq 0 ]; then exec cado -u -x -S $0; exit $? ; else exec cado -u -x -S $0 "$@"; exit $? ; fi
+#!/bin/cado
 
 Usage := << EOF
 {
@@ -30,7 +30,7 @@ parse_options := << EOF
 
     %ifnot $theArg:match %return
 
-	#we have an option:
+    #we have an option:
     parsedOption=1
 
     CG_MATCH_SPEC = /^-show/
@@ -45,8 +45,8 @@ parse_options := << EOF
     %if $theArg:match VERBOSE = 1
     %if $theArg:match %return
 
-	badOptions=1
-	%eecho ${p}: bad option, $theArg
+    badOptions=1
+    %eecho ${p}: bad option, $theArg
 }
 EOF
 
@@ -60,8 +60,8 @@ process_one_arg := << EOF
 
 #%eecho process_one_arg T0 arg='$arg' theArg='$theArg'
 
-	%call parse_options
-	%if $parsedOption %return
+    %call parse_options
+    %if $parsedOption %return
 
     #is it a directory?
     %if $theArg:d %call push_dir_list
@@ -147,7 +147,7 @@ process_one_file := << EOF
     %if $DO_SHOW %return
 
     #re-write the file but only if it has changed:
-    echo $theTextFile
+    echo     $theTextFile
 }
 EOF
 

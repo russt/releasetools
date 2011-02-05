@@ -1,5 +1,5 @@
-if [ $# -eq 0 ]; then exec codegen -u -x -S $0; exit $? ; else exec codegen -u -x -S $0 "$@"; exit $? ; fi
-#!/bin/codegen
+if [ $# -eq 0 ]; then exec cado -u -x -S $0; exit $? ; else exec cado -u -x -S $0 "$@"; exit $? ; fi
+#!/bin/cado
 
 Usage := << EOF
 {
@@ -350,18 +350,14 @@ process_source_file := << EOF
 }
 EOF
 
-
-
-
-
 ##################################### MAIN #####################################
+
 CG_ROOT = .
 DO_HELP = 0
 VERBOSE = 0
 EXIT_STATUS = 0
 
 p = $CG_INFILE:basename
-
 
 %ifndef CG_ARGV %call Usage
 %ifndef CG_ARGV %halt 1
