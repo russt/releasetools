@@ -29,7 +29,7 @@ The bld directory will hold the tests outputs {*.err,*.out,*.dif} only if there 
 a test failure.  You may copy the *.out file to the *.ref file if you are satisfied
 that the output is correct.  You may also add an IGNORE marker to the beginning of
 lines that jregress is to ignore in the difference output.  See "jregress -H" for
-a more complete explaination.
+a more complete explanation.
 
 Options:
  -help           Display this message.
@@ -44,15 +44,23 @@ Recognized test types (see jregress -H) are:
  .gvy            Groovy test script
  .ksh            Posix shell test script.
 
- Note that the test suffix must be 3 characters exactly.
+NOTES:
 
- Jregress will execute .ksh scripts in unix, cygwin, and mks/nt environemnts.
+ Jregress requires that the test suffix is 3 characters exactly.
+
+ Jregress will execute .ksh scripts in unix, cygwin, and mks/nt environments.
+
+ Jregress will only execute tests contained in a directory named "regress".
+ It will recursively process "regress" directories starting from the current working
+ directory.
 
 Example:
 
  Generate and run tests {db00001.ksh,db00001.ref} .. {db00009.ksh,db00009.ref}
-    $p -l 1 -u 9 db
-    jregress
+    % mkdir regress
+    % cd regress
+    % $p -l 1 -u 9 db
+    % jregress
 
 EOFSTR
 
@@ -66,7 +74,7 @@ parse_args := << //
     TEST_PREFIX_DEFAULT = test
     TEST_SUFFIX_DEFAULT = ksh
 
-    LOWER_TESTNUM = 1
+    LOWER_TESTNUM = 00001
     %undef UPPER_TESTNUM
 
     DO_HELP = 0
@@ -223,6 +231,14 @@ emit_tests := << //
 }
 //
 
+dumpParameters := << //
+{
+    %echo LOWER_TESTNUM=$LOWER_TESTNUM
+    %echo UPPER_TESTNUM=$UPPER_TESTNUM
+    %echo TEST_PREFIX=$TEST_PREFIX
+    %echo TEST_SUFFIX=$TEST_SUFFIX
+}
+//
 ################################## TEMPLATES ###################################
 
 {
@@ -258,9 +274,6 @@ EXIT_STATUS = 0
 #process arguments:
 %call parse_args
 
-%echo LOWER_TESTNUM=$LOWER_TESTNUM
-%echo UPPER_TESTNUM=$UPPER_TESTNUM
-%echo TEST_PREFIX=$TEST_PREFIX
-%echo TEST_SUFFIX=$TEST_SUFFIX
+%if $VERBOSE    %call dumpParameters
 
 %call emit_tests
