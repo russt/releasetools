@@ -1,0 +1,7 @@
+TEMPLATE= file.mmf
+
+BINTGZ       = groovy.btz
+
+T3DEST = ${BASE}/java/groovy
+
+BINFILES = .
