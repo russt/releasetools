@@ -1,27 +1,92 @@
 if [ $# -eq 0 ]; then exec cado -u -x -S $0; exit $? ; else exec cado -u -x -S $0 "$@"; exit $? ; fi
 #!/bin/cado
 
-Usage := << EOF
-{
-    UsageStr = << EOFSTR
-Usage:  $p [-help] [-verbose] file_names directory_names 
+p = $CG_INFILE:basename
 
-This utility signs source files with the CDDL license header.
+{
+UsageStr = << EOF
+Usage:  $p [-help] [-verbose] file_names directory_names
+
+This utility signs source files with a license header - CDDL as a default.
 
 Options:
  -help           Display this message.
  -verbose        Show statistics
+ -showlicense    Dump the current license template and exit.  Useful
+                 as and example for creating a new license template.
+ -entab <n>      Also eliminate tabs in the source, using <n> for tab-stop.
+ -fixeol         Also add final EOL to files that don't have one.
+
+Environment:
+    PROJECT_LICENSE_FILE   if defined, use the contents of this file for the license template.
+    LICENSE_URL            url home for the license
+    COPYRIGHT_YEARS        copyright range for each source file
+    COPYRIGHT_HOLDER       copyright holder for each source file
 
 Example:
  $p ./file1.java dir_1 dir_2 ./file2.xml
-EOFSTR
-
-    %echo $UsageStr
-}
 EOF
+}
 
-parse_options := << EOF
-#parse options
+Usage := << //
+{
+    %eecho $UsageStr
+}
+//
+
+parseArgs := << //
+{
+    %ifndef CG_ARGV %call Usage
+    %ifndef CG_ARGV %halt 1
+
+    DO_HELP = 0
+    VERBOSE = 0
+    SHOWLICENSE = 0
+    FIXEOL = 0
+    ENTAB = 0
+    ENTAB_SPACES = -1
+
+    %shift arg CG_ARGV
+    %whiledef arg %call process_one_arg
+
+    %if $badOptions %call Usage
+    %if $badOptions %halt 1
+
+    %if $DO_HELP %call Usage
+    %if $DO_HELP %halt 0
+}
+//
+
+process_one_arg := << //
+#if simple file, then add to stack
+#if directory, then get list of files in dir and add to stack
+#skip non-existent files.
+{
+    theArg = $arg
+    %shift arg CG_ARGV
+
+#%eecho process_one_arg T0 arg='$arg' theArg='$theArg'
+
+    %call parse_one_option
+    %if $parsedOption %return
+
+#%eecho process_one_arg T1 theArg='$theArg' check for dir
+    #is it a directory?
+    %if $theArg:d %call push_dir_list
+    %if $theArg:d %return
+
+    #is it a plain file?
+    %if $theArg:f %call push_file_name
+#%eecho process_one_arg T2 theArg='$theArg' check for plain file FILESTACK=$FILESTACK:stacksize $FILESTACK:showstack
+    %if $theArg:f %return
+
+    #otherwise, the arg is unrecognized - display error:
+    %eecho ${p}: bad arg, $theArg - IGNORED
+}
+//
+
+parse_one_option := << //
+#parse a single option
 {
     badOptions=0
     parsedOption=0
@@ -36,6 +101,18 @@ parse_options := << EOF
     %if $theArg:match DO_HELP = 1
     %if $theArg:match %return
 
+    %call parse_entab
+    %if $parsedEntab  badOptions = $badEntabArg
+    %if $parsedEntab  %return
+
+    CG_MATCH_SPEC = /^-f/
+    %if $theArg:match FIXEOL = 1
+    %if $theArg:match %return
+
+    CG_MATCH_SPEC = /^-showlicense/
+    %if $theArg:match SHOWLICENSE = 1
+    %if $theArg:match %return
+
     CG_MATCH_SPEC = /^-v/
     %if $theArg:match VERBOSE = 1
     %if $theArg:match %return
@@ -43,43 +120,49 @@ parse_options := << EOF
     badOptions=1
     %eecho ${p}: bad option, $theArg
 }
-EOF
+//
 
-process_one_arg := << EOF
-#if simple file, then add to stack
-#if directory, then get list of files in dir and add to stack
-#skip non-existent files.
+parse_entab := << //
+#handle -entab <tab-stop> option
+#INPUT:   theArg, arg, CG_ARGV
+#OUTPUT:  parsedEntab, ENTAB, ENTAB_SPACES, badEntabArg
 {
+    parsedEntab = 0
+    badEntabArg = 0
+
+    CG_MATCH_SPEC = /^-e/
+    %ifnot  $theArg:match %return
+
+    #we found an entab arg:
+    parsedEntab = 1
+    ENTAB = 1
+
+    #get the next arg:
     theArg = $arg
-    %shift arg CG_ARGV
+    %shift  arg CG_ARGV
 
-#%eecho process_one_arg T0 arg='$arg' theArg='$theArg'
+    %ifndef theArg        badEntabArg = 1
+    %if     $badEntabArg  %eecho ${p}:  ERROR:  -entab requires argument specifying the tab-stop.
+    %if     $badEntabArg  %return
 
-    %call parse_options
-    %if $parsedOption %return
+    %ifnot $theArg:isint  badEntabArg = 1
+    %if    $badEntabArg   %eecho ${p}:  ERROR:  -entab argument ($theArg) must be an integer
+    %if    $badEntabArg   %return
 
-    #is it a directory?
-    %if $theArg:d %call push_dir_list
-    %if $theArg:d %return
-
-    #is it a plain file?
-    %if $theArg:f %call push_file_name
-    %if $theArg:f %return
-
-    #otherwise, the arg is unrecognized - display error:
-    %eecho ${p}: bad arg, $theArg - IGNORED
+    #argument is the number of spaces per tab:
+    ENTAB_SPACES = $theArg
 }
-EOF
+//
 
-push_file_name := << EOF
+push_file_name := << //
 {
     theArg2 = ./$theArg
     %push FILESTACK $theArg2
     %void $FILE_CNT:incr:assign
 }
-EOF
+//
 
-push_dir_list := << EOF
+push_dir_list := << //
 {
     #use walkdir to get file-list:
     CG_SHELL_COMMAND_ARGS = -ftxt $theArg
@@ -96,52 +179,97 @@ push_dir_list := << EOF
 
     %void $DIR_CNT:incr:assign
 }
-EOF
+//
 
-dump_stats := << EOF
+dump_stats := << //
 {
     %echo Processed $FILE_CNT file arguments
     %echo Processed $DIR_CNT directory arguments
     %echo Processed Found $UNREADABLE_FILE_CNT unreadable files
     %echo Processed a total of $TOTAL_FILE_CNT files
 }
-EOF
+//
 
-reset_stats := << EOF
+reset_stats := << //
 {
     FILE_CNT = 0
     DIR_CNT = 0
     UNREADABLE_FILE_CNT = 0
     TOTAL_FILE_CNT = 0
 }
-EOF
+//
 
-process_one_file := << EOF
+process_one_file := << //
 {
     theTextFile = $aTextFile
     infile = $aTextFile
     %shift aTextFile FILESTACK
 
-
     %void $TOTAL_FILE_CNT:incr:assign
 
-    %ifnot $theTextFile:r %void UNREADABLE_FILE_CNT:incr:assign
-    %ifnot $theTextFile:r EXIT_STATUS = 1
-    %ifnot $theTextFile:r %return ${p}:  ${theTextFile} is not readable - SKIPPED.
-
-    %readtemplate ECHO_TXT $theTextFile
-
-    CG_COMPARE_SPEC = $ECHO_TXT
+    %ifnot $theTextFile:r %void $UNREADABLE_FILE_CNT:incr:assign
+    %ifnot $theTextFile:r %return -s 1 -e ${p}:  ${theTextFile} is not readable - SKIPPED.
 
     #SIGNSRC
     %call process_source_file
 }
-EOF
+//
+
+process_source_file := << //
+# process a single source file
+{
+    SOURCE_FULLNAME = $infile
+
+    SOURCE_FILENAME = $SOURCE_FULLNAME:basename
+    SOURCE_TYPE = $SOURCE_FILENAME:suffix
+
+    %ifdef DEBUG %eecho process_source_file: SOURCE_TYPE=$SOURCE_TYPE SOURCE_FILENAME=$SOURCE_FILENAME
+
+    #optimization - generate the processor name based on suffix and test:
+    processor = emit_$SOURCE_TYPE
+
+    #if not pointing to a defined processor:
+    %ifndef $processor    %call set_processor
+
+    %call $processor
+}
+//
+
+set_processor := << //
+#set the name of the process based on the file suffix
+#processor is set to emit_default routine if suffix is unknown
+{
+    #this is the default processor:
+    processor = emit_default
+
+    CG_MATCH_SPEC = /^(xml|html|bpel|wsdl|xsd|ant)$/
+    %if $SOURCE_TYPE:match    processor=emit_xml
+
+    CG_MATCH_SPEC = /^(java|c|h|m|mm|cc)$/
+    %if $SOURCE_TYPE:match    processor=emit_java
+
+    CG_MATCH_SPEC = /^(txt|pl|sh|ksh|csh|cg|properties)$/
+    %if $SOURCE_TYPE:match    processor=emit_text
+
+    %ifdef DEBUG %eecho T2 processor is $processor
+}
+//
 
 ################################ HEADER TEMPLATE ###############################
 
+set_header_template := << //
 {
-HEADER_TEMPLATE := << EOF
+    %pragma environment  1
+    %ifdef PROJECT_LICENSE_FILE   PROJECT_LICENSE_FILE=$PROJECT_LICENSE_FILE
+    %pragma environment  0
+
+    %ifdef  PROJECT_LICENSE_FILE   %readtemplate HEADER_TEMPLATE $PROJECT_LICENSE_FILE
+    %ifndef PROJECT_LICENSE_FILE   PROJECT_LICENSE_FILE = default
+
+    %ifdef HEADER_TEMPLATE   %return ${p}: NOTE:  using PROJECT_LICENSE_FILE "$PROJECT_LICENSE_FILE"
+
+    #otherwise, define it to be the default:
+    HEADER_TEMPLATE := << EOF
 {=$COMMENT_BEG=}
 {=$COMMENT_MID=} BEGIN_HEADER - DO NOT EDIT
 {=$COMMENT_MID=}
@@ -151,13 +279,13 @@ HEADER_TEMPLATE := << EOF
 {=$COMMENT_MID=} in compliance with the License.
 {=$COMMENT_MID=}
 {=$COMMENT_MID=} You can obtain a copy of the license at
-{=$COMMENT_MID=} {=LICENCE_URL=}.
+{=$COMMENT_MID=} {=LICENSE_URL=}.
 {=$COMMENT_MID=} See the License for the specific language governing
 {=$COMMENT_MID=} permissions and limitations under the License.
 {=$COMMENT_MID=}
 {=$COMMENT_MID=} When distributing Covered Code, include this CDDL
 {=$COMMENT_MID=} HEADER in each file and include the License file at
-{=$COMMENT_MID=} {=LICENCE_URL=}.
+{=$COMMENT_MID=} {=LICENSE_URL=}.
 {=$COMMENT_MID=} If applicable add the following below this CDDL HEADER,
 {=$COMMENT_MID=} with the fields enclosed by brackets "[]" replaced with
 {=$COMMENT_MID=} your own identifying information: Portions Copyright
@@ -173,9 +301,12 @@ HEADER_TEMPLATE := << EOF
 EOF
 }
 
+}
+//
+
 ################################ PRODUCT TOOLS SIGNAGE LIST ###############################
 
-set_template_vars := << EOF
+set_template_vars := << //
 {
     #set default dates:
     INCEPTION_YEAR=2004
@@ -189,30 +320,51 @@ set_template_vars := << EOF
     TODAY=$TODAY:date:trim
 
     #read in env. vars.  note:  set to empty-string if not defined.
-    %void $LICENCE_URL:nameof:env:a
+    %void $LICENSE_URL:nameof:env:a
     %void $COPYRIGHT_YEARS:nameof:env:a
     %void $COPYRIGHT_HOLDER:nameof:env:a
 
     #set template variables:
-    %ifnot $LICENCE_URL           LICENCE_URL =         https://open-esb.dev.java.net/public/CDDLv1.0.html
+    %ifnot $LICENSE_URL           LICENSE_URL =         https://open-esb.dev.java.net/public/CDDLv1.0.html
     %ifnot $COPYRIGHT_YEARS       COPYRIGHT_YEARS =     $INCEPTION_YEAR-$CURRENT_YEAR
     %ifnot $COPYRIGHT_HOLDER      COPYRIGHT_HOLDER =    Sun Microsystems, Inc
 
     #%undef CG_SHELL_COMMAND_ARGS
 }
-EOF
+//
 
 ############################# LANGUAGE PROCESSORS ##############################
 
-emit_default := << EOF
+expand_tabs := << //
+#for now we use the shell "expand" command.
+#TODO:  this should be a built-in cado op.
+#INPUT:  ECHO_TXT
+#OUTPUT:  ECHO_TXT
+{
+    CG_SHELL_COMMAND_ARGS = -$ENTAB_SPACES
+
+    %void $ECHO_TXT:expand:a
+}
+//
+
+optional_processors := << //
+#INPUT:  ECHO_TXT
+#OUTPUT:  ECHO_TXT
+{
+    %if $FIXEOL   %void $ECHO_TXT:fixeol:a
+    %if $ENTAB    %call expand_tabs
+}
+//
+
+emit_default := << //
 #default processor for file types that we don't know or care about -
 #we just copy input to output.
 {
-    %eecho Ignoring $SOURCE_TYPE file $SOURCE_FILENAME
+    %eecho ${p}:  WARNING: no processor for $SOURCE_FULLNAME - SKIP
 }
-EOF
+//
 
-emit_text := << EOF
+emit_text := << //
 #process a generic text file
 {
     %if $VERBOSE %eecho Processing $SOURCE_TYPE file $SOURCE_FILENAME
@@ -234,11 +386,14 @@ emit_text := << EOF
     #now insert our new header notice:
     %evalmacro ECHO_TXT tmpB
 
-    echo $SOURCE_FULLNAME
-}
-EOF
+    #apply other processors depending on options:
+    %call optional_processors
 
-emit_xml := << EOF
+    echo        $SOURCE_FULLNAME
+}
+//
+
+emit_xml := << //
 #process a xml file
 {
     %if $VERBOSE %eecho Processing $SOURCE_TYPE file $SOURCE_FILENAME
@@ -260,11 +415,14 @@ emit_xml := << EOF
     #now insert our new header notice:
     %evalmacro ECHO_TXT tmpB
 
+    #apply other processors depending on options:
+    %call optional_processors
+
     echo        $SOURCE_FULLNAME
 }
-EOF
+//
 
-emit_java := << EOF
+emit_java := << //
 #process a java file
 {
     %if $VERBOSE %eecho Processing $SOURCE_TYPE file $SOURCE_FILENAME
@@ -286,100 +444,42 @@ emit_java := << EOF
     #now insert our new header notice:
     %evalmacro ECHO_TXT tmpB
 
+    #apply other processors depending on options:
+    %call optional_processors
+
     echo        $SOURCE_FULLNAME
 }
-EOF
+//
 
-process_source_file := << EOF
-# process a single source file
+display_current_license := << //
 {
-    SOURCE_FULLNAME = $infile
-
-    SOURCE_FILENAME = $SOURCE_FULLNAME:basename
-    SOURCE_TYPE = $SOURCE_FILENAME:suffix
-
-    %ifdef DEBUG %eecho process_source_file: SOURCE_TYPE=$SOURCE_TYPE SOURCE_FILENAME=$SOURCE_FILENAME
-
-    processor = emit_$SOURCE_TYPE
-
-    %ifdef DEBUG %eecho T1 processor is $processor
-
-    #######
-    # found a processor matching suffix - call and return:
-    #######
-    %ifdef $processor %call $processor
-    %ifdef $processor %return
-  
-    %undef processor
-    CG_COMPARE_SPEC = xml
-    %if $SOURCE_TYPE:eq processor=emit_xml
-    CG_COMPARE_SPEC = html
-    %if $SOURCE_TYPE:eq processor=emit_xml
-    CG_COMPARE_SPEC = bpel
-    %if $SOURCE_TYPE:eq processor=emit_xml
-    CG_COMPARE_SPEC = wsdl
-    %if $SOURCE_TYPE:eq processor=emit_xml
-    CG_COMPARE_SPEC = xsd
-    %if $SOURCE_TYPE:eq processor=emit_xml
-    CG_COMPARE_SPEC = ant
-    %if $SOURCE_TYPE:eq processor=emit_xml
-    CG_COMPARE_SPEC = java
-    %if $SOURCE_TYPE:eq processor=emit_java
-    CG_COMPARE_SPEC = txt
-    %if $SOURCE_TYPE:eq processor=emit_text
-    CG_COMPARE_SPEC = pl
-    %if $SOURCE_TYPE:eq processor=emit_text
-    CG_COMPARE_SPEC = sh
-    %if $SOURCE_TYPE:eq processor=emit_text
-    CG_COMPARE_SPEC = ksh
-    %if $SOURCE_TYPE:eq processor=emit_text
-    CG_COMPARE_SPEC = csh
-    %if $SOURCE_TYPE:eq processor=emit_text
-    CG_COMPARE_SPEC = cg
-    %if $SOURCE_TYPE:eq processor=emit_text
-    CG_COMPARE_SPEC = properties
-    %if $SOURCE_TYPE:eq processor=
-
-    %undef CG_COMPARE_SPEC
-    %ifndef processor %return signsrc:  WARNING: no processor for suffix $SOURCE_TYPE, $SOURCE_FULLNAME
-
-    %ifdef DEBUG %eecho T2 processor is $processor
-
-    #if processor is non-empty and defined...
-    %if $processor %ifdef $processor %call $processor
+    %echo ================= Current License File is:  $PROJECT_LICENSE_FILE
+    %echo -n $HEADER_TEMPLATE
+    %echo ================= EOF =================
 }
-EOF
+//
 
 ##################################### MAIN #####################################
 
+#%pragma debug 1
+
 CG_ROOT = .
-DO_HELP = 0
-VERBOSE = 0
 EXIT_STATUS = 0
-
-p = $CG_INFILE:basename
-
-%ifndef CG_ARGV %call Usage
-%ifndef CG_ARGV %halt 1
-
-%call reset_stats
 
 #this stack holds final list of files to process
 FILESTACK =
 
-#%pragma debug 1
+#reset statistics:
+%call reset_stats
 
 #process arguments:
-%shift arg CG_ARGV
-%whiledef arg %call process_one_arg
+%call parseArgs
 
-%if $badOptions %call Usage
-%if $badOptions %halt 1
+#set up the header template:
+%call set_header_template
 
-%if $DO_HELP %call Usage
-%if $DO_HELP %halt 0
-
-#process files from argument expansion:
+%if $SHOWLICENSE   %call display_current_license
+%if $SHOWLICENSE   %return -s 0
 
 %pragma require licenses/signsrc_ops.pl
 %call set_template_vars
@@ -389,4 +489,4 @@ FILESTACK =
 
 %if $VERBOSE %call dump_stats
 
-%halt $EXIT_STATUS
+%return -s $EXIT_STATUS
