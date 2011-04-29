@@ -26,7 +26,7 @@ package ddiff;
 # @(#)ddiff.pl - ver 1.1 - 01/04/2006
 #
 # Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
-# Copyright 2010 Russ Tremain. All Rights Reserved.
+# Copyright 2010-2011 Russ Tremain. All Rights Reserved.
 # 
 # END_HEADER - DO NOT EDIT
 #
@@ -514,6 +514,8 @@ Options:
  -nosccs   alias for -noscm
  -nosvn    alias for -noscm
  -nogit    alias for -noscm
+ -exclude pat
+           exclude files or directories matching pattern, which is a perl RE.
  -csl      parse crc log file and compare list against dir. display
            unique files to log, unique files to dir and mark files
            that are different in common list with a '*'.
@@ -626,6 +628,10 @@ sub parse_args
                  $flag eq '-norcs' || $flag eq '-nosccs' || $flag eq '-nosvn') {
             $DO_CVS = 0;
             printf STDERR "OPTION '-nocvs' selected\n" if ($VERBOSE);
+        } elsif ($flag =~ /^-ex(clude)?/ ) {
+            return &usage(1) if (!@ARGV);
+            return &usage(1) if (!&walkdir::option_exclude(shift(@ARGV)));
+            printf STDERR "OPTION -exclude selected with pattern /%s/\n", $walkdir::EXCLUDE_PATTERN if ($VERBOSE);
         } elsif ($flag eq '-csl') {
             $CRCLOG_DIFF= 1;
             printf STDERR "OPTION '-csl' selected\n" if ($VERBOSE);

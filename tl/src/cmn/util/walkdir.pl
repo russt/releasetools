@@ -26,7 +26,7 @@ package walkdir;
 # @(#)walkdir.pl - ver 1.1 - 01/04/2006
 #
 # Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
-# Copyright 2009-2010 Russ Tremain. All Rights Reserved.
+# Copyright 2009-2011 Russ Tremain. All Rights Reserved.
 # 
 # END_HEADER - DO NOT EDIT
 #
@@ -230,6 +230,20 @@ sub save_file_info
         $SAVE_FILE_INFO = $bool;
     } else {
         printf STDERR "%s:  ERROR: option_crc requires boolean value (0=false, 1=true).\n", $p;
+        return(0);
+    }
+    return(1);
+}
+
+sub option_exclude
+#set the exclude pattern
+{
+    my ($pat) = @_;
+    if (defined($pat) && $pat ne "") {
+        $DO_EXCLUDES = 1;
+        $EXCLUDE_PATTERN = $pat;
+    } else {
+        printf STDERR "%s:  ERROR: option_exclude requires a non-empty perl regular expression\n", $p;
         return(0);
     }
     return(1);
@@ -504,6 +518,8 @@ sub dowalk
     #now walk sub-directories:
     for $ff (@lsout) {
         $islink = -l $ff;
+		next if ($DO_EXCLUDES && ($ff =~ $EXCLUDE_PATTERN) );
+
         if (!$islink && -d _ ) {
             next if ($dontrecurse); #don't call recursively - would be beyond max depth
             next if ($ff eq ".snapshot");   #don't go there - network appliance backup dirs.
@@ -1062,6 +1078,7 @@ sub init
     $DOMODES = 0;
     $CVSONLY = 0;
     $SKIPCVS = 0;
+	$DO_EXCLUDES = 0;
     $CREATE_RCSFILE = 0;    #create RCS files in tree
     $DO_UNJAR = 0;
     $DO_UNTAR = 0;
@@ -1181,6 +1198,8 @@ Options:
  -nosccs   alias for -noscm
  -nosvn    alias for -noscm
  -nogit    alias for -noscm
+ -exclude pat
+           exclude files or directories matching pattern, which is a perl RE.
  -ci       create RCS file for each file in path - useful for seeding a CVS repository
  -text     mark each file as "TXT" or "BIN"
  -lc       display line counts for each text file
@@ -1291,6 +1310,9 @@ sub parse_args
             &option_countlines(1);
         } elsif ($flag eq "-leaf") {
             &option_leaf(1);
+        } elsif ($flag =~ /^-ex(clude)?/ ) {
+            return &usage(1) if (!@ARGV);
+            return &usage(1) if (!&option_exclude(shift(@ARGV)));
         } elsif ($flag eq "-l") {
             return &usage(1) if (!@ARGV);
             return &usage(1) if (!&option_maxdepth(shift(@ARGV)));

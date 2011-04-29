@@ -25,6 +25,7 @@
 # @(#)comparejars.sh - ver 1.1 - 01/04/2006
 #
 # Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright 2010-2011 Russ Tremain. All Rights Reserved.
 # 
 # END_HEADER - DO NOT EDIT
 #
@@ -79,9 +80,11 @@ Options:
  -help        Display this help screen.
  -verbose     show informational messages.
  -nocvs       eliminate CVS and/or RCS files from comparison
+ -exclude pat exclude files or directories matching pattern, which is a perl RE.
 
 Example:
  $p foo.jar ../foo.jar
+ $p -exclude '(tmp.*|.*\.swp)' a.jar b.jar
 
 EOF
 
@@ -109,7 +112,18 @@ parse_args()
             ;;
         -v* )
             VERBOSE=1
+			ddiffarg="$ddiffarg -v"
             shift
+            ;;
+        -ex* )
+            shift
+            if [ $# -gt 0 ]; then
+				ddiffarg="$ddiffarg -exclude $1"
+                shift
+            else
+                echo "${p}: -exclude requires a perl regular expression parameter."
+                usage 1
+            fi
             ;;
         -* )
             echo "${p}: unknown option, $arg"  1>&2
