@@ -4,7 +4,7 @@ PKG2 =  lib
 
 MODE =  0555
 
-FILES   = jartoc.sh rj.sh jxtohtml.prl junitreport.prl
-FILES2  = jxtohtml.pl junitreport.pl
+FILES   = jartoc.sh rj.sh jxtohtml.prl junitreport.prl whereclasses.prl
+FILES2  = jxtohtml.pl junitreport.pl whereclasses.pl
 
 CMDS    = ${FILES}

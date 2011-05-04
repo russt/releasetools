@@ -3,19 +3,23 @@ jartoc.sh          bin/$TARGET_OS/jartoc              0555
 rj.sh              bin/$TARGET_OS/rj                  0555
 jxtohtml.pl        lib/$TARGET_OS/jxtohtml.pl         0444
 junitreport.pl     lib/$TARGET_OS/junitreport.pl      0444
+whereclasses.pl    lib/$TARGET_OS/whereclasses.pl     0444
 
 TARGET_OS = ntcmn
 jartoc.sh          bin/$TARGET_OS/jartoc.ksh          0555
 rj.sh              bin/$TARGET_OS/rj.ksh              0555
 jxtohtml.pl        lib/$TARGET_OS/jxtohtml.pl         0444
 junitreport.pl     lib/$TARGET_OS/junitreport.pl      0444
+whereclasses.pl    lib/$TARGET_OS/whereclasses.pl     0444
 
 TARGET_OS = cmn & skel
 jxtohtml.prl       bin/$TARGET_OS/jxtohtml            0555
 junitreport.prl    bin/$TARGET_OS/junitreport         0555
+whereclasses.prl   bin/$TARGET_OS/whereclasses        0555
 
 TARGET_OS = ntcmn & skel
 jxtohtml.prl       bin/$TARGET_OS/jxtohtml            0555
 jxtohtml.prl       bin/$TARGET_OS/jxtohtml.ksh        0555
 junitreport.prl    bin/$TARGET_OS/junitreport         0555
 junitreport.prl    bin/$TARGET_OS/junitreport.ksh     0555
+whereclasses.prl   bin/$TARGET_OS/whereclasses.ksh    0555
