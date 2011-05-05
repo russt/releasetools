@@ -377,6 +377,7 @@ sub dump_dirlist
         return;
     }
 
+    my $displayCnt = 0;
     for $kk (sort @tmp) {
         ($dir,$fn,$type) = split($;, $kk);
         next unless ($DIRFLAG && $type eq 'D' || $FILEFLAG && $type eq 'F');
@@ -406,17 +407,16 @@ sub dump_dirlist
             $pn = &path'mkpathname($dir,$fn) . "@";
         }
 
-        if ($DISPLAYALLCRCS ) {
+        if ( $DISPLAYALLCRCS ) {
             printf "\t%s\n", $pn;
-        }
-        elsif ( $crcA != $crcB ) {
+	    ++$displayCnt;
+        } elsif ( $crcA != $crcB ) {
             printf "\t%s\n", $pn;
-            $cnt++;
+	    ++$displayCnt;
         }
     }
-    if ((! $DISPLAYALLCRCS) && ($cnt < 1)) {
-        print "\tNULL\n";
-    }
+
+    print "\tNULL\n" unless ($displayCnt > 0);
 }
 
 sub option_displaycrcdiffsonly

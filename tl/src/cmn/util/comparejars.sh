@@ -79,8 +79,10 @@ the same, there may be differences in file attributes
 Options:
  -help        Display this help screen.
  -verbose     show informational messages.
- -nocvs       eliminate CVS and/or RCS files from comparison
+ -f           ignore directories in compare
+ -noscm       eliminate CVS, SVN, RCS, SCCS, and git meta-directories from compare.
  -exclude pat exclude files or directories matching pattern, which is a perl RE.
+ -tmpdir dir  create temp files and directories relative to <dir> instead of /tmp.
 
 Example:
  $p foo.jar ../foo.jar
@@ -96,6 +98,7 @@ parse_args()
     VERBOSE=0
 	ddiffarg=-fdiff
 	SUFFIX_LIST="zip,jar,war,tar,tgz,btz,gz"
+	TEMPDIR=/tmp
 
     while [ $# -gt 0 -a "$1" != "" ]
     do
@@ -106,13 +109,17 @@ parse_args()
             shift
             usage 0
             ;;
-        -nocvs )
-			ddiffarg="$ddiffarg -nocvs"
+        -noscm|-nocvs )
+			ddiffarg="$ddiffarg -noscm"
             shift
             ;;
         -v* )
             VERBOSE=1
 			ddiffarg="$ddiffarg -v"
+            shift
+            ;;
+        -f )
+			ddiffarg="$ddiffarg -f"
             shift
             ;;
         -ex* )
@@ -122,6 +129,16 @@ parse_args()
                 shift
             else
                 echo "${p}: -exclude requires a perl regular expression parameter."
+                usage 1
+            fi
+            ;;
+        -tmpdir )
+            shift
+            if [ $# -gt 0 ]; then
+				TEMPDIR="$1"
+                shift
+            else
+                echo "${p}: -tmpdir requires a directory name."
                 usage 1
             fi
             ;;
@@ -161,7 +178,7 @@ p=`basename $0`
 
 parse_args "$@"
 
-tmpdir=/tmp/$p.$$
+tmpdir="$TEMPDIR"/$p.$$
 mkdir -p $tmpdir
 
 jarA=`basename $fulljarA`
