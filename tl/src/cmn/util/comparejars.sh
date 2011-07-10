@@ -202,10 +202,10 @@ if [ "$suffixA" = "" -o "$suffixB" = "" ] ; then
 	exit 1
 fi
 
-if [ "$suffixA" != "$suffixB" ] ; then
-	bldmsg -error -p $p "both files must have the same suffix ($suffixA != $suffixB)"
-	exit 1
-fi
+#if [ "$suffixA" != "$suffixB" ] ; then
+#	bldmsg -error -p $p "both files must have the same suffix ($suffixA != $suffixB)"
+#	exit 1
+#fi
 
 case $suffixA in
 jar|zip|war )
