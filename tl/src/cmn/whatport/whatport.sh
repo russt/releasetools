@@ -25,6 +25,7 @@
 # @(#)whatport.sh - ver 1.1 - 01/04/2006
 #
 # Copyright 2004-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright 2009-2012 Russ Tremain.  All Rights Reserved.
 # 
 # END_HEADER - DO NOT EDIT
 #
@@ -57,7 +58,7 @@ case "$MACH" in
     00????????00) 
         echo rs6000
         ;;
-    i?86|Linux|x86_64)
+    i?86|Linux|x86_64|arm*)
         case `uname` in
         Linux)
             echo linux
