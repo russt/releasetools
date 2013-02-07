@@ -35,6 +35,7 @@ Options:
  -help           Display this message.
  -l <num>        First test number to generate
  -u <num>        Last test number to generate
+ -i <num>        Increment test numbers (default is 1)
  -t <suffix>     Set the test suffix to one of:  {ant, bsh, cgt, gvy, ksh}
 
 Recognized test types (see jregress -H) are:
@@ -75,6 +76,8 @@ parse_args := << //
     TEST_SUFFIX_DEFAULT = ksh
 
     LOWER_TESTNUM = 00001
+    #how much to increment between test numbers:
+    TESTNUM_INCR  = 1
     %undef UPPER_TESTNUM
 
     DO_HELP = 0
@@ -143,6 +146,11 @@ parse_options := << //
     %if $theArg:match    %call set_lower_bound
     %if $parsedOption    %return
 
+    CG_MATCH_SPEC = /^-i/
+    parsedOption=0
+    %if $theArg:match    %call set_testnum_increment
+    %if $parsedOption    %return
+
     CG_MATCH_SPEC = /^-u/
     parsedOption=0
     %if $theArg:match    %call set_upper_bound
@@ -172,6 +180,24 @@ set_lower_bound := << //
 
     CG_PAD_SPEC = %05d
     LOWER_TESTNUM = $theArg:pad
+    parsedOption = 1
+}
+//
+
+set_testnum_increment := << //
+{
+    CG_COMPARE_SPEC = 0
+    %if $CG_ARGV:stacksize:lt    %eecho ${p}:  -i requires an numerical argument
+    %if $CG_ARGV:stacksize:lt    %halt 1
+
+    theArg = $arg
+    %shift arg CG_ARGV
+
+    %ifnot $theArg:isint    %eecho ${p}:  "-i $theArg": ERROR: "$theArg" is not a number.
+    %ifnot $theArg:isint    %halt 1
+
+    CG_PAD_SPEC = %05d
+    TESTNUM_INCR  = $theArg:pad
     parsedOption = 1
 }
 //
@@ -226,17 +252,29 @@ emit_tests := << //
     %ifndef $test_emitter    %eecho ${p}:  no emitter for test suffix $TEST_SUFFIX - ABORT
     %ifndef $test_emitter    %halt 1
 
-    arange = $LOWER_TESTNUM..$UPPER_TESTNUM
-    %foreach TNUM arange %call $test_emitter
+    TNUM = $LOWER_TESTNUM
+    CG_COMPARE_SPEC = $UPPER_TESTNUM
+    %while $TNUM:le  %call incr_and_emit_test
+}
+//
+
+incr_and_emit_test := << //
+{
+        %call $test_emitter
+        TNUM += $TESTNUM_INCR
+        CG_PAD_SPEC = %05d
+        TNUM = $TNUM:pad
+        CG_COMPARE_SPEC = $UPPER_TESTNUM
 }
 //
 
 dumpParameters := << //
 {
-    %echo LOWER_TESTNUM=$LOWER_TESTNUM
-    %echo UPPER_TESTNUM=$UPPER_TESTNUM
-    %echo TEST_PREFIX=$TEST_PREFIX
-    %echo TEST_SUFFIX=$TEST_SUFFIX
+    %eecho LOWER_TESTNUM=$LOWER_TESTNUM
+    %eecho TESTNUM_INCR=$TESTNUM_INCR
+    %eecho UPPER_TESTNUM=$UPPER_TESTNUM
+    %eecho TEST_PREFIX=$TEST_PREFIX
+    %eecho TEST_SUFFIX=$TEST_SUFFIX
 }
 //
 ################################## TEMPLATES ###################################
