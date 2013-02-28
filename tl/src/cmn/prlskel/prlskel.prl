@@ -26,6 +26,7 @@
 # @(#)prlskel.prl - ver 1.1 - 01/04/2006
 #
 # Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright 2009-2013 Russ Tremain.  All Rights Reserved.
 #
 # END_HEADER - DO NOT EDIT
 #
@@ -519,4 +520,49 @@ sub run_pskel_cmd
 
     &'main(*fullargs, \@ENV);
     return 1;
+}
+
+################################## UTILITIES ###################################
+
+sub srname
+#this returns the full subroutine name of the caller (stack frame 1).
+#note: ($package, $filename, $line, $subr, $has_args, $wantarray )= caller($i);
+#        0         1          2      3      4          5
+#BUT with no args:
+#      ($package, $filename, $line) = caller();
+#        0         1          2
+# (sqlpj::sqlpjImpl, lib/sqlpj/sqlpjImpl.pm, 361)
+{
+    my @c1 = caller(1);
+    my @c0 = caller();
+    my $havecaller = ($#c1 >= 0);
+    my $fqsr = ( $havecaller ? $c1[3] : $c0[0] );
+
+    return $fqsr;
+}
+
+sub srline
+#this returns "srname[line_number]" of the caller (stack frame 1).
+{
+    my @c1 = caller(1);
+    my @c0 = caller();
+    my $havecaller = ($#c1 >= 0);
+
+#printf STDERR "srline: #c1=%d, havecaller=%d\n", $#c1, $havecaller;
+
+    #we need this to get actual line number of caller.
+    #othewise we get the line # of the original calling frame from the main:: context,
+    #where srline() is defined.
+    #
+    #note if we don't have a caller, we assume main, and further assume
+    #a #! start-up line offset of 1
+    #
+    #this means the line number is right more often.
+
+    my $line = ( $havecaller ? $c0[2] : $c0[2] + 1 );
+
+    #use package if we are not in a sub:
+    my $fqsr = ( $havecaller ? $c1[3] : $c0[0] );
+
+    return sprintf("%s[%s]", $fqsr, $line);
 }
