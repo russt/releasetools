@@ -409,10 +409,10 @@ sub dump_dirlist
 
         if ( $DISPLAYALLCRCS ) {
             printf "\t%s\n", $pn;
-	    ++$displayCnt;
+            ++$displayCnt;
         } elsif ( $crcA != $crcB ) {
             printf "\t%s\n", $pn;
-	    ++$displayCnt;
+            ++$displayCnt;
         }
     }
 
