@@ -26,7 +26,7 @@ package ddiff;
 # @(#)ddiff.pl - ver 1.1 - 01/04/2006
 #
 # Copyright 2004-2006 Sun Microsystems, Inc. All Rights Reserved.
-# Copyright 2010-2011 Russ Tremain. All Rights Reserved.
+# Copyright 2010-2013 Russ Tremain. All Rights Reserved.
 # 
 # END_HEADER - DO NOT EDIT
 #
@@ -144,7 +144,7 @@ sub main
             if ($TABLE_FORMAT) {
                 &dump_table("LEFT", *tmp, 0, *DIRDBA, *DIRDBB);
             } else {
-                &dump_dirlist("In $ARG_A but not in $ARG_B:", *tmp, 0, *DIRDBA, *DIRDBB);
+                &dump_dirlist("In $ARG_A but not in $ARG_B:", *tmp, 0, 0, *DIRDBA, *DIRDBB);
             }
         }
     }
@@ -158,7 +158,7 @@ sub main
             if ($TABLE_FORMAT) {
                 &dump_table("RIGHT", *tmp, 0, *DIRDBA, *DIRDBB);
             } else {
-                &dump_dirlist("In $ARG_B but not in $ARG_A:", *tmp, 0, *DIRDBA, *DIRDBB);
+                &dump_dirlist("In $ARG_B but not in $ARG_A:", *tmp, 0, 0, *DIRDBA, *DIRDBB);
             }
         }
     }
@@ -216,7 +216,12 @@ sub main
                 if ($TABLE_FORMAT) {
                     &dump_table("BOTH", *tmp, 1, *DIRDBA, *DIRDBB);
                 } else {
-                    &dump_dirlist("In both $ARG_A and $ARG_B:", *tmp, 1, *DIRDBA, *DIRDBB);
+                    if ($OMIT_COMMON_DIFFS) {
+                        $msg = "In both $ARG_A and $ARG_B:, with different content:";
+                    } else {
+                        $msg = "In both $ARG_A and $ARG_B:";
+                    }
+                    &dump_dirlist($msg, *tmp, 1, $OMIT_COMMON_DIFFS, *DIRDBA, *DIRDBB);
                 }
             } else {
                 #don't compare crcs:
@@ -364,11 +369,11 @@ sub dump_table
 sub dump_dirlist
 #local routine to output normal diff sets
 {
-    local($hdr, *tmp, $dodiff, *DIRDBA, *DIRDBB) = @_;
-    local($kk,$pn,$vv,$cnt);
-    local($dir,$fn,$type,$pn);
-    local($crcA, $crcB);
-    $cnt= 0;
+    local($hdr, *tmp, $dodiff, $omitcommon, *DIRDBA, *DIRDBB) = @_;
+    my($kk,$pn,$vv);
+    my($dir,$fn,$type);
+    my($crcA, $crcB);
+    my($cnt) = 0;
 
     printf "### %s\n", $hdr;
 
@@ -397,11 +402,16 @@ sub dump_dirlist
                     $crcB = $recB[$WD_CRC];
                 }
 #$pn = sprintf("%s %08X %08X", $pn, $crcA, $crcB);
-                if ($DISPLAYALLCRCS && $crcA != $crcB) {
-                    $pn =  $pn . '*';
+                if ($crcA != $crcB) {
+                    #don't mark common files with "*" if -ddiffonly selected:
+                    $pn =  $pn . '*' if ($DISPLAYALLCRCS && !$omitcommon);
+                } else {
+                    next if ($omitcommon);    #omit files with matching content from display
                 }
             }
         } elsif ($type eq 'D') {
+            #omit dirs from common display because they cannot be different by definition.
+            next if ($omitcommon);
             $pn = $dir;
         } else {
             $pn = &path'mkpathname($dir,$fn) . "@";
@@ -495,53 +505,53 @@ sub squawk_off
 
 sub usage
 {
-    local($status) = @_;
+    my($status) = @_;
 
     print STDERR <<"!";
-Usage:    $p [-h] [-v] [-csl] [-fdiff] [-common] [-sloppy] <dirA | crcfileA> <dirB | crcfileB>
+Usage:    $p [options]  <dirA|crcfileA> <dirB|crcfileB>
 
-Options:
- -h        display this usage message.
- -v        verbose mode - display informational messages on stderr.
-           displays crc values for common files when -sloppy selected.
- -f        display file entries only.
- -d        display directory entries only.
- -ieol     ignore platform end-of-line differences when comparing files.
-           NOTE:  this option precludes optimizations used to calculate file crcs.
- -noscm    skip RCS, CVS, SCCS, SUBVERSION, and GIT meta-directories.
- -nocvs    alias for -noscm
- -norcs    alias for -noscm
- -nosccs   alias for -noscm
- -nosvn    alias for -noscm
- -nogit    alias for -noscm
+OPTIONS:
+ -h         display this usage message.
+ -v         verbose mode - display informational messages on stderr.
+            displays crc values for common files when -sloppy selected.
+ -f         display file entries only.
+ -d         display directory entries only.
+ -ieol      ignore platform end-of-line differences when comparing files.
+            NOTE:  this option precludes optimizations used to calculate file crcs.
+ -noscm     skip RCS, CVS, SCCS, SUBVERSION, and GIT meta-directories.
+ -nocvs     alias for -noscm
+ -norcs     alias for -noscm
+ -nosccs    alias for -noscm
+ -nosvn     alias for -noscm
+ -nogit     alias for -noscm
  -exclude pat
-           exclude files or directories matching pattern, which is a perl RE.
- -csl      parse crc log file and compare list against dir. display
-           unique files to log, unique files to dir and mark files
-           that are different in common list with a '*'.
- -fdiff    mark files that are different in common list with a '*'.
- -common   only display files in common.
- -left     display files present in first dir but not in second.
- -right    display files present in second dir but not in first.
- -table    display files in tabular format:
-             (where_seen, type, pathname, isdifferent)
-           where:
-              where_seen is one of:  {LEFT, RIGHT, BOTH}
-              type is one:  {D, F, L}, where D=dir, F=plain file, & L=symlink
-              filename is the name of the file or dir, relative to the arg. dir
-              isdifferent is one of: {1, 0, -1}  (1=different, 0=same, -1 = undef)
+            exclude files or directories matching pattern, which is a perl RE.
+ -csl       parse crc log file and compare list against dir. display
+            unique files to log, unique files to dir and mark files
+            that are different in common list with a '*'.
+ -fdiff     mark files that are different in common list with a '*'.
+ -fdiffonly omit files with matching content in common list.
+ -common    only display files in common.
+ -left      display files present in first dir but not in second.
+ -right     display files present in second dir but not in first.
+ -table     display files in tabular format:
+               (where_seen, type, pathname, isdifferent)
+            where:
+               where_seen is one of:  {LEFT, RIGHT, BOTH}
+               type is one:  {D, F, L}, where D=dir, F=plain file, & L=symlink
+               filename is the name of the file or dir, relative to the arg. dir
+               isdifferent is one of: {1, 0, -1}  (1=different, 0=same, -1 = undef)
 
-          note that -table is modified by {-left, -right, and -comm}
-          args to display only the asked for results.
+           note that -table is modified by {-left, -right, and -comm}
+           args to display only the asked for results.
 
--sloppy   ignore directory names in compares.
+ -sloppy   ignore directory names in compares.
 
-Examples:
+EXAMPLES:
 
 Form 1 (include directory names in compares):
 
     $p -fdiff a b
-
     $p -csl checksum.log dir
 
     $p -fdiff tst/{a,b}
@@ -556,35 +566,36 @@ Form 1 (include directory names in compares):
             ./c
             ./c/x2*
 
-In this form, the command shows all exact matches
-between the two directory structures.  Common
-pathnames that have different contents are marked
-with '*', if -fdiff is selected.
+In this form, the command shows all exact matches between the two directory structures.
+With -fdiff, common files with different content are marked with '*'.
 
-Note that in this form, directory names are
-significant and are included in the output.
+If -fdiffonly is selected, then common files with the same content are omitted
+from the display:
+
+    $p -fdiffonly tst/{a,b}
+    ### In tst/a but not in tst/b:
+            ./x3
+    ### In tst/b but not in tst/a:
+            ./x4
+    ### In both tst/a and tst/b, with different content:
+            ./x1
+            ./c/x2
 
 Form 2 (ignore directory names in compares):
 
     $p -v -sloppy -fdiff -common a b
-
     ### In both a and b:
     8AD5E083    x2                      a/x2
     8AD5E083      =x2                   b/x2
     EBE0F56A      !x2                   a/c/x2
     79A6468B      !x2                   b/c/x2
 
+In this form, the first column is the computed crc of each file.  The second
+column is the file name only.  An equals sign (=) indicates that the file contents
+match the previous instance.  An exclamation mark (!) indicates that the file
+contents do not match.  All files are sorted by the crc value.
 
-In this form, the first column is the computed crc of each file.
-The second column is the file name only.  An equals sign (=)
-indicates that the file contents match the previous
-instance.  An exclamation mark (!) indicates that the file
-contents do not match.  All files are sorted by the crc
-value.
-
-Note that crc's are not displayed unless the verbose (-v)
-option is selected.
-
+Note that crc's are not displayed unless the verbose (-v) option is selected.
 !
     return($status);
 }
@@ -620,27 +631,21 @@ sub parse_args
             $DIRFLAG = 1;
         } elsif ($flag eq "-ieol") {
             $IGNORE_EOL_DIFFS = 1;
-            printf STDERR "OPTION '-ieol' selected\n" if ($VERBOSE);
         } elsif ($flag eq "-v") {
             $VERBOSE = 1;
-            printf STDERR "OPTION '-verbose' selected\n" if ($VERBOSE);
         } elsif ($flag eq '-noscm' || $flag eq '-nocvs' || $flag eq '-nogit' ||
                  $flag eq '-norcs' || $flag eq '-nosccs' || $flag eq '-nosvn') {
             $DO_CVS = 0;
-            printf STDERR "OPTION '-nocvs' selected\n" if ($VERBOSE);
         } elsif ($flag =~ /^-ex(clude)?/ ) {
             return &usage(1) if (!@ARGV);
             return &usage(1) if (!&walkdir::option_exclude(shift(@ARGV)));
-            printf STDERR "OPTION -exclude selected with pattern /%s/\n", $walkdir::EXCLUDE_PATTERN if ($VERBOSE);
         } elsif ($flag eq '-csl') {
             $CRCLOG_DIFF= 1;
-            printf STDERR "OPTION '-csl' selected\n" if ($VERBOSE);
         } elsif ($flag eq '-common') {
             $DISPLAY_COMMON = 1;
             #set -left & -right if they haven't been specified:
             $DISPLAY_ARG_A = 0 if ($DISPLAY_ARG_A < 0);
             $DISPLAY_ARG_B = 0 if ($DISPLAY_ARG_B < 0);
-            printf STDERR "OPTION '-common' selected\n" if ($VERBOSE);
         } elsif ($flag eq '-left') {
             $DISPLAY_ARG_A = 1;
             $DISPLAY_ARG_B = 0 if ($DISPLAY_ARG_B < 0);
@@ -653,10 +658,11 @@ sub parse_args
             $TABLE_FORMAT = 1;
         } elsif ($flag =~ '^-s') {
             $SLOPPY_DIFF = 1;
-            printf STDERR "OPTION '-sloppy' selected\n" if ($VERBOSE);
+        } elsif ($flag eq '-fdiffonly') {
+            $OMIT_COMMON_DIFFS = 1;
+            $FDIFF_FLAG = 1;
         } elsif ($flag eq '-fdiff') {
             $FDIFF_FLAG = 1;
-            printf STDERR "OPTION '-fdiff' selected\n" if ($VERBOSE);
         } elsif ($flag =~ '^-h') {
             $HELPFLAG = 1;
             return &usage(0);
