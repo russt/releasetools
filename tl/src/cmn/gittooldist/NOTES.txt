@@ -1,0 +1,12 @@
+git push origin serverfix
+
+    83	16:53	git co -b linuxtools
+    85	16:53	cvs -f -d /scm/cvs/tooldist/rtproj/main/rttl co linuxtools
+    88	16:54	git add --all
+    91	16:54	git commit -m "add to branch linuxtools"
+    93	16:54	git push origin linuxtools
+
+
+Q: now how do I clone the branch?
+
+git clone --branch linuxtools git://localhost/tooldist/rtproj/main/rttl linuxtools
