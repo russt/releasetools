@@ -1,4 +1,3 @@
-git push origin serverfix
 
     83	16:53	git co -b linuxtools
     85	16:53	cvs -f -d /scm/cvs/tooldist/rtproj/main/rttl co linuxtools
@@ -10,3 +9,37 @@ git push origin serverfix
 Q: now how do I clone the branch?
 
 git clone --branch linuxtools git://localhost/tooldist/rtproj/main/rttl linuxtools
+
+Q: how can I have git ignore all of the CVS directories?
+A: add ignore patterns to .git/info/exclude
+----
+Q: how to clone and make read-only?
+A: git cannot do it.
+A: on unix, you can set umask prior to the clone.  but that defeats the purpose of having an easy method to bootstrap tools.
+
+In reality, this is not a showstopper.  it means that clone is controlled by user's umask, which means that user can screw up stuff.  when the branch is updated, there could be merge conflicts.
+
+this is the same as the current cvs-based distributions, except that when you try to edit a tool script, you will get a warning that it is read-only.
+----
+
+here is an interesting project but it is only for linux: http://joeyh.name/code/etckeeper/
+
+Some red herrings…
+
+core.sharedRepository
+
+Russ note:  this variable applies to who can clone, and has *nothing* to do with file permissions.
+
+When group (or true), the repository is made shareable between several users in a group (making sure all the files and objects are group-writable). When all (or world or everybody), the repository will be readable by all users, additionally to being group-shareable. When umask (or false), Git will use permissions reported by umask(2). When 0xxx, where 0xxx is an octal number, files in the repository will have this mode value. 0xxx will override user's umask value (whereas the other options will only override requested parts of the user's umask value). Examples: 0660 will make the repo read/write-able for the owner and group, but inaccessible to others (equivalent to group unless umask is e.g. 0022). 0640 is a repository that is group-readable but not group-writable. See git-init(1). False by default.
+
+
+
+	; core variables
+	[core]
+		; Don't trust file modes
+		filemode = false
+
+core.fileMode
+If false, the executable bit differences between the index and the working tree are ignored; useful on broken filesystems like FAT. See git-update-index(1).
+
+The default is true, except git-clone(1) or git-init(1) will probe and set core.fileMode false if appropriate when the repository is created.
