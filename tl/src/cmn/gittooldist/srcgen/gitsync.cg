@@ -1,0 +1,6 @@
+%ifndef CG_ROOT    CG_ROOT = ./bld
+
+%include gitsync.defs
+
+CG_MODE = 0775
+shell/main.sh	/tooldist2git
