@@ -1,0 +1,4 @@
+TEMPLATE        = file.mmf
+PKG     = bin
+
+FILES   = tooldist2git.sh

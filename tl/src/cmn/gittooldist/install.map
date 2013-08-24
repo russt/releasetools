@@ -1,0 +1,6 @@
+TARGET_OS = cmn
+tooldist2git.sh   bin/$TARGET_OS/tooldist2git 555
+
+#tools distributions are not supported on nt.  RT 8/23/13
+#TARGET_OS = ntcmn
+#tooldist2git.sh   bin/$TARGET_OS/tooldist2git.ksh 555

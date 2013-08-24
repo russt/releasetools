@@ -1,9 +1,8 @@
-
-    83	16:53	git co -b linuxtools
-    85	16:53	cvs -f -d /scm/cvs/tooldist/rtproj/main/rttl co linuxtools
-    88	16:54	git add --all
-    91	16:54	git commit -m "add to branch linuxtools"
-    93	16:54	git push origin linuxtools
+    83  16:53   git co -b linuxtools
+    85  16:53   cvs -f -d /scm/cvs/tooldist/rtproj/main/rttl co linuxtools
+    88  16:54   git add --all
+    91  16:54   git commit -m "add to branch linuxtools"
+    93  16:54   git push origin linuxtools
 
 
 Q: now how do I clone the branch?
@@ -17,14 +16,14 @@ Q: how to clone and make read-only?
 A: git cannot do it.
 A: on unix, you can set umask prior to the clone.  but that defeats the purpose of having an easy method to bootstrap tools.
 
-In reality, this is not a showstopper.  it means that clone is controlled by user's umask, which means that user can screw up stuff.  when the branch is updated, there could be merge conflicts.
+In reality, this is not a showstopper.  it means that clone is controlled by user's umask, which means that user can screw up stuff.  when the branch is updated, there could be merge conflicts if user has written on files.
 
-this is the same as the current cvs-based distributions, except that when you try to edit a tool script, you will get a warning that it is read-only.
+This can happen on cvs dists as well, except that the read-only bit serves as a deterrent.
 ----
 
 here is an interesting project but it is only for linux: http://joeyh.name/code/etckeeper/
 
-Some red herrings…
+Some red herrings:
 
 core.sharedRepository
 
@@ -34,10 +33,10 @@ When group (or true), the repository is made shareable between several users in 
 
 
 
-	; core variables
-	[core]
-		; Don't trust file modes
-		filemode = false
+    ; core variables
+    [core]
+        ; Don't trust file modes
+        filemode = false
 
 core.fileMode
 If false, the executable bit differences between the index and the working tree are ignored; useful on broken filesystems like FAT. See git-update-index(1).
