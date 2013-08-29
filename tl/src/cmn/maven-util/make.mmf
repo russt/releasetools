@@ -6,6 +6,6 @@ CHECK=
 PKG    = bin
 
 MODE   = 0555
-FILES  = mkpom.sh
+FILES  = mkpom.sh mvn.sh
 
 CMDS   = ${FILES}

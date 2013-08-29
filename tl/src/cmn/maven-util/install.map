@@ -1,5 +1,7 @@
 TARGET_OS = cmn
 mkpom.sh         bin/$TARGET_OS/mkpom           0555
+mvn.sh           bin/$TARGET_OS/mvn             0555
 
 TARGET_OS = ntcmn
 mkpom.sh         bin/$TARGET_OS/mkpom.ksh       0555
+mvn.sh           bin/$TARGET_OS/mvn.ksh         0555

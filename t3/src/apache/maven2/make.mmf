@@ -5,5 +5,3 @@ BINTGZ       = maven.btz
 T3DEST = ${BASE}/java/maven2
 
 BINFILES = .
-
-FILES   =  mvn.sh
