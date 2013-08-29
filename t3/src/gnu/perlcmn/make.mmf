@@ -8,9 +8,14 @@
 ####
 
 TEMPLATE = file.mmf
+#DESTRULE = dist_except_cmn
 
 PKG  = lib
 
 #this is a dummy target:
 LIBFILES = perlcmn
 
+#NOTE: need a different package for this one as *.ltz files use PKG2 implicitly. RT 9/22/10
+PGK3    = lib
+DEST3   =  ${BASE}/lib/${TARGET_OS}/perl5/VCS
+FILES3  =  SCCS.pm
