@@ -4,11 +4,6 @@ ant-testutil.jar        java/ant/lib/ant-testutil.jar         0444
 checkstyle-all-3.3.jar  java/ant/lib/checkstyle-all-3.3.jar   0444
 ant-contrib.jar         java/ant/lib/ant-contrib.jar          0444
 
-#ant task for graphing ant files:
-weaver.jar              java/ant/lib/weaver.jar               0444
-grand.jar               java/ant/lib/grand.jar                0444
-linguinemaps.jar        java/ant/lib/linguinemaps.jar         0444
-
 #jdbc for build access to database
 ojdbc14.jar                        java/ant/lib/ojdbc14.jar       0444
 mysql-connector-java-5.0.4-bin.jar java/ant/lib/mysqljdbc.jar     0444
