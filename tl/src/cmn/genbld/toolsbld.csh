@@ -340,7 +340,7 @@ else
         bldmsg -p $p -warn AUX_TOOLS_PJLIST not defined - will build local tools only
         set LOCALONLY = 1
     else
-        set toolspj_list=$AUX_TOOLS_PJLIST
+        set toolspj_list="$AUX_TOOLS_PJLIST"
     endif
 endif
 
