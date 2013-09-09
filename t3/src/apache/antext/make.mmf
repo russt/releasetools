@@ -4,5 +4,5 @@ PKG3    = java/ant/lib
 
 POST_INSTALL3 =
 
-FILES3  = checkstyle-all-1.2.jar checkstyle-all-2.1.jar junit.jar mysqljdbc.jar ojdbc14.jar\
+FILES3  = junit.jar mysqljdbc.jar ojdbc14.jar\
           jmx4ant.jar jmxri.jar jmxtools.jar jmxremote.jar jmxremote_optional.jar
