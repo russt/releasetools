@@ -4,5 +4,6 @@ PKG3    = java/ant/lib
 
 POST_INSTALL3 =
 
-FILES3  = checkstyle-all-3.3.jar junit.jar ojdbc14.jar ant-testutil.jar ant-contrib.jar\
+#note, as of ant 1.7.x ant-testutil.jar is no longer considered an extension.  RT 9/10/13
+FILES3  = checkstyle-all-3.3.jar junit.jar ojdbc14.jar ant-contrib.jar\
             mysql-connector-java-5.0.4-bin.jar
