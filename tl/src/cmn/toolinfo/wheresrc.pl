@@ -336,23 +336,21 @@ sub parse_args
 	}
 
 	$TOOLDB = "NULL";
-        $DISTROOT = $ENV{"DISTROOT"};
+	$DISTROOT = $ENV{"DISTROOT"};
 
 	if (defined($ENV{"SRCROOT"})) {
 		$SRCROOT = $ENV{"SRCROOT"};
-		if (-r "$SRCROOT/$TLMAP") {
-			$TOOLDB = "$SRCROOT/$TLMAP";
-		} elsif (defined($ENV{"TOOLSFOR"})) {
-			$TOOLSFOR = $ENV{"TOOLSFOR"};
-			if (-r "$TOOLSFOR/$TLMAP") {
-				$TOOLDB = "$TOOLSFOR/$TLMAP";
-			}
-		} elsif (defined($ENV{"TOOLROOT"})) {
-			my($toolroot) = $ENV{"TOOLROOT"};
-			if (-r "$toolroot/lib/cmn/$TLMAP") {
-				$TOOLDB = "$toolroot/lib/cmn/$TLMAP";
-			}
-		}
+		$TOOLDB = "$SRCROOT/$TLMAP" if (-r "$SRCROOT/$TLMAP")
+	}
+
+	if ($TOOLDB eq "NULL" && defined($ENV{"TOOLSFOR"})) {
+		$TOOLSFOR = $ENV{"TOOLSFOR"};
+		$TOOLDB = "$TOOLSFOR/$TLMAP" if (-r "$TOOLSFOR/$TLMAP");
+	}
+
+	if ($TOOLDB eq "NULL" && defined($ENV{"TOOLROOT"})) {
+		$TOOLROOT = $ENV{"TOOLROOT"};
+		$TOOLDB = "$TOOLROOT/lib/cmn/$TLMAP" if (-r "$TOOLROOT/lib/cmn/$TLMAP");
 	}
 
 	$PATTERN_FLAG = 0;
