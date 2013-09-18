@@ -78,6 +78,7 @@ set READYFILE = ""
 set CLEANDIST = 1
 set DOLOCALCVSUPDATE = 1
 set DOGITSYNC = 1
+set GITSYNC_OPTIONS =
 #########
 
 if (! $?LOCAL_MMF_CMN ) then
@@ -141,6 +142,10 @@ while ( $#argv > 0 )
         case -printmaponly:
             set DOPRINTMAPONLY = 1
             breaksw
+        case -cleangitsync:
+            set DOGITSYNC = 1
+            set GITSYNC_OPTIONS = -clean
+            breaksw
         case -gitsync:
             set DOGITSYNC = 1
             breaksw
@@ -189,6 +194,8 @@ Options:
  -cvsupdate    same as -update
  -gitsync      sync cvs tooldist to git (on by default)
  -nogitsync    do not sync cvs tooldist to git
+ -cleangitsync remove git tools distribution before syncing
+               NOTE:  this forces git toolsdist clients to reclone.
  directories...
               only build these directories in each project.
 
@@ -675,7 +682,7 @@ if ($DOGITSYNC) then
     if ( ! $?CVS_TOOLDIST_PATH ) then
         setenv CVS_TOOLDIST_PATH "$DISTROOT"
     endif
-    tooldist2git -verbose
+    tooldist2git $GITSYNC_OPTIONS
 endif
 
 #######
