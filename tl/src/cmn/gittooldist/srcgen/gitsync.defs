@@ -49,9 +49,14 @@ SH_ARG_VARNAME := PLATFORM_ARGS
 
 SH_INIT_DEFAULTS_BODY := << (
     CLEAN_DIST=0
+    VERBOSE=0
 )
 
 SH_PARSE_ARGS_CASES := << [
+        -v* )
+            #verbose messages
+            VERBOSE=1
+            ;;
         -clean )
             CLEAN_DIST=1
             ;;

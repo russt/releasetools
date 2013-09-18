@@ -97,6 +97,10 @@ parse_args()
         -help )
             usage 0
             ;;
+        -v* )
+            #verbose messages
+            VERBOSE=1
+            ;;
         -clean )
             CLEAN_DIST=1
             ;;
@@ -128,6 +132,7 @@ init_defaults()
 {
     PLATFORM_ARGS=
     CLEAN_DIST=0
+    VERBOSE=0
 }
 
 ################################## SUBROUTINES #################################
