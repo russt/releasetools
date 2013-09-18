@@ -53,6 +53,11 @@
 #   bdb/<pj>.cmn    - bdb to build each <pj> listed in AUX_TOOLS_PJLIST.
 #       this bdb is defined for the local $SRCROOT.
 #
+#   Environment required by tooldist2git:
+#       CVS_TOOLDIST_PATH - base of cvs tools distribution repository, eg. $DISTROOT
+#       GIT_TOOLDIST_PATH - base of git tools distribution repository
+#       GIT_TOOLDIST_WORK - base of git working directories, used to sync the cvs tools modules to git branches
+#
 
 set p=`basename $0`
 unset noclobber
@@ -72,6 +77,7 @@ set DOREADYFILE = 0
 set READYFILE = ""
 set CLEANDIST = 1
 set DOLOCALCVSUPDATE = 1
+set DOGITSYNC = 1
 #########
 
 if (! $?LOCAL_MMF_CMN ) then
@@ -135,6 +141,13 @@ while ( $#argv > 0 )
         case -printmaponly:
             set DOPRINTMAPONLY = 1
             breaksw
+        case -gitsync:
+            set DOGITSYNC = 1
+            breaksw
+        case -nogitsync:
+            #git sync is on by default if tooldist2git env. variables are defined.
+            set DOGITSYNC = 0
+            breaksw
         case -*:
             echo "${p}:  unrecognized option, $arg"
             goto USAGE
@@ -152,6 +165,7 @@ cat << EOF
 Usage:  $p [-help] [-test]  [-clean] [-dopull] [-readyfile flagfile]
                    [-localonly] [-nonlocalonly] [-noprintmap]
                    [-printmaponly] [-readyfile flagfile] [-update]
+                   [-gitsync] [-nogitsync]
                    directories...
 
  Build a tools distribution from one or more projects.
@@ -173,6 +187,8 @@ Options:
  -update       perform a cvs update in local tools path and then
                in each \$AUX_TOOLS_PJLIST.
  -cvsupdate    same as -update
+ -gitsync      sync cvs tooldist to git (on by default)
+ -nogitsync    do not sync cvs tooldist to git
  directories...
               only build these directories in each project.
 
@@ -196,6 +212,14 @@ Environment:
        to use.
 
  DISTROOT -  the distribution area for tools. (removed if -clean).
+
+ GIT_TOOLDIST_PATH
+       The base of git tools distribution repository.
+       Must be defined for -gitsync option.
+
+ GIT_TOOLDIST_WORK
+       The base of git working directories, used to sync the cvs tools modules to git branches
+       Must be defined for -gitsync option.
 
  SRCROOT  -  the root directory of the working source repository.
 
@@ -234,6 +258,13 @@ endif
 if (! $?CVS_BRANCH_NAME ) then
     echo "${p}:  BUILD_ERROR: \$CVS_BRANCH_NAME must be defined.  HALT."
     exit 1
+endif
+
+if ($DOGITSYNC) then
+    if (! $?GIT_TOOLDIST_PATH || ! $?GIT_TOOLDIST_WORK ) then
+        echo "${p}:  BUILD_WARNING: GIT_TOOLDIST_PATH or GIT_TOOLDIST_WORK is not defined, setting -nogitsync"
+        set DOGITSYNC = 0
+    endif
 endif
 
 if ( $?CVS_OPTS) then
@@ -635,6 +666,16 @@ if ( $CLEANDIST && ! $DOCLEAN && ! $NONLOCALONLY && ! $LOCALONLY) then
     rm -rf `walkdir -e $DISTROOT | grep -v Emptydir`
 
     bldmsg -p $p -markend execute cleandist
+endif
+
+#####
+#sync to git distribution only after cvs distribution is fully updated.
+#####
+if ($DOGITSYNC) then
+    if ( ! $?CVS_TOOLDIST_PATH ) then
+        setenv CVS_TOOLDIST_PATH "$DISTROOT"
+    endif
+    tooldist2git -verbose
 endif
 
 #######
