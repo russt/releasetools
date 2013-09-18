@@ -1,10 +1,14 @@
 %ifndef CG_ROOT    CG_ROOT = ./bld
 
 %pragma trim_multiline_rnewline 1
+%pragma clrifndef 1
+
 %include gitsync.defs
 
 CG_MODE = 0775
 shell/main.sh	/tooldist2git.sh
+
+#TODO:  check for undefs!!
 
 PROJECT_LICENSE_FILE = bsd2clause.txt
 COPYRIGHT_YEARS  = 2013-2013

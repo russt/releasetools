@@ -124,7 +124,6 @@ parse_args()
             ;;
         esac
     done
-${SH_PARSE_ARGS_EPILOG:undef}
 }
 
 init_defaults()
