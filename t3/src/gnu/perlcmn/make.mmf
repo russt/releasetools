@@ -10,7 +10,9 @@
 TEMPLATE = file.mmf
 #DESTRULE = dist_except_cmn
 
-PKG  = lib
+PKG   = lib
+DEST =  ${BASE}/${PKG}/${TARGET_OS}/perl5
+FILES = JDBC.pm
 
 #this is a dummy target:
 LIBFILES = perlcmn
