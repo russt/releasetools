@@ -1,0 +1,11 @@
+TEMPLATE = file.mmf
+
+DESTRULE = dist_except_cmn
+BASE = $(SRCROOT)
+PKG = bdb
+UPDATE=-udiff
+
+#we don't want transactions
+TRANSACT        =
+
+FILES = bdb.bdb mmf.bdb services.bdb suffix.dat

@@ -1,0 +1,10 @@
+#install map for build-database (bdb) files.
+TARGET_OS=cmn
+services.bdb           bdb/services           0444
+suffix.dat             bdb/suffix.dat         0444
+
+#note that bdb also processes includes.
+TARGET_OS=cmn & bdb
+bdb.bdb                bdb/bdb.cmn            0444
+mmf.bdb                bdb/mmf.cmn            0444
+
